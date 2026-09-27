@@ -36,7 +36,7 @@
                         <div class="text-[11px] text-theme-muted font-medium mt-0.5">All Indoor Pro</div>
                     </div>
                     <div class="p-3.5 rounded-2xl glass-card">
-                        <div class="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400">2-Min Hold</div>
+                        <div class="text-xl sm:text-2xl font-black text-amber-700 dark:text-amber-400">{{ max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60)) }}-Min Hold</div>
                         <div class="text-[11px] text-theme-muted font-medium mt-0.5">Real-Time Sync</div>
                     </div>
                     <div class="p-3.5 rounded-2xl glass-card">
@@ -114,13 +114,19 @@
                     </button>
                 </div>
 
-                <!-- Quick Date Pills -->
+                <!-- Quick Date Pills & Calendar View Option -->
                 <div class="flex items-center gap-1.5">
                     <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d') ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700' }}" data-date="{{ date('Y-m-d') }}">
                         Today
                     </button>
                     <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d', strtotime('+1 day')) ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700' }}" data-date="{{ date('Y-m-d', strtotime('+1 day')) }}">
                         Tomorrow
+                    </button>
+                    <button type="button" id="openCalendarModalBtn"
+                        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-indigo-500/15 hover:from-cyan-500/25 hover:to-indigo-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:border-cyan-500 shadow-sm cursor-pointer"
+                        title="Open interactive monthly calendar">
+                        <i class="fa-solid fa-calendar-days text-xs"></i>
+                        <span>Calendar View</span>
                     </button>
                 </div>
             </div>
@@ -139,7 +145,7 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-4 h-4 rounded-md bg-amber-500/20 border border-amber-500/50"></span>
-                    <span class="text-amber-700 dark:text-amber-300 font-medium">Held (2-Min Checkout)</span>
+                    <span class="text-amber-700 dark:text-amber-300 font-medium">Held ({{ max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60)) }}-Min Checkout)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="w-4 h-4 rounded-md bg-indigo-500/20 border border-indigo-500/50"></span>
@@ -200,7 +206,7 @@
                                         @endphp
                                         <button type="button"
                                             class="court-slot p-2.5 rounded-xl text-center text-xs font-semibold transition-all relative
-                                                {{ $isAvailable ? 'slot-available cursor-pointer' : 'pointer-events-none cursor-not-allowed select-none opacity-80' }}
+                                                {{ $isAvailable ? 'slot-available cursor-pointer' : 'cursor-not-allowed select-none opacity-80' }}
                                                 {{ $status === 'held' ? 'slot-held' : '' }}
                                                 {{ $status === 'pending_approval' ? 'slot-pending' : '' }}
                                                 {{ $status === 'confirmed' ? 'slot-booked' : '' }}"
@@ -209,8 +215,7 @@
                                             data-display-time="{{ $slot['display_time'] }}"
                                             data-display-range="{{ $slot['display_range'] }}"
                                             data-status="{{ $status }}"
-                                            data-remaining-seconds="{{ $slot['remaining_seconds'] }}"
-                                            {{ !$isAvailable ? 'disabled' : '' }}>
+                                            data-remaining-seconds="{{ $slot['remaining_seconds'] }}">
                                             <div class="font-bold text-xs">{{ $slot['display_time'] }}</div>
                                             <div class="text-[10px] opacity-85 mt-0.5 slot-status-label">
                                                 @if($status === 'available')
@@ -363,42 +368,46 @@
                         </div>
 
                         <!-- Payment Flow Sections Based on Owner Setting (Manual GCash, Xendit, or PayMongo) -->
+                        @php
+                            $holdSecs = (int) ($settings->holding_duration_seconds ?: 120);
+                            $holdMins = max(1, (int) round($holdSecs / 60));
+                        @endphp
                         @if($settings->payment_mode === 'paymongo')
-                            <!-- PAYMONGO FLOW: 2-Min Instant Hold & Pay (GCash, Maya, Cards, QRPH) -->
+                            <!-- PAYMONGO FLOW: Instant Hold & Pay (GCash, Maya, Cards, QRPH) -->
                             <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
                                         <i class="fa-solid fa-bolt text-emerald-600 text-sm"></i>
-                                        <span>2-Minute Real-Time Slot Hold</span>
+                                        <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
                                     </div>
                                     <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-extrabold uppercase">PayMongo</span>
                                 </div>
                                 <p class="text-[11px] text-theme-body leading-relaxed">
-                                    Click below to lock these slots for <strong>120 seconds</strong> while you complete checkout via PayMongo (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
+                                    Click below to lock these slots for <strong>{{ $holdSecs }} seconds</strong> while you complete checkout via PayMongo (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
                                 </p>
                                 <button type="button" id="startHoldAndPayBtn" data-gateway="paymongo"
                                     class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
                                     <i class="fa-solid fa-lock"></i>
-                                    <span>Hold 2 Mins & Pay with PayMongo</span>
+                                    <span>Hold {{ $holdMins }} Mins & Pay with PayMongo</span>
                                 </button>
                             </div>
                         @elseif($settings->payment_mode === 'xendit')
-                            <!-- XENDIT FLOW: 2-Min Instant Hold & Pay -->
+                            <!-- XENDIT FLOW: Instant Hold & Pay -->
                             <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-3">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2 text-cyan-700 dark:text-cyan-300 text-xs font-bold">
                                         <i class="fa-solid fa-stopwatch text-sm"></i>
-                                        <span>2-Minute Real-Time Slot Hold</span>
+                                        <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
                                     </div>
                                     <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-700 font-extrabold uppercase">Xendit</span>
                                 </div>
                                 <p class="text-[11px] text-theme-body leading-relaxed">
-                                    Click below to hold this slot for <strong>120 seconds</strong> while you complete payment via Xendit (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
+                                    Click below to hold this slot for <strong>{{ $holdSecs }} seconds</strong> while you complete payment via Xendit (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
                                 </p>
                                 <button type="button" id="startHoldAndPayBtn" data-gateway="xendit"
                                     class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
                                     <i class="fa-solid fa-lock"></i>
-                                    <span>Hold 2 Mins & Pay with Xendit</span>
+                                    <span>Hold {{ $holdMins }} Mins & Pay with Xendit</span>
                                 </button>
                             </div>
                         @else
@@ -642,20 +651,25 @@
 <!-- 2-MINUTE REAL-TIME HOLD CHECKOUT MODAL (PayMongo & Xendit) -->
 <div id="xenditHoldModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
     <div class="glass-dropdown p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-cyan-500/30 shadow-2xl relative">
-        <button type="button" id="closeXenditModalBtn" class="absolute top-4 right-4 text-theme-muted hover:text-theme-heading p-2">
+        <button type="button" id="closeXenditModalBtn" class="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer" title="Close modal">
             <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <!-- Live 2-Minute Timer Display -->
+        <!-- Live Holding Timer Display -->
         <div class="text-center space-y-2 mb-6">
             <div id="modalGatewayIcon" class="w-16 h-16 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mx-auto border border-cyan-500/40 animate-pulse">
                 <i class="fa-solid fa-stopwatch"></i>
             </div>
+            @php
+                $holdingSecs = (int) ($settings->holding_duration_seconds ?: 120);
+                $holdingMins = max(1, (int) round($holdingSecs / 60));
+                $holdingDefaultDisplay = sprintf('%02d:%02d', floor($holdingSecs / 60), $holdingSecs % 60);
+            @endphp
             <span id="modalGatewayBadge" class="px-3 py-1 rounded-full text-xs font-extrabold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
-                2-Minute Slot Hold Active
+                {{ $holdingMins }}-Minute Slot Hold Active
             </span>
             <div class="text-4xl sm:text-5xl font-black text-theme-heading font-mono tracking-tight" id="modalHoldCountdown">
-                02:00
+                {{ $holdingDefaultDisplay }}
             </div>
             <p class="text-xs text-theme-muted max-w-xs mx-auto">
                 These slots are locked exclusively for you. Other players cannot select them. Please complete payment before time expires.
@@ -699,6 +713,65 @@
         </div>
     </div>
 </div>
+
+<!-- INTERACTIVE CALENDAR VIEW MODAL (Option to View Calendar on Client/Player side) -->
+<div id="playerCalendarModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-dropdown p-6 sm:p-7 rounded-3xl max-w-md w-full border border-cyan-500/30 shadow-2xl relative space-y-5">
+        <button type="button" id="closeCalendarModalBtn" class="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer" title="Close calendar">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/30 shadow-sm">
+                <i class="fa-solid fa-calendar-days"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-black text-theme-heading">Court Reservation Calendar</h3>
+                <p class="text-xs text-theme-muted">Select any date to view court timeslot availability</p>
+            </div>
+        </div>
+
+        <!-- Month Navigation Bar -->
+        <div class="flex items-center justify-between p-2 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800">
+            <button type="button" id="calPrevMonthBtn" class="w-8 h-8 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Previous Month">
+                <i class="fa-solid fa-chevron-left text-xs"></i>
+            </button>
+            <div class="font-extrabold text-sm text-theme-heading tracking-wide" id="calMonthYearLabel">
+                {{ date('F Y', strtotime($selectedDate)) }}
+            </div>
+            <button type="button" id="calNextMonthBtn" class="w-8 h-8 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Next Month">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Calendar Days Header (Sun - Sat) -->
+        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-theme-muted uppercase tracking-wider">
+            <div>Su</div>
+            <div>Mo</div>
+            <div>Tu</div>
+            <div>We</div>
+            <div>Th</div>
+            <div>Fr</div>
+            <div>Sa</div>
+        </div>
+
+        <!-- Calendar Days Grid Container -->
+        <div id="calDaysGrid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
+            <!-- Dynamically populated via JS -->
+        </div>
+
+        <!-- Calendar Footer / Legend -->
+        <div class="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-[11px] text-theme-muted">
+            <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Selected</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border border-cyan-500"></span> Today</span>
+            </div>
+            <button type="button" id="calJumpTodayBtn" class="text-cyan-600 dark:text-cyan-400 font-bold hover:underline cursor-pointer">
+                Jump to Today
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -716,11 +789,12 @@
         paymentMode: "{{ $settings->payment_mode }}",
         activeHoldRef: null,
         holdTimerInterval: null,
-        holdRemainingSeconds: 120,
+        holdRemainingSeconds: {{ (int) ($settings->holding_duration_seconds ?: 120) }},
     };
 
     document.addEventListener('DOMContentLoaded', () => {
         setupDateControls();
+        setupInteractiveCalendar();
         setupSlotInteractivity();
         setupManualReceiptPreview();
         setupXenditCheckout();
@@ -822,16 +896,15 @@
         if (status !== 'available') {
             if (!isDragMove) {
                 const isHeld = status === 'held';
+                resetSelection();
                 Swal.fire({
                     icon: 'warning',
-                    title: isHeld ? 'Timeslot Currently Held' : 'Timeslot Unavailable',
+                    title: isHeld ? 'Slot Held by Another Customer' : 'Timeslot Unavailable',
                     text: isHeld 
-                        ? 'This timeslot is temporarily held by another customer completing payment (2-min hold) and cannot be selected.' 
-                        : 'This timeslot has already been reserved and is not selectable.',
-                    timer: 2500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
+                        ? `Timeslot ${time} is temporarily held by another customer completing checkout.` 
+                        : `Timeslot ${time} has already been reserved and cannot be selected.`,
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'Understood'
                 });
             }
             return;
@@ -871,9 +944,27 @@
         if (isDragMove) {
             const anchor = bookingState.dragAnchorTime || earliest;
             const newRange = getSlotsRange(courtId, anchor, time);
-            if (newRange.length > 0 && isRangeAvailable(courtId, newRange)) {
-                bookingState.selectedSlots = newRange;
-                renderSelectionUI();
+            if (newRange.length > 0) {
+                if (isRangeAvailable(courtId, newRange)) {
+                    bookingState.selectedSlots = newRange;
+                    renderSelectionUI();
+                } else {
+                    const heldSlot = newRange.find(t => {
+                        const btn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${t}"]`);
+                        return btn && btn.getAttribute('data-status') === 'held';
+                    });
+                    bookingState.isDragging = false;
+                    resetSelection();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
+                        text: heldSlot
+                            ? `Timeslot ${heldSlot} in this range is temporarily held by another customer completing checkout.`
+                            : 'Cannot select this range because one or more timeslots are already reserved.',
+                        confirmButtonColor: '#0891b2',
+                        confirmButtonText: 'Understood'
+                    });
+                }
             }
             return;
         }
@@ -893,13 +984,27 @@
         }
 
         // Scenario 2: User clicks a slot between earliest and latest (or earliest itself)
-        // User requirement: "for example i clicked 6am, and 3pm so my booking will be 6am to 3pm, when i clicked 10am, my booking must be changed to 6am to 10am"
         if (time >= earliest && time < latest) {
             const newRange = getSlotsRange(courtId, earliest, time);
             if (newRange.length > 0 && isRangeAvailable(courtId, newRange)) {
                 bookingState.selectedSlots = newRange;
                 bookingState.dragAnchorTime = earliest;
                 renderSelectionUI();
+            } else {
+                const heldSlot = newRange.find(t => {
+                    const btn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${t}"]`);
+                    return btn && btn.getAttribute('data-status') === 'held';
+                });
+                resetSelection();
+                Swal.fire({
+                    icon: 'warning',
+                    title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
+                    text: heldSlot
+                        ? `Timeslot ${heldSlot} in this range is temporarily held by another customer completing checkout.`
+                        : 'Cannot select this range because one or more intermediate timeslots are already reserved.',
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'Understood'
+                });
             }
             return;
         }
@@ -912,14 +1017,19 @@
                 bookingState.dragAnchorTime = earliest;
                 renderSelectionUI();
             } else {
+                const heldSlot = newRange.find(t => {
+                    const btn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${t}"]`);
+                    return btn && btn.getAttribute('data-status') === 'held';
+                });
+                resetSelection();
                 Swal.fire({
                     icon: 'warning',
-                    title: 'Range Unavailable',
-                    text: 'Cannot extend selection because one or more intermediate slots are already reserved.',
-                    timer: 2500,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
+                    title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
+                    text: heldSlot
+                        ? `Timeslot ${heldSlot} in this range is temporarily held by another customer completing checkout.`
+                        : 'Cannot extend selection because one or more intermediate slots are already reserved.',
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'Understood'
                 });
             }
             return;
@@ -933,9 +1043,20 @@
                 bookingState.dragAnchorTime = time;
                 renderSelectionUI();
             } else {
-                bookingState.selectedSlots = [time];
-                bookingState.dragAnchorTime = time;
-                renderSelectionUI();
+                const heldSlot = newRange.find(t => {
+                    const btn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${t}"]`);
+                    return btn && btn.getAttribute('data-status') === 'held';
+                });
+                resetSelection();
+                Swal.fire({
+                    icon: 'warning',
+                    title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
+                    text: heldSlot
+                        ? `Timeslot ${heldSlot} in this range is temporarily held by another customer completing checkout.`
+                        : 'Cannot extend selection because one or more intermediate slots are already reserved.',
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'Understood'
+                });
             }
             return;
         }
@@ -996,9 +1117,8 @@
     }
 
     function renderSelectionUI() {
-        // Automatically eject any slot that is no longer 'available' (e.g. held or booked by another player)
-        if (bookingState.selectedCourtId && bookingState.selectedSlots.length > 0) {
-            const initialCount = bookingState.selectedSlots.length;
+        // Automatically eject any slot that is no longer 'available' (unless currently held by this user's active checkout)
+        if (bookingState.selectedCourtId && bookingState.selectedSlots.length > 0 && !bookingState.activeHoldRef) {
             bookingState.selectedSlots = bookingState.selectedSlots.filter(time => {
                 const btn = document.querySelector(`.court-slot[data-court-id="${bookingState.selectedCourtId}"][data-slot-time="${time}"]`);
                 return btn && btn.getAttribute('data-status') === 'available';
@@ -1006,17 +1126,6 @@
             if (bookingState.selectedSlots.length === 0) {
                 bookingState.selectedCourtId = null;
                 bookingState.selectedCourtName = '';
-            }
-            if (bookingState.selectedSlots.length < initialCount) {
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Selection Updated',
-                    text: 'One or more of your selected timeslots were just held or booked by another customer.',
-                    timer: 3000,
-                    showConfirmButton: false,
-                    toast: true,
-                    position: 'top-end'
-                });
             }
         }
 
@@ -1026,7 +1135,7 @@
             const statusLabel = btn.querySelector('.slot-status-label');
             const status = btn.getAttribute('data-status');
 
-            if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(time) && status === 'available') {
+            if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(time) && (status === 'available' || bookingState.activeHoldRef)) {
                 btn.classList.add('slot-selected');
                 btn.classList.remove('slot-available', 'pointer-events-none', 'cursor-not-allowed', 'select-none');
                 if (statusLabel) {
@@ -1039,10 +1148,10 @@
                     statusLabel.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
                 }
             } else {
-                // Held, confirmed, or in-review: ensure locked
-                btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer');
-                btn.classList.add('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                btn.disabled = true;
+                // Held, confirmed, or in-review: allow clicking to trigger error warning & unselection
+                btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer', 'pointer-events-none');
+                btn.classList.add('cursor-not-allowed', 'select-none', 'opacity-80');
+                btn.disabled = false;
             }
         });
 
@@ -1176,9 +1285,10 @@
         if (holdBtn) {
             const gateway = holdBtn.getAttribute('data-gateway') || 'xendit';
             const isPayMongo = gateway === 'paymongo';
+            const holdMinsLabel = Math.max(1, Math.round({{ (int) ($settings->holding_duration_seconds ?: 120) }} / 60));
             const defaultBtnText = isPayMongo 
-                ? '<i class="fa-solid fa-lock"></i> Hold 2 Mins & Pay with PayMongo' 
-                : '<i class="fa-solid fa-lock"></i> Hold 2 Mins & Pay with Xendit';
+                ? `<i class="fa-solid fa-lock"></i> Hold ${holdMinsLabel} Mins & Pay with PayMongo` 
+                : `<i class="fa-solid fa-lock"></i> Hold ${holdMinsLabel} Mins & Pay with Xendit`;
 
             holdBtn.addEventListener('click', async () => {
                 const name = document.getElementById('custName').value.trim();
@@ -1245,7 +1355,8 @@
                     }
 
                     bookingState.activeHoldRef = data.reference;
-                    bookingState.holdRemainingSeconds = data.remaining_seconds || 120;
+                    bookingState.holdRemainingSeconds = data.remaining_seconds || {{ (int) ($settings->holding_duration_seconds ?: 120) }};
+                    const holdMins = Math.max(1, Math.round(bookingState.holdRemainingSeconds / 60));
 
                     // Open Modal and apply gateway styling
                     const isResponsePayMongo = (data.gateway === 'paymongo') || isPayMongo;
@@ -1261,7 +1372,7 @@
                         }
                         if (modalGatewayBadge) {
                             modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-widest';
-                            modalGatewayBadge.textContent = 'PayMongo 2-Minute Checkout Active';
+                            modalGatewayBadge.textContent = `PayMongo ${holdMins}-Minute Checkout Active`;
                         }
                         if (modalPayLink) {
                             modalPayLink.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all';
@@ -1276,7 +1387,7 @@
                         }
                         if (modalGatewayBadge) {
                             modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-widest';
-                            modalGatewayBadge.textContent = 'Xendit 2-Minute Slot Hold Active';
+                            modalGatewayBadge.textContent = `Xendit ${holdMins}-Minute Slot Hold Active`;
                         }
                         if (modalPayLink) {
                             modalPayLink.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all';
@@ -1393,10 +1504,24 @@
             if (bookingState.holdRemainingSeconds <= 0) {
                 clearInterval(bookingState.holdTimerInterval);
                 timerEl.textContent = '00:00';
+
+                // Instantly notify server to release hold so Reverb broadcasts 'released' to all players
+                if (bookingState.activeHoldRef) {
+                    fetch(`/api/cancel-hold/${bookingState.activeHoldRef}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                            'Accept': 'application/json'
+                        }
+                    }).catch(() => {});
+                }
+
+                const holdDurationMinutes = Math.max(1, Math.round({{ (int) ($settings->holding_duration_seconds ?: 120) }} / 60));
                 Swal.fire({
                     icon: 'warning',
                     title: 'Reservation Hold Expired',
-                    text: 'Your 2-minute reservation hold has expired. Slots have been released back to the schedule.',
+                    text: `Your ${holdDurationMinutes}-minute reservation hold has expired. Slots have been released back to the schedule.`,
                     confirmButtonColor: '#0891b2'
                 }).then(() => {
                     document.getElementById('xenditHoldModal').classList.add('opacity-0', 'pointer-events-none');
@@ -1416,71 +1541,53 @@
         bookingState.holdTimerInterval = setInterval(updateTimer, 1000);
     }
 
-    // 5. Live Reverb Synchronization
     // 5. Live Reverb Synchronization & Periodic Availability Sync
     function listenToReverbUpdates() {
         // Handle incoming court update payload
-        function applyCourtSlotUpdate(courtId, slotTime, status, remainingSeconds = 120) {
+        function applyCourtSlotUpdate(courtId, slotTime, status, remainingSeconds = {{ (int) ($settings->holding_duration_seconds ?: 120) }}) {
             const slotBtn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${slotTime}"]`);
             if (!slotBtn) return;
 
-            slotBtn.setAttribute('data-status', status);
+            const normalizedStatus = (status === 'released') ? 'available' : status;
+            slotBtn.setAttribute('data-status', normalizedStatus);
             slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected');
 
-            if (status === 'available' || status === 'released') {
-                slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
+            if (normalizedStatus === 'available') {
+                slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked');
                 slotBtn.classList.add('slot-available', 'cursor-pointer');
                 slotBtn.disabled = false;
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
-            } else if (status === 'held') {
-                slotBtn.classList.remove('cursor-pointer');
-                slotBtn.classList.add('slot-held', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = true;
-                slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${remainingSeconds}">${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}</span></span>`;
+            } else if (normalizedStatus === 'held') {
+                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
+                slotBtn.classList.add('slot-held', 'cursor-not-allowed', 'select-none', 'opacity-80');
+                slotBtn.disabled = false;
+                const rem = Math.max(0, parseInt(remainingSeconds) || 0);
+                slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, '0')}</span></span>`;
 
-                // If user had this slot selected, immediately drop it and alert
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime)) {
+                // If another user had this slot selected (and not the current active hold owner), silently update selection
+                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                     renderSelectionUI();
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Slot Held by Another Customer',
-                        text: `Timeslot ${slotTime} is now temporarily held by another player completing checkout.`,
-                        timer: 3500,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
                 }
-            } else if (status === 'pending_approval') {
-                slotBtn.classList.remove('cursor-pointer');
-                slotBtn.classList.add('slot-pending', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = true;
+            } else if (normalizedStatus === 'pending_approval') {
+                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
+                slotBtn.classList.add('slot-pending', 'cursor-not-allowed', 'select-none', 'opacity-80');
+                slotBtn.disabled = false;
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-indigo-700 dark:text-indigo-300">In Review</span>';
 
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime)) {
+                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                     renderSelectionUI();
                 }
-            } else if (status === 'confirmed') {
-                slotBtn.classList.remove('cursor-pointer');
-                slotBtn.classList.add('slot-booked', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = true;
+            } else if (normalizedStatus === 'confirmed') {
+                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
+                slotBtn.classList.add('slot-booked', 'cursor-not-allowed', 'select-none', 'opacity-80');
+                slotBtn.disabled = false;
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-rose-700 dark:text-rose-400">Booked</span>';
 
-                // If user had this slot selected, immediately drop it and alert
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime)) {
+                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                     renderSelectionUI();
-                    Swal.fire({
-                        icon: 'info',
-                        title: 'Slot Reserved by Another Customer',
-                        text: `Timeslot ${slotTime} was just confirmed and booked.`,
-                        timer: 3500,
-                        showConfirmButton: false,
-                        toast: true,
-                        position: 'top-end'
-                    });
                 }
             }
         }
@@ -1490,8 +1597,15 @@
             window.subscribeCourtUpdates((data) => {
                 const selectedDate = document.getElementById('selectedDateInput').value;
                 if (data.date === selectedDate) {
+                    let remSec = {{ (int) ($settings->holding_duration_seconds ?: 120) }};
+                    if (data.remaining_seconds != null && data.remaining_seconds !== undefined) {
+                        remSec = Math.max(0, parseInt(data.remaining_seconds) || 0);
+                    } else if (data.held_until_timestamp) {
+                        remSec = Math.max(0, data.held_until_timestamp - Math.floor(Date.now() / 1000));
+                    }
+
                     data.slots.forEach(slotTime => {
-                        applyCourtSlotUpdate(data.court_id, slotTime, data.status, 120);
+                        applyCourtSlotUpdate(data.court_id, slotTime, data.status, remSec);
                     });
                 }
             });
@@ -1506,12 +1620,12 @@
                 const res = await fetch(`/api/availability?date=${selectedDate}`);
                 const data = await res.json();
                 if (data.success && Array.isArray(data.courts)) {
-                    data.courts.forEach(court => {
-                        if (Array.isArray(court.slots)) {
-                            court.slots.forEach(slot => {
-                                applyCourtSlotUpdate(court.id, slot.time, slot.status, slot.remaining_seconds || 0);
-                            });
-                        }
+                    data.courts.forEach(courtItem => {
+                        const courtId = courtItem.court ? courtItem.court.id : courtItem.id;
+                        const slotsList = Array.isArray(courtItem.slots) ? courtItem.slots : Object.values(courtItem.slots || {});
+                        slotsList.forEach(slot => {
+                            applyCourtSlotUpdate(courtId, slot.time, slot.status, slot.remaining_seconds || 0);
+                        });
                     });
                 }
             } catch (e) {
@@ -1533,14 +1647,156 @@
                     el.textContent = `${m}:${String(s).padStart(2, '0')}`;
                 } else {
                     const slotBtn = el.closest('.court-slot');
-                    slotBtn.setAttribute('data-status', 'available');
-                    slotBtn.classList.remove('slot-held', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                    slotBtn.classList.add('slot-available', 'cursor-pointer');
-                    slotBtn.disabled = false;
-                    slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                    if (slotBtn) {
+                        slotBtn.setAttribute('data-status', 'available');
+                        slotBtn.classList.remove('slot-held', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
+                        slotBtn.classList.add('slot-available', 'cursor-pointer');
+                        slotBtn.disabled = false;
+                        const labelEl = slotBtn.querySelector('.slot-status-label');
+                        if (labelEl) {
+                            labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                        }
+                    }
                 }
             });
         }, 1000);
+    }
+
+    // 7. Interactive Calendar View Modal (Player option to view calendar)
+    function setupInteractiveCalendar() {
+        const modal = document.getElementById('playerCalendarModal');
+        const openBtn = document.getElementById('openCalendarModalBtn');
+        const closeBtn = document.getElementById('closeCalendarModalBtn');
+        const prevBtn = document.getElementById('calPrevMonthBtn');
+        const nextBtn = document.getElementById('calNextMonthBtn');
+        const jumpTodayBtn = document.getElementById('calJumpTodayBtn');
+        const labelEl = document.getElementById('calMonthYearLabel');
+        const gridEl = document.getElementById('calDaysGrid');
+        const dateInput = document.getElementById('selectedDateInput');
+
+        if (!modal || !openBtn || !gridEl) return;
+
+        let curDate = dateInput?.value ? new Date(dateInput.value + 'T00:00:00') : new Date();
+        if (isNaN(curDate.getTime())) curDate = new Date();
+
+        let calYear = curDate.getFullYear();
+        let calMonth = curDate.getMonth();
+
+        function renderCalendar() {
+            gridEl.innerHTML = '';
+
+            const monthNames = [
+                'January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'
+            ];
+            labelEl.textContent = `${monthNames[calMonth]} ${calYear}`;
+
+            const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay(); // 0 is Sunday
+            const totalDaysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+
+            const now = new Date();
+            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+            const activeSelected = dateInput?.value || todayStr;
+
+            // Empty cells for padding days before the 1st
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const blank = document.createElement('div');
+                blank.className = 'p-2.5';
+                gridEl.appendChild(blank);
+            }
+
+            // Days 1 through totalDaysInMonth
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+                const dayStr = String(day).padStart(2, '0');
+                const monthStr = String(calMonth + 1).padStart(2, '0');
+                const dateStr = `${calYear}-${monthStr}-${dayStr}`;
+
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = day;
+
+                const isPast = dateStr < todayStr;
+                const isToday = dateStr === todayStr;
+                const isSelected = dateStr === activeSelected;
+
+                if (isPast) {
+                    btn.className = 'p-2.5 rounded-xl text-center font-medium text-xs text-theme-muted opacity-25 cursor-not-allowed select-none';
+                    btn.disabled = true;
+                } else if (isSelected) {
+                    btn.className = 'p-2.5 rounded-xl text-center font-black text-xs bg-gradient-to-tr from-cyan-500 to-cyan-600 text-slate-950 shadow-md shadow-cyan-500/30 cursor-pointer transition-transform hover:scale-105';
+                } else if (isToday) {
+                    btn.className = 'p-2.5 rounded-xl text-center font-bold text-xs border border-cyan-500/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/15 transition-all cursor-pointer';
+                } else {
+                    btn.className = 'p-2.5 rounded-xl text-center font-semibold text-xs text-theme-heading hover:bg-stone-200 dark:hover:bg-stone-800 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer';
+                }
+
+                if (!isPast) {
+                    btn.addEventListener('click', () => {
+                        dateInput.value = dateStr;
+                        closeCalendar();
+                        window.location.href = `/?date=${dateStr}#booking-engine`;
+                    });
+                }
+
+                gridEl.appendChild(btn);
+            }
+        }
+
+        function openCalendar() {
+            if (dateInput?.value) {
+                const d = new Date(dateInput.value + 'T00:00:00');
+                if (!isNaN(d.getTime())) {
+                    calYear = d.getFullYear();
+                    calMonth = d.getMonth();
+                }
+            }
+            renderCalendar();
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            modal.classList.add('opacity-100', 'pointer-events-auto');
+        }
+
+        function closeCalendar() {
+            modal.classList.remove('opacity-100', 'pointer-events-auto');
+            modal.classList.add('opacity-0', 'pointer-events-none');
+        }
+
+        openBtn.addEventListener('click', openCalendar);
+        closeBtn?.addEventListener('click', closeCalendar);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeCalendar();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('opacity-100')) {
+                closeCalendar();
+            }
+        });
+
+        prevBtn?.addEventListener('click', () => {
+            calMonth--;
+            if (calMonth < 0) {
+                calMonth = 11;
+                calYear--;
+            }
+            renderCalendar();
+        });
+
+        nextBtn?.addEventListener('click', () => {
+            calMonth++;
+            if (calMonth > 11) {
+                calMonth = 0;
+                calYear++;
+            }
+            renderCalendar();
+        });
+
+        jumpTodayBtn?.addEventListener('click', () => {
+            const now = new Date();
+            calYear = now.getFullYear();
+            calMonth = now.getMonth();
+            renderCalendar();
+        });
     }
 </script>
 @endpush

@@ -24,29 +24,56 @@ class OwnerController extends Controller
     /**
      * Dashboard Overview
      */
-    public function dashboard()
+    public function dashboard(Request $request)
     {
         $settings = VenueSetting::getSettings();
         $this->bookingService->releaseExpiredHolds();
 
         $today = Carbon::today()->format('Y-m-d');
+        $courts = Court::where('is_active', true)->orderBy('court_number')->get();
+        $selectedCourtId = $request->input('court_id');
 
         $pendingApprovals = Booking::with('court')
             ->where('booking_status', 'pending_approval')
             ->orderBy('created_at', 'asc')
             ->get();
 
-        $todayBookings = Booking::with('court')
+        $nowTime = Carbon::now()->format('H:i');
+
+        $todayBookings = Booking::with(['court', 'approver', 'slots'])
             ->whereDate('booking_date', $today)
             ->whereIn('booking_status', ['confirmed', 'pending_approval', 'held'])
-            ->orderBy('start_time', 'asc')
-            ->get();
+            ->get()
+            ->map(function ($b) use ($nowTime) {
+                $endTime = substr($b->end_time, 0, 5);
+                $startTime = substr($b->start_time, 0, 5);
+                if ($endTime === '24:00' || ($endTime === '00:00' && $startTime > '12:00')) {
+                    $isPast = false;
+                } else {
+                    $isPast = $endTime <= $nowTime;
+                }
+                $b->is_past = $isPast;
+                return $b;
+            })->sort(function ($a, $b) {
+                // Active/upcoming at the top (0), past at the bottom (1)
+                if ($a->is_past !== $b->is_past) {
+                    return $a->is_past ? 1 : -1;
+                }
+                // Sort time descending
+                $timeA = substr($a->start_time, 0, 5);
+                $timeB = substr($b->start_time, 0, 5);
+                $cmp = strcmp($timeB, $timeA);
+                if ($cmp !== 0) {
+                    return $cmp;
+                }
+                return ($a->court?->court_number ?? 0) <=> ($b->court?->court_number ?? 0);
+            })->values();
 
         $totalRevenue = Booking::where('booking_status', 'confirmed')->sum('total_amount');
         $totalConfirmedCount = Booking::where('booking_status', 'confirmed')->count();
-        $totalCourtsCount = Court::where('is_active', true)->count();
+        $totalCourtsCount = $courts->count();
 
-        $recentBookings = Booking::with('court')
+        $recentBookings = Booking::with(['court', 'approver', 'slots'])
             ->orderBy('id', 'desc')
             ->limit(8)
             ->get();
@@ -58,7 +85,9 @@ class OwnerController extends Controller
             'totalRevenue',
             'totalConfirmedCount',
             'totalCourtsCount',
-            'recentBookings'
+            'recentBookings',
+            'courts',
+            'selectedCourtId'
         ));
     }
 
@@ -354,14 +383,25 @@ class OwnerController extends Controller
         $settings = VenueSetting::getSettings();
         $courts = Court::orderBy('court_number')->get();
 
+        $allowedStatuses = ['confirmed', 'pending_approval', 'held', 'rejected', 'expired'];
+
+        // Default status is 'confirmed' unless explicitly provided
+        if ($request->has('status')) {
+            $rawStatus = $request->input('status');
+            $status = in_array($rawStatus, $allowedStatuses) ? $rawStatus : 'all';
+        } else {
+            $status = 'confirmed';
+        }
+
         $query = Booking::with(['court', 'approver'])->orderBy('booking_date', 'desc')->orderBy('start_time', 'desc');
 
         if ($request->filled('court_id')) {
             $query->where('court_id', $request->input('court_id'));
         }
 
-        if ($request->filled('status')) {
-            $query->where('booking_status', $request->input('status'));
+        // Apply status filter if not 'all'
+        if ($status !== 'all') {
+            $query->where('booking_status', $status);
         }
 
         if ($request->filled('date')) {
@@ -379,6 +419,15 @@ class OwnerController extends Controller
 
         $bookings = $query->paginate(20)->withQueryString();
 
-        return view('owner.bookings.index', compact('settings', 'courts', 'bookings'));
+        $statusCounts = [
+            'all' => Booking::count(),
+            'confirmed' => Booking::where('booking_status', 'confirmed')->count(),
+            'pending_approval' => Booking::where('booking_status', 'pending_approval')->count(),
+            'held' => Booking::where('booking_status', 'held')->count(),
+            'rejected' => Booking::where('booking_status', 'rejected')->count(),
+            'expired' => Booking::where('booking_status', 'expired')->count(),
+        ];
+
+        return view('owner.bookings.index', compact('settings', 'courts', 'bookings', 'status', 'statusCounts'));
     }
 }

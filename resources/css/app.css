@@ -181,7 +181,6 @@ body {
     border: 1px dashed #b88250;
     color: #b88250;
     cursor: not-allowed !important;
-    pointer-events: none !important;
     user-select: none !important;
 }
 
@@ -191,7 +190,6 @@ body {
     border: 1px solid #c7d2fe;
     color: #4338ca;
     cursor: not-allowed !important;
-    pointer-events: none !important;
     user-select: none !important;
 }
 
@@ -201,15 +199,13 @@ body {
     border: 1px solid #fecdd3;
     color: #b91c1c;
     cursor: not-allowed !important;
-    pointer-events: none !important;
     user-select: none !important;
     opacity: 0.85;
 }
 
-/* Strictly disable all user events on any disabled slot */
+/* Slot disabled/held base styling */
 .court-slot:disabled {
     cursor: not-allowed !important;
-    pointer-events: none !important;
     user-select: none !important;
 }
 

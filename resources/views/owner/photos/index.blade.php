@@ -62,13 +62,14 @@
 <!-- UPLOAD PHOTO MODAL (Req #8) -->
 <div id="uploadPhotoModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
     <div class="glass-dropdown p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4">
-        <button type="button" onclick="closeUploadPhotoModal()" class="absolute top-4 right-4 text-theme-muted hover:text-theme-heading p-2 cursor-pointer">
-            <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-
-        <div>
-            <h3 class="text-lg font-bold text-theme-heading">Upload Website Facility Photo</h3>
-            <p class="text-xs text-theme-muted">This photo will appear in the public landing page gallery.</p>
+        <div class="flex items-start justify-between pb-3 border-b border-stone-200 dark:border-stone-800 gap-3">
+            <div class="min-w-0 pr-2">
+                <h3 class="text-lg font-bold text-theme-heading">Upload Website Facility Photo</h3>
+                <p class="text-xs text-theme-muted">This photo will appear in the public landing page gallery.</p>
+            </div>
+            <button type="button" onclick="closeUploadPhotoModal()" class="shrink-0 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer -mt-1 -mr-1" title="Close modal">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
         </div>
 
         <form action="{{ route('owner.photos.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs">

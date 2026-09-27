@@ -54,14 +54,17 @@
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Xendit API (Auto-Reserve)</h4>
+                            @php
+                                $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
+                            @endphp
                             <p class="text-theme-muted text-[11px] leading-relaxed">
-                                Automatically confirms bookings when paid. Slots held for <strong>2 minutes</strong> during checkout.
+                                Automatically confirms bookings when paid. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong> during checkout.
                             </p>
                         </div>
                         <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} class="mt-1 text-cyan-500 focus:ring-0">
                     </div>
                     <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2 py-1 rounded-lg border border-cyan-500/25 self-start">
-                        2-Min Hold & Instant Confirm
+                        {{ $currentHoldMins }}-Min Hold & Instant Confirm
                     </span>
                 </label>
 
@@ -75,27 +78,58 @@
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">PayMongo API (Auto-Reserve)</h4>
                             <p class="text-theme-muted text-[11px] leading-relaxed">
-                                Auto-confirms bookings via PayMongo GCash, Maya, QRPH, and Cards. Slots held for <strong>2 minutes</strong>.
+                                Auto-confirms bookings via PayMongo GCash, Maya, QRPH, and Cards. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong>.
                             </p>
                         </div>
                         <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} class="mt-1 text-emerald-500 focus:ring-0">
                     </div>
                     <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 px-2 py-1 rounded-lg border border-emerald-500/25 self-start">
-                        PayMongo Checkout
+                        {{ $currentHoldMins }}-Min Checkout
                     </span>
                 </label>
             </div>
 
-            <!-- Holding Time Setting (Req #5) -->
-            <div class="pt-4 border-t border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <label class="block font-bold text-theme-heading text-xs">Slot Holding Time Window (Seconds)</label>
-                    <p class="text-[11px] text-theme-muted">Duration the timeslot is held for the client during Xendit checkout (Default: 120 seconds = 2 mins).</p>
+            <!-- Holding Time Setting (Default 2 mins, fully editable by Court Owner) -->
+            <div class="pt-4 border-t border-stone-200 dark:border-stone-800 space-y-3">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <label class="block font-bold text-theme-heading text-sm">Checkout Slot Holding Time Window</label>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/30 uppercase">
+                                Default: 2 Mins
+                            </span>
+                        </div>
+                        <p class="text-[11px] text-theme-muted mt-0.5">
+                            Duration the timeslot is locked exclusively for the player during checkout (PayMongo & Xendit) before auto-releasing back to schedule.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <div class="relative">
+                            <input type="number" id="holdingDurationInput" name="holding_duration_seconds" value="{{ $settings->holding_duration_seconds ?: 120 }}" min="30" max="600" step="10" required
+                                class="w-28 px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono font-bold text-center focus:border-cyan-500 text-sm">
+                        </div>
+                        <span class="text-xs text-theme-body font-semibold">seconds</span>
+                        <span id="holdingMinutesBadge" class="px-2.5 py-1 rounded-lg bg-stone-200 dark:bg-stone-800 text-xs font-mono font-bold text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700">
+                            {{ round(($settings->holding_duration_seconds ?: 120) / 60, 1) }} mins
+                        </span>
+                    </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <input type="number" name="holding_duration_seconds" value="{{ $settings->holding_duration_seconds }}" min="30" max="600"
-                        class="w-24 px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono font-bold text-center focus:border-cyan-500">
-                    <span class="text-theme-muted text-xs font-semibold">seconds (2 mins)</span>
+
+                <!-- Quick Presets for Owner Convenience -->
+                <div class="flex items-center gap-2 pt-1 flex-wrap">
+                    <span class="text-[11px] text-theme-muted font-medium">Quick Presets:</span>
+                    <button type="button" onclick="setHoldingTime(60)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-heading border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer">
+                        1 Min (60s)
+                    </button>
+                    <button type="button" onclick="setHoldingTime(120)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-heading border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer">
+                        2 Mins (120s) - Default
+                    </button>
+                    <button type="button" onclick="setHoldingTime(180)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-heading border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer">
+                        3 Mins (180s)
+                    </button>
+                    <button type="button" onclick="setHoldingTime(300)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-heading border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer">
+                        5 Mins (300s)
+                    </button>
                 </div>
             </div>
         </div>
@@ -300,3 +334,31 @@
     </form>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    function setHoldingTime(seconds) {
+        const input = document.getElementById('holdingDurationInput');
+        const badge = document.getElementById('holdingMinutesBadge');
+        if (input) {
+            input.value = seconds;
+            if (badge) {
+                badge.textContent = `${(seconds / 60).toFixed(1)} mins`;
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('holdingDurationInput');
+        const badge = document.getElementById('holdingMinutesBadge');
+        if (input && badge) {
+            input.addEventListener('input', function() {
+                const val = parseInt(this.value, 10);
+                if (!isNaN(val) && val > 0) {
+                    badge.textContent = `${(val / 60).toFixed(1)} mins`;
+                }
+            });
+        }
+    });
+</script>
+@endpush

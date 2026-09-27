@@ -1,16 +1,33 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $isOwner = $isOwner ?? (Auth::check() && (Auth::user()->isOwner() || Auth::user()->isAdmin()));
+@endphp
+
 <div class="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
     <!-- Top breadcrumb / back link -->
     <div class="mb-6 flex items-center justify-between">
-        <a href="{{ route('home') }}" class="text-xs font-semibold text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
-            <i class="fa-solid fa-arrow-left"></i> Back to Schedule
-        </a>
-        <div class="reverb-status-indicator">
-            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30">
-                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Live Tracker
-            </span>
+        @if($isOwner)
+            <a href="{{ route('owner.bookings.index') }}" class="text-xs font-semibold text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Back to Reservations Management
+            </a>
+        @else
+            <a href="{{ route('home') }}" class="text-xs font-semibold text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-arrow-left"></i> Back to Schedule
+            </a>
+        @endif
+        <div class="flex items-center gap-2">
+            @if($isOwner)
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30">
+                    <i class="fa-solid fa-shield-halved"></i> Owner View
+                </span>
+            @endif
+            <div class="reverb-status-indicator">
+                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30">
+                    <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Live Tracker
+                </span>
+            </div>
         </div>
     </div>
 
@@ -93,11 +110,13 @@
                 <p class="text-xs sm:text-sm text-theme-body max-w-md mx-auto">
                     The 2-minute holding window expired before payment was completed. The timeslots have been released back into the public schedule.
                 </p>
-                <div class="pt-3">
-                    <a href="{{ route('home') }}#booking-engine" class="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 inline-flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-calendar-plus"></i> Select a New Slot
-                    </a>
-                </div>
+                @if(!$isOwner)
+                    <div class="pt-3">
+                        <a href="{{ route('home') }}#booking-engine" class="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/20 inline-flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-calendar-plus"></i> Select a New Slot
+                        </a>
+                    </div>
+                @endif
             </div>
 
         @elseif($booking->booking_status === 'rejected')
@@ -125,11 +144,13 @@
                 <span class="text-xs font-semibold text-theme-muted">Booking Reference</span>
                 <h3 class="text-xl sm:text-2xl font-mono font-black text-cyan-600 dark:text-cyan-400 mt-0.5 tracking-wider">{{ $booking->booking_reference }}</h3>
             </div>
-            <div class="flex items-center gap-2">
-                <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-2 transition-colors cursor-pointer">
-                    <i class="fa-solid fa-print"></i> Print Pass
-                </button>
-            </div>
+            @if(!$isOwner)
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-2 transition-colors cursor-pointer">
+                        <i class="fa-solid fa-print"></i> Print Pass
+                    </button>
+                </div>
+            @endif
         </div>
 
         <!-- Grid of Details -->
@@ -218,16 +239,18 @@
         @endif
 
         <!-- Special Notes / Instructions -->
-        <div class="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-xs text-theme-muted space-y-1">
-            <div class="font-bold text-theme-heading flex items-center gap-1.5">
-                <i class="fa-solid fa-circle-exclamation text-amber-600 dark:text-amber-400"></i> Facility Reminders:
+        @if(!$isOwner)
+            <div class="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-xs text-theme-muted space-y-1">
+                <div class="font-bold text-theme-heading flex items-center gap-1.5">
+                    <i class="fa-solid fa-circle-exclamation text-amber-600 dark:text-amber-400"></i> Facility Reminders:
+                </div>
+                <ul class="list-disc list-inside space-y-0.5 text-theme-body text-[11px] pl-1">
+                    <li>Please arrive 10 minutes before your scheduled start time.</li>
+                    <li>Non-marking indoor court shoes are strictly required on all tournament courts.</li>
+                    <li>Paddle rentals and ball canisters are available at Ace Pro Shop.</li>
+                </ul>
             </div>
-            <ul class="list-disc list-inside space-y-0.5 text-theme-body text-[11px] pl-1">
-                <li>Please arrive 10 minutes before your scheduled start time.</li>
-                <li>Non-marking indoor court shoes are strictly required on all tournament courts.</li>
-                <li>Paddle rentals and ball canisters are available at Ace Pro Shop.</li>
-            </ul>
-        </div>
+        @endif
     </div>
 </div>
 @endsection

@@ -53,13 +53,15 @@
                 <span class="text-theme-muted">Payment Engine:</span>
                 @if($globalSettings->payment_mode === 'xendit')
                     <span class="px-2 py-0.5 rounded-md bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 font-bold border border-cyan-500/30">Xendit (Auto)</span>
+                @elseif($globalSettings->payment_mode === 'paymongo')
+                    <span class="px-2 py-0.5 rounded-md bg-green-500/20 text-green-700 dark:text-green-400 font-bold border border-green-500/30">Paymongo (Auto)</span>
                 @else
                     <span class="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-800 dark:text-amber-400 font-bold border border-amber-500/30">Manual Receipt</span>
                 @endif
             </div>
             <div class="text-[10px] text-theme-muted">
-                @if($globalSettings->payment_mode === 'xendit')
-                    Holds 2 mins, auto-confirms on pay
+                @if($globalSettings->payment_mode === 'xendit' || $globalSettings->payment_mode === 'paymongo')
+                    Holds for 2 minutes, auto-confirms on payment completion
                 @else
                     Client uploads proof, owner approves
                 @endif

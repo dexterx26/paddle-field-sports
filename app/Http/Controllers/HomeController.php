@@ -10,13 +10,17 @@ use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
+use App\Services\PayMongoService;
+
 class HomeController extends Controller
 {
     protected BookingService $bookingService;
+    protected PayMongoService $paymongoService;
 
-    public function __construct(BookingService $bookingService)
+    public function __construct(BookingService $bookingService, PayMongoService $paymongoService)
     {
         $this->bookingService = $bookingService;
+        $this->paymongoService = $paymongoService;
     }
 
     /**
@@ -50,13 +54,23 @@ class HomeController extends Controller
             ->where('booking_reference', $reference)
             ->firstOrFail();
 
-        // Check if hold is expired
+        // 1. Direct PayMongo Reconciliation: If not confirmed and has checkout session, verify with PayMongo API
+        if ($booking->booking_status !== 'confirmed' && !empty($booking->paymongo_checkout_id)) {
+            $check = $this->paymongoService->checkCheckoutSessionStatus($booking->paymongo_checkout_id);
+            if (!empty($check['paid'])) {
+                $booking = $this->bookingService->confirmBooking($booking, null, 'paymongo');
+            }
+        }
+
+        // 2. Check if hold is expired (only if still held and not confirmed)
         if ($booking->booking_status === 'held' && $booking->isExpired()) {
             $booking->update(['booking_status' => 'expired']);
             $booking->slots()->update(['status' => 'released']);
         }
 
-        return view('bookings.track', compact('settings', 'booking'));
+        $isOwner = auth()->check() && (auth()->user()->isOwner() || auth()->user()->isAdmin());
+
+        return view('bookings.track', compact('settings', 'booking', 'isOwner'));
     }
 
     /**

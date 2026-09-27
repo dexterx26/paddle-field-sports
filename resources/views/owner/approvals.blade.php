@@ -122,13 +122,14 @@
 <!-- Receipt Modal Component -->
 <div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
     <div class="glass-dropdown p-6 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4">
-        <button type="button" onclick="closeReceiptModal()" class="absolute top-4 right-4 text-theme-muted hover:text-theme-heading p-2 cursor-pointer">
-            <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-
-        <div class="border-b border-stone-200 dark:border-stone-800 pb-3">
-            <h3 class="text-sm font-bold text-theme-heading" id="rcptModalTitle">Payment Receipt Verification</h3>
-            <p class="text-xs text-theme-muted" id="rcptModalMeta">-</p>
+        <div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-800 pb-3 gap-3">
+            <div class="min-w-0 pr-2">
+                <h3 class="text-sm font-bold text-theme-heading" id="rcptModalTitle">Payment Receipt Verification</h3>
+                <p class="text-xs text-theme-muted" id="rcptModalMeta">-</p>
+            </div>
+            <button type="button" onclick="closeReceiptModal()" class="shrink-0 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer -mt-1 -mr-1" title="Close modal">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
         </div>
 
         <div class="rounded-2xl overflow-hidden bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center max-h-96">
@@ -149,12 +150,13 @@
 <!-- Reject Modal Component -->
 <div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
     <div class="glass-dropdown p-6 rounded-3xl max-w-md w-full border border-rose-500/30 shadow-2xl relative space-y-4">
-        <button type="button" onclick="closeRejectModal()" class="absolute top-4 right-4 text-theme-muted hover:text-theme-heading p-2 cursor-pointer">
-            <i class="fa-solid fa-xmark text-lg"></i>
-        </button>
-
-        <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl">
-            <i class="fa-solid fa-ban"></i>
+        <div class="flex items-start justify-between gap-3">
+            <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-ban"></i>
+            </div>
+            <button type="button" onclick="closeRejectModal()" class="shrink-0 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer -mt-1 -mr-1" title="Close modal">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
         </div>
 
         <div>

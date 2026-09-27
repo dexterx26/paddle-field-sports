@@ -58,12 +58,18 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
 
     public function broadcastWith(): array
     {
+        $remaining = 0;
+        if ($this->heldUntilTimestamp) {
+            $remaining = max(0, $this->heldUntilTimestamp - now()->timestamp);
+        }
+
         return [
             'date' => $this->date,
             'court_id' => $this->courtId,
             'slots' => $this->slots,
             'status' => $this->status,
             'held_until_timestamp' => $this->heldUntilTimestamp,
+            'remaining_seconds' => $remaining,
             'message' => $this->message,
             'timestamp' => now()->timestamp,
         ];

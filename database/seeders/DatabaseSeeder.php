@@ -69,6 +69,22 @@ class DatabaseSeeder extends Seeder
             'phone' => '+63 918 222 3344',
         ]);
 
+        $client2 = User::create([
+            'name' => 'Elena Cruz (Player 2)',
+            'email' => 'player2@gmail.com',
+            'password' => Hash::make('password123'),
+            'role' => 'client',
+            'phone' => '+63 918 555 6789',
+        ]);
+
+        $client3 = User::create([
+            'name' => 'Paolo Soriano',
+            'email' => 'paolo@gmail.com',
+            'password' => Hash::make('password123'),
+            'role' => 'client',
+            'phone' => '+63 918 777 8899',
+        ]);
+
         // 3. Create Courts (Requirement: exactly 3 courts, all indoor, default 150 pesos/hr)
         $court1 = Court::create([
             'name' => 'Court 1 - Championship Center',

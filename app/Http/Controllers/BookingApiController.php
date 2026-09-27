@@ -102,12 +102,15 @@ class BookingApiController extends Controller
                 $gatewayName = 'Xendit';
             }
 
+            $durationMinutes = max(1, (int) round(($holdResult['remaining_seconds'] ?? 120) / 60));
+
             return response()->json([
                 'success' => true,
-                'message' => "Timeslot held successfully for 2 minutes. Please complete payment with {$gatewayName} before time runs out.",
+                'message' => "Timeslot held successfully for {$durationMinutes} minutes. Please complete payment with {$gatewayName} before time runs out.",
                 'reference' => $booking->booking_reference,
                 'held_until' => $holdResult['held_until'],
                 'remaining_seconds' => $holdResult['remaining_seconds'],
+                'expiry_seconds' => $isPayMongo ? ($payResult['expiry_seconds'] ?? 120) : null,
                 'total_amount' => $holdResult['total_amount'],
                 'formatted_amount' => $holdResult['formatted_amount'],
                 'invoice_url' => $invoiceUrl,
@@ -185,8 +188,6 @@ class BookingApiController extends Controller
      */
     public function status(string $reference): JsonResponse
     {
-        $this->bookingService->releaseExpiredHolds();
-
         $booking = Booking::with('court')
             ->where('booking_reference', $reference)
             ->first();
@@ -197,6 +198,17 @@ class BookingApiController extends Controller
                 'message' => 'Booking reference not found',
             ], 404);
         }
+
+        // Direct PayMongo check: if not confirmed, query PayMongo API to confirm payment
+        if ($booking->booking_status !== 'confirmed' && !empty($booking->paymongo_checkout_id)) {
+            $check = $this->paymongoService->checkCheckoutSessionStatus($booking->paymongo_checkout_id);
+            if (!empty($check['paid'])) {
+                $booking = $this->bookingService->confirmBooking($booking, null, 'paymongo');
+            }
+        }
+
+        $this->bookingService->releaseExpiredHolds();
+        $booking->refresh();
 
         $isHeld = $booking->isHeld();
         $isExpired = $booking->isExpired();
@@ -320,6 +332,20 @@ class BookingApiController extends Controller
     }
 
     /**
+     * Generate dynamic QR via PayMongo backend integration with expiry_seconds: 120
+     */
+    public function generatePayMongoQr(string $reference): JsonResponse
+    {
+        $booking = Booking::with('court')
+            ->where('booking_reference', $reference)
+            ->firstOrFail();
+
+        $qrData = $this->paymongoService->generateDynamicQr($booking, 120);
+
+        return response()->json($qrData);
+    }
+
+    /**
      * Official PayMongo Webhook Handler
      */
     public function paymongoWebhook(Request $request): JsonResponse
@@ -338,13 +364,23 @@ class BookingApiController extends Controller
 
         // Check if event is checkout_session.payment.paid or payment.paid
         if (str_contains($eventType, 'paid')) {
-            $ref = $eventData['attributes']['reference_number'] ?? null;
+            $ref = $eventData['attributes']['reference_number']
+                ?? ($eventData['attributes']['metadata']['booking_reference'] ?? null);
+
+            $booking = null;
             if ($ref) {
                 $booking = Booking::where('booking_reference', $ref)->first();
-                if ($booking && $booking->booking_status !== 'confirmed') {
-                    $this->bookingService->confirmBooking($booking, null, 'paymongo');
-                    return response()->json(['message' => 'Booking confirmed via PayMongo']);
-                }
+            }
+
+            // Also search by PayMongo Checkout Session ID if reference number not found
+            if (!$booking && !empty($eventData['id'])) {
+                $booking = Booking::where('paymongo_checkout_id', $eventData['id'])->first();
+            }
+
+            if ($booking && $booking->booking_status !== 'confirmed') {
+                $this->bookingService->confirmBooking($booking, null, 'paymongo');
+                Log::info("PayMongo Webhook confirmed booking {$booking->booking_reference}");
+                return response()->json(['message' => 'Booking confirmed via PayMongo']);
             }
         }
 

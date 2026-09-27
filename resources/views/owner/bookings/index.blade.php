@@ -4,12 +4,66 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800 gap-4">
         <div>
-            <h2 class="text-xl font-bold text-theme-heading">All Reservations Ledger</h2>
-            <p class="text-xs text-theme-muted">Comprehensive log of all court reservations, customer records, and payment states.</p>
+            <div class="flex items-center gap-2.5">
+                <h2 class="text-xl font-bold text-theme-heading">Reservations Ledger</h2>
+                @if($status === 'confirmed')
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-wider">
+                        Confirmed Only (Default)
+                    </span>
+                @elseif($status === 'all')
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-stone-200 dark:bg-stone-800 text-theme-heading border border-stone-300 dark:border-stone-700 uppercase tracking-wider">
+                        All Statuses
+                    </span>
+                @else
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 uppercase tracking-wider">
+                        {{ ucwords(str_replace('_', ' ', $status)) }}
+                    </span>
+                @endif
+            </div>
+            <p class="text-xs text-theme-muted mt-1">Default view displays confirmed bookings. You can search or switch to any status or all statuses at any time.</p>
         </div>
         <div class="text-xs text-theme-muted font-mono">
             Total Records: {{ $bookings->total() }}
         </div>
+    </div>
+
+    <!-- Quick Status Filter Pills -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'confirmed'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'confirmed' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>Confirmed</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'confirmed' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['confirmed'] ?? 0 }}</span>
+        </a>
+
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'all'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'all' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>All Statuses</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'all' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['all'] ?? 0 }}</span>
+        </a>
+
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'pending_approval'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'pending_approval' ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>Pending Approval</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'pending_approval' ? 'bg-slate-950 text-amber-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['pending_approval'] ?? 0 }}</span>
+        </a>
+
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'held'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'held' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>Held</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'held' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['held'] ?? 0 }}</span>
+        </a>
+
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'rejected'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'rejected' ? 'bg-rose-500 text-white shadow-md shadow-rose-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>Rejected</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'rejected' ? 'bg-slate-950 text-rose-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['rejected'] ?? 0 }}</span>
+        </a>
+
+        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'expired'])) }}"
+            class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $status === 'expired' ? 'bg-stone-600 text-white' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+            <span>Expired</span>
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $status === 'expired' ? 'bg-slate-950 text-stone-300' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $statusCounts['expired'] ?? 0 }}</span>
+        </a>
     </div>
 
     <!-- Filters & Search Bar -->
@@ -39,12 +93,12 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Status</label>
                 <select name="status" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
-                    <option value="">All Statuses</option>
-                    <option value="confirmed" {{ request('status') === 'confirmed' ? 'selected' : '' }}>Confirmed</option>
-                    <option value="pending_approval" {{ request('status') === 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
-                    <option value="held" {{ request('status') === 'held' ? 'selected' : '' }}>Held (2-Min Hold)</option>
-                    <option value="rejected" {{ request('status') === 'rejected' ? 'selected' : '' }}>Rejected</option>
-                    <option value="expired" {{ request('status') === 'expired' ? 'selected' : '' }}>Expired</option>
+                    <option value="confirmed" {{ $status === 'confirmed' ? 'selected' : '' }}>Confirmed (Default)</option>
+                    <option value="all" {{ $status === 'all' ? 'selected' : '' }}>All Statuses</option>
+                    <option value="pending_approval" {{ $status === 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
+                    <option value="held" {{ $status === 'held' ? 'selected' : '' }}>Held (2-Min Hold)</option>
+                    <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>Rejected</option>
+                    <option value="expired" {{ $status === 'expired' ? 'selected' : '' }}>Expired</option>
                 </select>
             </div>
 
@@ -135,7 +189,14 @@
                     @empty
                         <tr>
                             <td colspan="8" class="py-12 text-center text-theme-muted">
-                                No reservations match your filter criteria.
+                                <div>No reservations match your filter criteria.</div>
+                                @if($status === 'confirmed')
+                                    <div class="mt-2 text-xs">
+                                        <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'all'])) }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold inline-flex items-center gap-1">
+                                            <i class="fa-solid fa-list-check"></i> Switch to All Statuses to see other bookings
+                                        </a>
+                                    </div>
+                                @endif
                             </td>
                         </tr>
                     @endforelse

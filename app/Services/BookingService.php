@@ -26,6 +26,20 @@ class BookingService
 
         $count = 0;
         foreach ($expiredHolds as $booking) {
+            // Safety check: if user paid in PayMongo while hold was ticking down, confirm instead of expiring
+            if ($booking->payment_method === 'paymongo' && !empty($booking->paymongo_checkout_id)) {
+                try {
+                    $paymongo = app(PayMongoService::class);
+                    $check = $paymongo->checkCheckoutSessionStatus($booking->paymongo_checkout_id);
+                    if (!empty($check['paid'])) {
+                        $this->confirmBooking($booking, null, 'paymongo');
+                        continue;
+                    }
+                } catch (\Exception $e) {
+                    Log::warning("PayMongo check failed during releaseExpiredHolds for {$booking->booking_reference}: " . $e->getMessage());
+                }
+            }
+
             $slotTimes = $booking->slots->pluck('slot_time')->toArray();
             $courtId = $booking->court_id;
             $date = $booking->booking_date->format('Y-m-d');
@@ -34,11 +48,19 @@ class BookingService
                 'booking_status' => 'expired',
             ]);
 
+            // Expire PayMongo checkout session so it can no longer be paid
+            if ($booking->payment_method === 'paymongo' && !empty($booking->paymongo_checkout_id)) {
+                try {
+                    $paymongo = app(PayMongoService::class);
+                    $paymongo->expireCheckoutSession($booking->paymongo_checkout_id);
+                } catch (\Exception $e) {}
+            }
+
             BookingSlot::where('booking_id', $booking->id)->update([
                 'status' => 'released',
             ]);
 
-            // Broadcast real-time release event
+            // Broadcast real-time release event to all listeners
             try {
                 broadcast(new CourtSlotsUpdated(
                     $date,
@@ -47,12 +69,37 @@ class BookingService
                     'released',
                     null,
                     "Held timeslots on Court {$courtId} expired and are now available."
-                ))->toOthers();
+                ));
             } catch (\Exception $e) {
                 Log::warning('Reverb broadcast error on releaseExpiredHolds: ' . $e->getMessage());
             }
 
             $count++;
+        }
+
+        // Clean up any orphan held slots whose held_until has passed
+        $orphanSlots = BookingSlot::where('status', 'held')
+            ->where('held_until', '<=', now())
+            ->get();
+
+        if ($orphanSlots->isNotEmpty()) {
+            foreach ($orphanSlots->groupBy(fn($s) => $s->court_id . '_' . $s->date) as $group) {
+                $first = $group->first();
+                $slotTimes = $group->pluck('slot_time')->toArray();
+
+                BookingSlot::whereIn('id', $group->pluck('id'))->update(['status' => 'released']);
+
+                try {
+                    broadcast(new CourtSlotsUpdated(
+                        $first->date,
+                        $first->court_id,
+                        $slotTimes,
+                        'released',
+                        null,
+                        "Held timeslots on Court {$first->court_id} expired and are now available."
+                    ));
+                } catch (\Exception $e) {}
+            }
         }
 
         return $count;
@@ -240,6 +287,7 @@ class BookingService
             }
 
             // Real-time broadcast: inform other users that these slots are held with countdown
+            $holdDurationMins = max(1, (int) round($holdingSeconds / 60));
             try {
                 broadcast(new CourtSlotsUpdated(
                     $date,
@@ -247,7 +295,7 @@ class BookingService
                     $slots,
                     'held',
                     $heldUntil->timestamp,
-                    "Slots on {$court->name} are currently held for checkout (2-minute window)."
+                    "Slots on {$court->name} are currently held for checkout ({$holdDurationMins}-minute window)."
                 ))->toOthers();
             } catch (\Exception $e) {
                 Log::warning('Reverb broadcast error: ' . $e->getMessage());
@@ -440,7 +488,7 @@ class BookingService
     public function cancelHeldBooking(string $reference): bool
     {
         $booking = Booking::where('booking_reference', $reference)
-            ->where('booking_status', 'held')
+            ->whereIn('booking_status', ['held', 'expired'])
             ->first();
 
         if (!$booking) {
@@ -450,6 +498,14 @@ class BookingService
         $booking->update([
             'booking_status' => 'cancelled',
         ]);
+
+        // Expire PayMongo checkout session on manual cancellation
+        if ($booking->payment_method === 'paymongo' && !empty($booking->paymongo_checkout_id)) {
+            try {
+                $paymongo = app(PayMongoService::class);
+                $paymongo->expireCheckoutSession($booking->paymongo_checkout_id);
+            } catch (\Exception $e) {}
+        }
 
         BookingSlot::where('booking_id', $booking->id)->update([
             'status' => 'released',
@@ -466,7 +522,7 @@ class BookingService
                 'released',
                 null,
                 "Hold released on {$booking->court->name}."
-            ))->toOthers();
+            ));
         } catch (\Exception $e) {
             Log::warning('Reverb broadcast error: ' . $e->getMessage());
         }

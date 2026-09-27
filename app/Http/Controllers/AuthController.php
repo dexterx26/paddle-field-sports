@@ -50,6 +50,9 @@ class AuthController extends Controller
             'owner' => 'owner@paddlefield.com',
             'admin' => 'admin@paddlefield.com',
             'player' => 'player@gmail.com',
+            'player2' => 'player2@gmail.com',
+            'paolo' => 'paolo@gmail.com',
+            'paolosoriano' => 'paolo@gmail.com',
         ];
 
         if (!isset($emailMap[$role])) {
