@@ -76,21 +76,32 @@
             </div>
         </div>
 
-        <!-- Simulated Action Button -->
-        <form action="{{ route('booking.simulate_payment', $booking->booking_reference) }}" method="POST" class="space-y-3">
-            @csrf
-            <input type="hidden" name="payment_channel" id="selectedChannelInput" value="GCash PayMongo">
+        <!-- Checkout Actions -->
+        <div class="space-y-3">
+            @if(!empty($booking->paymongo_payment_url) && str_starts_with($booking->paymongo_payment_url, 'http') && !str_contains($booking->paymongo_payment_url, 'paymongo-checkout'))
+                <a href="{{ $booking->paymongo_payment_url }}"
+                    class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Proceed to Official PayMongo Hosted Checkout</span>
+                    <i class="fa-solid fa-arrow-up-right-from-square text-xs ml-1"></i>
+                </a>
+            @endif
 
-            <button type="submit"
-                class="w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
-                <i class="fa-solid fa-circle-check"></i>
-                <span>Complete PayMongo Payment (Test Mode)</span>
-            </button>
+            <form action="{{ route('booking.simulate_payment', $booking->booking_reference) }}" method="POST" class="space-y-3">
+                @csrf
+                <input type="hidden" name="payment_channel" id="selectedChannelInput" value="GCash PayMongo">
 
-            <a href="{{ route('booking.track', $booking->booking_reference) }}" class="block text-center text-xs text-theme-muted hover:text-theme-heading py-1">
-                Return to Reservation Tracker
-            </a>
-        </form>
+                <button type="submit"
+                    class="w-full py-3.5 rounded-xl bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 font-bold text-xs border border-emerald-500/30 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-bolt text-emerald-600 dark:text-emerald-400"></i>
+                    <span>Instant Confirm Reservation (Demo / Test Mode)</span>
+                </button>
+
+                <a href="{{ route('booking.track', $booking->booking_reference) }}" class="block text-center text-xs text-theme-muted hover:text-theme-heading py-1">
+                    Return to Reservation Tracker
+                </a>
+            </form>
+        </div>
     </div>
 </div>
 @endsection

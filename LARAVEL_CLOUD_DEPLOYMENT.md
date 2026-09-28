@@ -72,6 +72,11 @@ VITE_REVERB_APP_KEY="${REVERB_APP_KEY}"
 VITE_REVERB_HOST="${REVERB_HOST}"
 VITE_REVERB_PORT="${REVERB_PORT}"
 VITE_REVERB_SCHEME="${REVERB_SCHEME}"
+
+# PayMongo Gateway Keys (Optional if entered via Owner Settings Dashboard)
+PAYMONGO_SECRET_KEY=sk_live_...
+PAYMONGO_PUBLIC_KEY=pk_live_...
+PAYMONGO_WEBHOOK_TOKEN=whsk_...
 ```
 
 ### Step B: Build Hook

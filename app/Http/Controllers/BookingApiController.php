@@ -325,7 +325,12 @@ class BookingApiController extends Controller
 
         if ($booking->isExpired()) {
             return redirect()->route('booking.track', ['reference' => $booking->booking_reference])
-                ->with('error', 'Your 2-minute reservation hold has expired. Please select your slot again.');
+                ->with('error', 'Your reservation hold has expired. Please select your slot again.');
+        }
+
+        // If this booking has an external live PayMongo checkout URL, redirect directly to PayMongo
+        if (!empty($booking->paymongo_payment_url) && str_starts_with($booking->paymongo_payment_url, 'http') && !str_contains($booking->paymongo_payment_url, 'paymongo-checkout')) {
+            return redirect()->away($booking->paymongo_payment_url);
         }
 
         return view('payments.paymongo-simulation', compact('booking', 'settings'));

@@ -21,8 +21,9 @@ class PayMongoService
      */
     public function createCheckoutSession(Booking $booking): array
     {
+        $holdingSeconds = (int) ($this->settings->holding_duration_seconds ?: 120);
         $secretKey = $this->settings->paymongo_secret_key ?: config('services.paymongo.secret_key');
-        $isSimulation = $this->settings->paymongo_simulation_mode || empty($secretKey);
+        $isSimulation = (bool) ($this->settings->paymongo_simulation_mode || empty($secretKey));
 
         if ($isSimulation) {
             $checkoutId = 'pm_sim_' . bin2hex(random_bytes(8));
@@ -34,7 +35,6 @@ class PayMongoService
                 'payment_method' => 'paymongo',
             ]);
 
-            $holdingSeconds = (int) ($this->settings->holding_duration_seconds ?: 120);
             return [
                 'success' => true,
                 'is_simulation' => true,
@@ -48,6 +48,19 @@ class PayMongoService
         // Live PayMongo Checkout Sessions API Call
         try {
             $amountCentavos = (int) round(((float) $booking->total_amount) * 100);
+
+            $billing = [
+                'name' => $booking->customer_name ?: 'Valued Player',
+            ];
+            if (!empty($booking->customer_phone)) {
+                $billing['phone'] = $booking->customer_phone;
+            }
+            if (!empty($booking->customer_email)) {
+                $billing['email'] = $booking->customer_email;
+            }
+
+            $courtName = $booking->court ? $booking->court->name : 'Court';
+            $bookingDateStr = $booking->booking_date ? $booking->booking_date->format('M d, Y') : date('M d, Y');
 
             $response = Http::withHeaders([
                 'Authorization' => 'Basic ' . base64_encode($secretKey . ':'),
@@ -63,25 +76,21 @@ class PayMongoService
                             [
                                 'currency' => 'PHP',
                                 'amount' => $amountCentavos,
-                                'name' => "Court Reservation: {$booking->court->name}",
+                                'name' => "Court Reservation: {$courtName}",
                                 'quantity' => 1,
-                                'description' => "Pickleball Reservation for {$booking->customer_name} on {$booking->booking_date->format('M d, Y')} ({$booking->start_time} - {$booking->end_time})",
+                                'description' => "Pickleball Reservation for {$booking->customer_name} on {$bookingDateStr} ({$booking->start_time} - {$booking->end_time})",
                             ]
                         ],
                         'payment_method_types' => ['gcash', 'paymaya', 'card', 'dob', 'qrph'],
                         'reference_number' => $booking->booking_reference,
                         'metadata' => [
                             'booking_reference' => $booking->booking_reference,
-                            'expiry_seconds' => $holdingSeconds,
+                            'expiry_seconds' => (string) $holdingSeconds,
                         ],
-                        'description' => "Paddle Field Sports Center - {$booking->court->name}",
+                        'description' => "Paddle Field Sports Center - {$courtName}",
                         'success_url' => route('booking.track', ['reference' => $booking->booking_reference]),
-                        'cancel_url' => route('home'),
-                        'billing' => [
-                            'name' => $booking->customer_name,
-                            'phone' => $booking->customer_phone,
-                            'email' => $booking->customer_email ?: 'guest.' . $booking->customer_phone . '@paddlefield.com',
-                        ],
+                        'cancel_url' => route('booking.track', ['reference' => $booking->booking_reference]),
+                        'billing' => $billing,
                     ]
                 ]
             ]);
@@ -102,7 +111,7 @@ class PayMongoService
                     'is_simulation' => false,
                     'checkout_id' => $checkoutId,
                     'checkout_url' => $checkoutUrl,
-                    'expiry_seconds' => 120,
+                    'expiry_seconds' => $holdingSeconds,
                     'expires_at' => $booking->held_until?->toISOString(),
                 ];
             } else {
@@ -121,7 +130,7 @@ class PayMongoService
                     'is_simulation' => true,
                     'fallback_reason' => $response->body(),
                     'checkout_url' => $checkoutUrl,
-                    'expiry_seconds' => 120,
+                    'expiry_seconds' => $holdingSeconds,
                     'expires_at' => $booking->held_until?->toISOString(),
                 ];
             }
@@ -139,7 +148,7 @@ class PayMongoService
                 'success' => true,
                 'is_simulation' => true,
                 'checkout_url' => $checkoutUrl,
-                'expiry_seconds' => 120,
+                'expiry_seconds' => $holdingSeconds,
                 'expires_at' => $booking->held_until?->toISOString(),
             ];
         }
