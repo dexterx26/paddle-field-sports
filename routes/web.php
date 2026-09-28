@@ -51,30 +51,48 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 | Protected Owner & Admin Portal
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth', 'role:court_owner,admin'])->prefix('owner')->name('owner.')->group(function () {
-    Route::get('/', [OwnerController::class, 'dashboard'])->name('dashboard');
+Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('owner')->name('owner.')->group(function () {
+    // Overview & Schedule Dashboard
+    Route::get('/', [OwnerController::class, 'dashboard'])->middleware('module:schedule')->name('dashboard');
 
     // Manual Receipt Approvals Queue
-    Route::get('/approvals', [OwnerController::class, 'approvals'])->name('approvals');
-    Route::post('/approvals/{id}/approve', [OwnerController::class, 'approveBooking'])->name('approve');
-    Route::post('/approvals/{id}/reject', [OwnerController::class, 'rejectBooking'])->name('reject');
+    Route::middleware('module:approvals')->group(function () {
+        Route::get('/approvals', [OwnerController::class, 'approvals'])->name('approvals');
+        Route::post('/approvals/{id}/approve', [OwnerController::class, 'approveBooking'])->name('approve');
+        Route::post('/approvals/{id}/reject', [OwnerController::class, 'rejectBooking'])->name('reject');
+    });
 
     // Courts Management (Pricing per hour, max players, photo, add/edit)
-    Route::get('/courts', [OwnerController::class, 'courts'])->name('courts.index');
-    Route::post('/courts', [OwnerController::class, 'storeCourt'])->name('courts.store');
-    Route::put('/courts/{id}', [OwnerController::class, 'updateCourt'])->name('courts.update');
-    Route::delete('/courts/{id}', [OwnerController::class, 'destroyCourt'])->name('courts.destroy');
-    Route::post('/courts/{id}/restore', [OwnerController::class, 'restoreCourt'])->name('courts.restore');
+    Route::middleware('module:courts')->group(function () {
+        Route::get('/courts', [OwnerController::class, 'courts'])->name('courts.index');
+        Route::post('/courts', [OwnerController::class, 'storeCourt'])->name('courts.store');
+        Route::put('/courts/{id}', [OwnerController::class, 'updateCourt'])->name('courts.update');
+        Route::delete('/courts/{id}', [OwnerController::class, 'destroyCourt'])->name('courts.destroy');
+        Route::post('/courts/{id}/restore', [OwnerController::class, 'restoreCourt'])->name('courts.restore');
+    });
 
     // Facility Photos Management for Website Main Page
-    Route::get('/photos', [OwnerController::class, 'photos'])->name('photos.index');
-    Route::post('/photos', [OwnerController::class, 'storePhoto'])->name('photos.store');
-    Route::delete('/photos/{id}', [OwnerController::class, 'destroyPhoto'])->name('photos.destroy');
+    Route::middleware('module:photos')->group(function () {
+        Route::get('/photos', [OwnerController::class, 'photos'])->name('photos.index');
+        Route::post('/photos', [OwnerController::class, 'storePhoto'])->name('photos.store');
+        Route::delete('/photos/{id}', [OwnerController::class, 'destroyPhoto'])->name('photos.destroy');
+    });
 
     // Venue & Payment Gateway Settings (Xendit vs Manual Receipt)
-    Route::get('/settings', [OwnerController::class, 'settings'])->name('settings');
-    Route::put('/settings', [OwnerController::class, 'updateSettings'])->name('settings.update');
+    Route::middleware('module:settings')->group(function () {
+        Route::get('/settings', [OwnerController::class, 'settings'])->name('settings');
+        Route::put('/settings', [OwnerController::class, 'updateSettings'])->name('settings.update');
+    });
 
-    // All Bookings Ledger
-    Route::get('/bookings', [OwnerController::class, 'allBookings'])->name('bookings.index');
+    // All Bookings Ledger (Schedule & Reservations)
+    Route::get('/bookings', [OwnerController::class, 'allBookings'])->middleware('module:schedule')->name('bookings.index');
+
+    // Admin Assistants Management (Accessible only to Court Owners and System Administrators)
+    Route::middleware('role:court_owner,admin')->prefix('assistants')->name('assistants.')->group(function () {
+        Route::get('/', [OwnerController::class, 'assistantsIndex'])->name('index');
+        Route::post('/', [OwnerController::class, 'storeAssistant'])->name('store');
+        Route::put('/{id}', [OwnerController::class, 'updateAssistant'])->name('update');
+        Route::delete('/{id}', [OwnerController::class, 'destroyAssistant'])->name('destroy');
+        Route::post('/{id}/toggle-status', [OwnerController::class, 'toggleAssistantStatus'])->name('toggle');
+    });
 });

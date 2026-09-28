@@ -70,47 +70,67 @@
 
         <!-- Nav Items -->
         <nav class="flex-1 px-4 py-4 space-y-1.5 overflow-y-auto">
-            <a href="{{ route('owner.dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.dashboard') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <i class="fa-solid fa-chart-pie w-4 text-center"></i>
-                <span>Overview & Today</span>
-            </a>
+            @if(Auth::user()->hasModuleAccess('schedule'))
+                <a href="{{ route('owner.dashboard') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.dashboard') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-chart-pie w-4 text-center"></i>
+                    <span>Overview & Today</span>
+                </a>
+            @endif
 
             <!-- Approvals with Badge -->
-            <a href="{{ route('owner.approvals') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.approvals') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>
-                    <span>Receipt Approvals</span>
-                </div>
-                @if($pendingCount > 0)
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold {{ request()->routeIs('owner.approvals') ? 'bg-slate-950 text-cyan-400' : 'bg-amber-500 text-slate-950 animate-pulse' }}">
-                        {{ $pendingCount }}
-                    </span>
-                @endif
-            </a>
+            @if(Auth::user()->hasModuleAccess('approvals'))
+                <a href="{{ route('owner.approvals') }}" class="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.approvals') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <div class="flex items-center gap-3">
+                        <i class="fa-solid fa-file-invoice-dollar w-4 text-center"></i>
+                        <span>Receipt Approvals</span>
+                    </div>
+                    @if($pendingCount > 0)
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold {{ request()->routeIs('owner.approvals') ? 'bg-slate-950 text-cyan-400' : 'bg-amber-500 text-slate-950 animate-pulse' }}">
+                            {{ $pendingCount }}
+                        </span>
+                    @endif
+                </a>
+            @endif
 
             <!-- Court Management -->
-            <a href="{{ route('owner.courts.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.courts.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <i class="fa-solid fa-table-tennis-paddle-ball w-4 text-center"></i>
-                <span>Courts & Pricing</span>
-            </a>
+            @if(Auth::user()->hasModuleAccess('courts'))
+                <a href="{{ route('owner.courts.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.courts.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-table-tennis-paddle-ball w-4 text-center"></i>
+                    <span>Courts & Pricing</span>
+                </a>
+            @endif
 
             <!-- Photo Uploads for Website -->
-            <a href="{{ route('owner.photos.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.photos.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <i class="fa-solid fa-images w-4 text-center"></i>
-                <span>Website Photos</span>
-            </a>
+            @if(Auth::user()->hasModuleAccess('photos'))
+                <a href="{{ route('owner.photos.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.photos.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-images w-4 text-center"></i>
+                    <span>Website Photos</span>
+                </a>
+            @endif
 
             <!-- All Bookings -->
-            <a href="{{ route('owner.bookings.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.bookings.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <i class="fa-solid fa-list-check w-4 text-center"></i>
-                <span>All Reservations</span>
-            </a>
+            @if(Auth::user()->hasModuleAccess('schedule'))
+                <a href="{{ route('owner.bookings.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.bookings.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-list-check w-4 text-center"></i>
+                    <span>All Reservations</span>
+                </a>
+            @endif
 
             <!-- Settings -->
-            <a href="{{ route('owner.settings') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.settings') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
-                <i class="fa-solid fa-sliders w-4 text-center"></i>
-                <span>Payment & Center Config</span>
-            </a>
+            @if(Auth::user()->hasModuleAccess('settings'))
+                <a href="{{ route('owner.settings') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.settings') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-sliders w-4 text-center"></i>
+                    <span>Payment & Center Config</span>
+                </a>
+            @endif
+
+            <!-- Admin Assistants Management (Only Court Owner & System Admin) -->
+            @if(Auth::user()->canManageStaff())
+                <a href="{{ route('owner.assistants.index') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('owner.assistants.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                    <i class="fa-solid fa-users-gear w-4 text-center"></i>
+                    <span>Admin Assistants</span>
+                </a>
+            @endif
 
             <div class="pt-4 border-t border-stone-200 dark:border-stone-800">
                 <a href="{{ route('home') }}" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
@@ -129,7 +149,7 @@
                     </div>
                     <div class="text-xs">
                         <div class="font-bold text-theme-heading leading-tight truncate w-28">{{ Auth::user()->name ?? 'Owner' }}</div>
-                        <div class="text-[10px] text-theme-muted capitalize">{{ str_replace('_', ' ', Auth::user()->role ?? 'Court Owner') }}</div>
+                        <div class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold capitalize">{{ str_replace('_', ' ', Auth::user()->role ?? 'Court Owner') }}</div>
                     </div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
@@ -168,16 +188,19 @@
                     </button>
                     <div class="absolute right-0 mt-2 w-48 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                         <a href="{{ route('quick.login', 'owner') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Court Owner</a>
+                        <a href="{{ route('quick.login', 'assistant') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400">Admin Assistant</a>
                         <a href="{{ route('quick.login', 'admin') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">System Admin</a>
                         <a href="{{ route('quick.login', 'player') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Client / Player</a>
                     </div>
                 </div>
 
                 <!-- Add Court Shortcut -->
-                <a href="{{ route('owner.courts.index') }}" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all cursor-pointer">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Add Court</span>
-                </a>
+                @if(Auth::user()->hasModuleAccess('courts'))
+                    <a href="{{ route('owner.courts.index') }}" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Add Court</span>
+                    </a>
+                @endif
             </div>
         </header>
 

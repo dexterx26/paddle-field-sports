@@ -5,11 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Booking;
 use App\Models\Court;
 use App\Models\FacilityPhoto;
+use App\Models\User;
 use App\Models\VenueSetting;
 use App\Services\BookingService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
 class OwnerController extends Controller
@@ -429,5 +431,166 @@ class OwnerController extends Controller
         ];
 
         return view('owner.bookings.index', compact('settings', 'courts', 'bookings', 'status', 'statusCounts'));
+    }
+
+    /**
+     * Admin Assistants Management (Added by Court Owner)
+     */
+    public function assistantsIndex()
+    {
+        if (!Auth::user()->canManageStaff()) {
+            abort(403, 'Only court owners and administrators can manage admin assistants.');
+        }
+
+        $settings = VenueSetting::getSettings();
+        $currentUser = Auth::user();
+
+        $query = User::where('role', 'admin_assistant')->with('courtOwner');
+
+        // If Court Owner, show assistants created by this owner or unassigned
+        if ($currentUser->isOwner()) {
+            $query->where(function ($q) use ($currentUser) {
+                $q->where('court_owner_id', $currentUser->id)
+                  ->orWhereNull('court_owner_id');
+            });
+        }
+
+        $assistants = $query->orderBy('id', 'desc')->get();
+        $availableModules = User::availableModules();
+        $defaultPermissions = User::defaultAssistantPermissions();
+
+        return view('owner.assistants.index', compact('settings', 'assistants', 'availableModules', 'defaultPermissions'));
+    }
+
+    /**
+     * Store new Admin Assistant
+     */
+    public function storeAssistant(Request $request)
+    {
+        if (!Auth::user()->canManageStaff()) {
+            abort(403, 'Only court owners and administrators can manage admin assistants.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|max:150|unique:users,email',
+            'phone' => 'nullable|string|max:50',
+            'password' => 'required|string|min:6|confirmed',
+            'modules' => 'nullable|array',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $modules = $request->input('modules');
+        // If not supplied, apply default (schedule and approvals)
+        if ($modules === null) {
+            $modules = User::defaultAssistantPermissions();
+        }
+
+        $ownerId = Auth::user()->isOwner() ? Auth::id() : null;
+
+        $assistant = User::create([
+            'name' => trim($request->input('name')),
+            'email' => strtolower(trim($request->input('email'))),
+            'phone' => $request->input('phone'),
+            'password' => Hash::make($request->input('password')),
+            'role' => 'admin_assistant',
+            'court_owner_id' => $ownerId,
+            'permissions' => array_values($modules),
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        return redirect()->route('owner.assistants.index')
+            ->with('success', "Admin Assistant '{$assistant->name}' created successfully with configured module access!");
+    }
+
+    /**
+     * Update Admin Assistant details and module access
+     */
+    public function updateAssistant(Request $request, int $id)
+    {
+        if (!Auth::user()->canManageStaff()) {
+            abort(403, 'Only court owners and administrators can manage admin assistants.');
+        }
+
+        $assistant = User::where('role', 'admin_assistant')->findOrFail($id);
+
+        if (Auth::user()->isOwner() && $assistant->court_owner_id && $assistant->court_owner_id !== Auth::id()) {
+            abort(403, 'You do not have permission to manage this admin assistant.');
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|max:150|unique:users,email,' . $assistant->id,
+            'phone' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6|confirmed',
+            'modules' => 'nullable|array',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $modules = $request->input('modules', []);
+
+        $updateData = [
+            'name' => trim($request->input('name')),
+            'email' => strtolower(trim($request->input('email'))),
+            'phone' => $request->input('phone'),
+            'permissions' => array_values($modules),
+            'is_active' => $request->boolean('is_active', true),
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->input('password'));
+        }
+
+        $assistant->update($updateData);
+
+        return redirect()->route('owner.assistants.index')
+            ->with('success', "Admin Assistant '{$assistant->name}' updated successfully!");
+    }
+
+    /**
+     * Toggle Assistant Active/Inactive status
+     */
+    public function toggleAssistantStatus(int $id)
+    {
+        if (!Auth::user()->canManageStaff()) {
+            abort(403, 'Only court owners and administrators can manage admin assistants.');
+        }
+
+        $assistant = User::where('role', 'admin_assistant')->findOrFail($id);
+
+        if (Auth::user()->isOwner() && $assistant->court_owner_id && $assistant->court_owner_id !== Auth::id()) {
+            abort(403, 'You do not have permission to manage this admin assistant.');
+        }
+
+        $assistant->update([
+            'is_active' => !$assistant->is_active,
+        ]);
+
+        $statusText = $assistant->is_active ? 'activated' : 'deactivated';
+
+        return back()->with('success', "Admin Assistant '{$assistant->name}' has been {$statusText}.");
+    }
+
+    /**
+     * Delete an Admin Assistant
+     */
+    public function destroyAssistant(int $id)
+    {
+        if (!Auth::user()->canManageStaff()) {
+            abort(403, 'Only court owners and administrators can manage admin assistants.');
+        }
+
+        $assistant = User::where('role', 'admin_assistant')->findOrFail($id);
+
+        if (Auth::user()->isOwner() && $assistant->court_owner_id && $assistant->court_owner_id !== Auth::id()) {
+            abort(403, 'You do not have permission to manage this admin assistant.');
+        }
+
+        $name = $assistant->name;
+        $assistant->delete();
+
+        return back()->with('success', "Admin Assistant '{$name}' has been removed.");
     }
 }

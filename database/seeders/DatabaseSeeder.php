@@ -61,6 +61,17 @@ class DatabaseSeeder extends Seeder
             'phone' => '+63 917 555 7233',
         ]);
 
+        $assistant = User::create([
+            'name' => 'Maria Santos (Admin Assistant)',
+            'email' => 'assistant@paddlefield.com',
+            'password' => Hash::make('password123'),
+            'role' => 'admin_assistant',
+            'court_owner_id' => $owner->id,
+            'permissions' => ['schedule', 'approvals'], // default viewing of schedule and approval of reservation
+            'is_active' => true,
+            'phone' => '+63 919 123 4567',
+        ]);
+
         $client = User::create([
             'name' => 'Marcus Vance (Player)',
             'email' => 'player@gmail.com',

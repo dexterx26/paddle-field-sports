@@ -26,8 +26,21 @@ class EnsureUserHasRole
             return $next($request);
         }
 
-        if (!in_array($userRole, $roles)) {
+        $flatRoles = [];
+        foreach ($roles as $r) {
+            foreach (explode(',', $r) as $part) {
+                $flatRoles[] = trim($part);
+            }
+        }
+
+        if (!in_array($userRole, $flatRoles)) {
             abort(403, 'Unauthorized access to this portal.');
+        }
+
+        if ($userRole === 'admin_assistant' && !$request->user()->is_active) {
+            auth()->logout();
+            $request->session()->invalidate();
+            return redirect()->route('login')->with('error', 'Your admin assistant account has been deactivated. Please contact the court owner.');
         }
 
         return $next($request);

@@ -29,7 +29,19 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+
+            if ($user->isAdminAssistant() && !$user->is_active) {
+                Auth::logout();
+                $request->session()->invalidate();
+                return back()->withErrors([
+                    'email' => 'Your admin assistant account has been deactivated. Please contact the court owner.',
+                ])->onlyInput('email');
+            }
+
             if ($user->isStaffOrAdmin()) {
+                if ($user->isAdminAssistant()) {
+                    return redirect()->intended(route($user->getFirstAllowedRoute()));
+                }
                 return redirect()->intended(route('owner.dashboard'));
             }
 
@@ -49,6 +61,7 @@ class AuthController extends Controller
         $emailMap = [
             'owner' => 'owner@paddlefield.com',
             'admin' => 'admin@paddlefield.com',
+            'assistant' => 'assistant@paddlefield.com',
             'player' => 'player@gmail.com',
             'player2' => 'player2@gmail.com',
             'paolo' => 'paolo@gmail.com',
@@ -62,10 +75,17 @@ class AuthController extends Controller
         $user = User::where('email', $emailMap[$role])->first();
 
         if ($user) {
+            if ($user->isAdminAssistant() && !$user->is_active) {
+                return redirect()->route('login')->with('error', 'Demo assistant account is currently inactive.');
+            }
+
             Auth::login($user);
             request()->session()->regenerate();
 
             if ($user->isStaffOrAdmin()) {
+                if ($user->isAdminAssistant()) {
+                    return redirect()->route($user->getFirstAllowedRoute())->with('success', "Logged in as Admin Assistant: {$user->name}");
+                }
                 return redirect()->route('owner.dashboard')->with('success', "Logged in as {$user->name} ({$user->role})");
             }
 
