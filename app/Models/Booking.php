@@ -51,7 +51,7 @@ class Booking extends Model
         if (str_starts_with($this->receipt_image_path, 'http')) {
             return $this->receipt_image_path;
         }
-        return asset('storage/' . $this->receipt_image_path);
+        return asset('storage/' . ltrim($this->receipt_image_path, '/'));
     }
 
     public function getFormattedAmountAttribute(): string

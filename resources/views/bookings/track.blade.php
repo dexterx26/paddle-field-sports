@@ -179,7 +179,7 @@
                     </div>
                     <div class="flex justify-between">
                         <span class="text-theme-muted">Total Hours:</span>
-                        <span class="font-bold text-theme-heading">{{ $booking->total_hours }} Hours</span>
+                        <span class="font-bold text-theme-heading">{{ $booking->total_hours }} {{ $booking->total_hours == 1 ? 'Hour' : 'Hours' }}</span>
                     </div>
                 </div>
             </div>

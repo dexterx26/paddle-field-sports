@@ -108,13 +108,20 @@ Route::get('/storage/{path}', function (string $path) {
         abort(403);
     }
 
-    $fullPath = storage_path('app/public/' . $path);
-    if (!file_exists($fullPath)) {
-        abort(404);
+    $publicFile = public_path('storage/' . $path);
+    if (file_exists($publicFile) && !is_dir($publicFile)) {
+        return response()->file($publicFile, [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
     }
 
-    return response()->file($fullPath, [
-        'Cache-Control' => 'public, max-age=86400',
-    ]);
+    $storageFile = storage_path('app/public/' . $path);
+    if (file_exists($storageFile) && !is_dir($storageFile)) {
+        return response()->file($storageFile, [
+            'Cache-Control' => 'public, max-age=86400',
+        ]);
+    }
+
+    abort(404);
 })->where('path', '.*')->name('storage.serve');
 

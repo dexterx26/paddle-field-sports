@@ -156,6 +156,14 @@ class BookingApiController extends Controller
 
         $receiptPath = $request->file('receipt')->store('receipts', 'public');
 
+        try {
+            $publicTargetDir = public_path('storage/receipts');
+            if (!file_exists($publicTargetDir)) {
+                @mkdir($publicTargetDir, 0755, true);
+            }
+            @copy(storage_path('app/public/' . $receiptPath), public_path('storage/' . $receiptPath));
+        } catch (\Throwable $e) {}
+
         $customerData = [
             'name' => trim($request->input('customer_name')),
             'phone' => trim($request->input('customer_phone')),

@@ -175,9 +175,9 @@
                 <!-- Environment & DB Indicator -->
                 <div>
                     @if(app()->isProduction())
-                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" title="Environment: Production | Database: MySQL">
+                        <!-- <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" title="Environment: Production | Database: MySQL">
                             <i class="fa-solid fa-cloud text-[10px]"></i> PROD (MySQL)
-                        </span>
+                        </span> -->
                     @else
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" title="Environment: Local | Database: SQLite">
                             <i class="fa-solid fa-laptop-code text-[10px]"></i> DEV (SQLite)

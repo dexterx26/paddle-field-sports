@@ -206,10 +206,10 @@
                                         @endphp
                                         <button type="button"
                                             class="court-slot p-2.5 rounded-xl text-center text-xs font-semibold transition-all relative
-                                                {{ $isAvailable ? 'slot-available cursor-pointer' : 'cursor-not-allowed select-none opacity-80' }}
-                                                {{ $status === 'held' ? 'slot-held' : '' }}
-                                                {{ $status === 'pending_approval' ? 'slot-pending' : '' }}
-                                                {{ $status === 'confirmed' ? 'slot-booked' : '' }}"
+                                                {{ $isAvailable ? 'slot-available cursor-pointer' : '' }}
+                                                {{ $status === 'held' ? 'slot-held cursor-pointer select-none opacity-80' : '' }}
+                                                {{ $status === 'pending_approval' ? 'slot-pending cursor-not-allowed select-none opacity-80' : '' }}
+                                                {{ $status === 'confirmed' ? 'slot-booked cursor-not-allowed select-none opacity-80' : '' }}"
                                             data-court-id="{{ $c['id'] }}"
                                             data-slot-time="{{ $slot['time'] }}"
                                             data-display-time="{{ $slot['display_time'] }}"
@@ -266,6 +266,25 @@
                                 Manual GCash
                             @endif
                         </span>
+                    </div>
+
+                    <!-- Active Reservation Hold Quick Resume Banner -->
+                    <div id="activeHoldBanner" class="hidden p-4 rounded-2xl bg-gradient-to-r from-emerald-500/15 via-teal-500/15 to-cyan-500/15 border border-emerald-500/40 space-y-3 mt-4 mb-2 shadow-lg">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                                Active Reservation Hold
+                            </span>
+                            <span id="activeHoldBannerTimer" class="font-mono font-black text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">02:00</span>
+                        </div>
+                        <div class="text-xs text-theme-body flex items-center justify-between">
+                            <span id="activeHoldBannerCourt" class="font-semibold">-</span>
+                            <span class="font-mono font-bold text-emerald-600 dark:text-emerald-400" id="activeHoldBannerRef">-</span>
+                        </div>
+                        <button type="button" onclick="openHoldCheckoutModal()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 font-black text-xs shadow-md shadow-emerald-500/20 flex items-center justify-center gap-2 cursor-pointer transition-transform hover:scale-[1.01]">
+                            <i class="fa-solid fa-credit-card"></i>
+                            <span>Resume Payment & View Summary</span>
+                        </button>
                     </div>
 
                     <!-- Placeholder state when no slot selected -->
@@ -789,10 +808,251 @@
         dragMode: null, // 'SELECT' or 'REMOVE'
         dragAnchorTime: null,
         paymentMode: "{{ $settings->payment_mode }}",
+        activeHold: null,
         activeHoldRef: null,
         holdTimerInterval: null,
         holdRemainingSeconds: {{ (int) ($settings->holding_duration_seconds ?: 120) }},
     };
+
+    // Helper: Normalize slot time strings (e.g., '06:00:00' -> '06:00')
+    function normalizeSlotTime(t) {
+        return (t || '').toString().trim().substring(0, 5);
+    }
+
+    // Helper: Retrieve and validate active hold for current client session (In-memory or LocalStorage)
+    function getActiveHold() {
+        if (bookingState.activeHold && bookingState.activeHold.reference) {
+            if (Date.now() < bookingState.activeHold.expiresAt) {
+                return bookingState.activeHold;
+            } else {
+                clearActiveHold();
+                return null;
+            }
+        }
+        try {
+            const raw = localStorage.getItem('paddle_active_hold');
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (parsed && parsed.expires_at && Date.now() < parsed.expires_at) {
+                    bookingState.activeHold = {
+                        reference: parsed.reference,
+                        courtId: parseInt(parsed.court_id),
+                        courtName: parsed.court_name,
+                        date: parsed.date,
+                        slots: (parsed.slots || []).map(s => normalizeSlotTime(s)),
+                        expiresAt: parsed.expires_at,
+                        formattedAmount: parsed.formatted_amount,
+                        invoiceUrl: parsed.invoice_url,
+                        gateway: parsed.gateway,
+                        gatewayName: parsed.gateway_name
+                    };
+                    bookingState.activeHoldRef = parsed.reference;
+                    bookingState.holdRemainingSeconds = Math.max(0, Math.floor((parsed.expires_at - Date.now()) / 1000));
+                    return bookingState.activeHold;
+                } else {
+                    localStorage.removeItem('paddle_active_hold');
+                }
+            }
+        } catch (e) {}
+        return null;
+    }
+
+    // Helper: Check whether a specific court slot is held by the CURRENT client
+    function isSlotHeldByMe(courtId, time) {
+        const hold = getActiveHold();
+        if (!hold) return false;
+        const currentDate = document.getElementById('selectedDateInput')?.value;
+        if (hold.date && currentDate && hold.date.trim() !== currentDate.trim()) return false;
+        if (parseInt(hold.courtId) !== parseInt(courtId)) return false;
+        const targetTime = normalizeSlotTime(time);
+        return Array.isArray(hold.slots) && hold.slots.some(s => normalizeSlotTime(s) === targetTime);
+    }
+
+    // Helper: Show the quick-resume banner in sidebar
+    function showActiveHoldBanner() {
+        const hold = getActiveHold();
+        const banner = document.getElementById('activeHoldBanner');
+        if (!banner || !hold) return;
+
+        const timerEl = document.getElementById('activeHoldBannerTimer');
+        const courtEl = document.getElementById('activeHoldBannerCourt');
+        const refEl = document.getElementById('activeHoldBannerRef');
+
+        if (courtEl) {
+            const slotsStr = (hold.slots || []).join(', ');
+            courtEl.textContent = `${hold.courtName || 'Court'} (${slotsStr})`;
+        }
+        if (refEl) {
+            refEl.textContent = hold.reference;
+        }
+        const sec = Math.max(0, Math.floor((hold.expiresAt - Date.now()) / 1000));
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        if (timerEl) {
+            timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+        }
+        banner.classList.remove('hidden');
+    }
+
+    // Helper: Hide the quick-resume banner
+    function hideActiveHoldBanner() {
+        const banner = document.getElementById('activeHoldBanner');
+        if (banner) banner.classList.add('hidden');
+    }
+
+    // Helper: Clear active hold locally
+    function clearActiveHold() {
+        try {
+            localStorage.removeItem('paddle_active_hold');
+        } catch (e) {}
+        bookingState.activeHold = null;
+        bookingState.activeHoldRef = null;
+        hideActiveHoldBanner();
+        document.querySelectorAll('.slot-my-hold').forEach(el => {
+            el.classList.remove('slot-my-hold', 'pointer-events-none', 'cursor-not-allowed');
+            el.disabled = false; // Re-enable so other clients can click
+            const status = el.getAttribute('data-status');
+            if (status === 'held') {
+                el.classList.remove('pointer-events-none');
+                el.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
+                el.title = 'Temporarily held by another customer';
+                const labelEl = el.querySelector('.slot-status-label');
+                const sec = parseInt(el.getAttribute('data-remaining-seconds')) || 0;
+                if (labelEl) {
+                    labelEl.innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${sec}">${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}</span></span>`;
+                }
+            } else if (status === 'available') {
+                el.classList.add('slot-available', 'cursor-pointer');
+                el.title = '';
+                const labelEl = el.querySelector('.slot-status-label');
+                if (labelEl) {
+                    labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                }
+            }
+        });
+    }
+
+    // Helper: Visually style the client's own held slots in the DOM (disabled for holder)
+    function updateMyHeldSlotsInDOM() {
+        const hold = getActiveHold();
+        if (!hold) return;
+
+        const currentDate = document.getElementById('selectedDateInput')?.value;
+        if (hold.date && currentDate && hold.date.trim() !== currentDate.trim()) return;
+
+        const courtId = parseInt(hold.courtId);
+        const slots = hold.slots || [];
+        const remSec = hold.expiresAt 
+            ? Math.max(0, Math.floor((hold.expiresAt - Date.now()) / 1000))
+            : (bookingState.holdRemainingSeconds || 120);
+
+        document.querySelectorAll('.court-slot').forEach(slotBtn => {
+            const btnCourtId = parseInt(slotBtn.getAttribute('data-court-id'));
+            const btnTime = normalizeSlotTime(slotBtn.getAttribute('data-slot-time'));
+            if (btnCourtId === courtId && slots.some(s => normalizeSlotTime(s) === btnTime)) {
+                slotBtn.setAttribute('data-status', 'held');
+                slotBtn.setAttribute('data-remaining-seconds', remSec);
+                slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'cursor-pointer');
+                slotBtn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
+                slotBtn.disabled = true; // DISABLED for the client who reserved it
+                slotBtn.title = 'Your held reservation';
+                const labelEl = slotBtn.querySelector('.slot-status-label');
+                if (labelEl) {
+                    const m = Math.floor(remSec / 60);
+                    const s = remSec % 60;
+                    labelEl.innerHTML = `<span class="text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center gap-1"><i class="fa-solid fa-lock text-[9px]"></i> Your Hold (<span class="slot-timer" data-seconds="${remSec}">${m}:${String(s).padStart(2, '0')}</span>)</span>`;
+                }
+            }
+        });
+    }
+
+    // Re-open checkout summary modal for the client's active hold so they can trigger pay again
+    function openHoldCheckoutModal() {
+        const hold = getActiveHold();
+        if (!hold || !hold.reference) {
+            if (!bookingState.activeHoldRef) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'No Active Hold',
+                    text: 'You do not have an active timeslot reservation hold.',
+                    confirmButtonColor: '#0891b2'
+                });
+                return;
+            }
+        }
+
+        const modal = document.getElementById('xenditHoldModal');
+        if (!modal) return;
+
+        const refCodeEl = document.getElementById('modalRefCode');
+        const courtTimeEl = document.getElementById('modalCourtTime');
+        const totalDueEl = document.getElementById('modalTotalDue');
+        const payLinkEl = document.getElementById('modalXenditPayLink');
+        const payTextEl = document.getElementById('modalPayButtonText');
+        const modalGatewayIcon = document.getElementById('modalGatewayIcon');
+        const modalGatewayBadge = document.getElementById('modalGatewayBadge');
+
+        const holdData = hold || bookingState;
+        const courtName = holdData.courtName || holdData.court_name || bookingState.selectedCourtName;
+        const slots = holdData.slots || bookingState.selectedSlots || [];
+        const formattedAmount = holdData.formattedAmount || holdData.formatted_amount || document.getElementById('summaryTotalAmount')?.textContent || '₱0.00';
+        const invoiceUrl = holdData.invoiceUrl || holdData.invoice_url || '#';
+        const reference = holdData.reference || bookingState.activeHoldRef;
+        const gateway = holdData.gateway || (bookingState.paymentMode === 'paymongo' ? 'paymongo' : 'xendit');
+        const isPayMongo = gateway === 'paymongo';
+
+        if (refCodeEl) refCodeEl.textContent = reference;
+        if (courtTimeEl) {
+            const slotsCount = slots.length;
+            courtTimeEl.textContent = `${courtName} (${slotsCount} ${slotsCount > 1 ? 'hrs' : 'hr'}: ${slots.join(', ')})`;
+        }
+        if (totalDueEl) totalDueEl.textContent = formattedAmount;
+        if (payLinkEl) payLinkEl.href = invoiceUrl;
+
+        const remainingSec = holdData.expiresAt 
+            ? Math.max(0, Math.floor((holdData.expiresAt - Date.now()) / 1000))
+            : (bookingState.holdRemainingSeconds || 120);
+        bookingState.holdRemainingSeconds = remainingSec;
+        const holdMins = Math.max(1, Math.round(remainingSec / 60));
+
+        if (isPayMongo) {
+            if (modalGatewayIcon) {
+                modalGatewayIcon.className = 'w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mx-auto border border-emerald-500/40 animate-pulse';
+                modalGatewayIcon.innerHTML = '<i class="fa-solid fa-bolt"></i>';
+            }
+            if (modalGatewayBadge) {
+                modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-widest';
+                modalGatewayBadge.textContent = `PayMongo ${holdMins}-Minute Checkout Active`;
+            }
+            if (payLinkEl) {
+                payLinkEl.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all';
+            }
+            if (payTextEl) {
+                payTextEl.textContent = 'Proceed to Pay with PayMongo (GCash / Maya / Card)';
+            }
+        } else {
+            if (modalGatewayIcon) {
+                modalGatewayIcon.className = 'w-16 h-16 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mx-auto border border-cyan-500/40 animate-pulse';
+                modalGatewayIcon.innerHTML = '<i class="fa-solid fa-stopwatch"></i>';
+            }
+            if (modalGatewayBadge) {
+                modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-widest';
+                modalGatewayBadge.textContent = `Xendit ${holdMins}-Minute Slot Hold Active`;
+            }
+            if (payLinkEl) {
+                payLinkEl.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all';
+            }
+            if (payTextEl) {
+                payTextEl.textContent = 'Proceed to Pay with Xendit (GCash / Maya / Card)';
+            }
+        }
+
+        modal.classList.remove('opacity-0', 'pointer-events-none');
+        modal.classList.add('opacity-100', 'pointer-events-auto');
+
+        startModalCountdown();
+    }
+    window.openHoldCheckoutModal = openHoldCheckoutModal;
 
     document.addEventListener('DOMContentLoaded', () => {
         setupDateControls();
@@ -802,6 +1062,13 @@
         setupXenditCheckout();
         listenToReverbUpdates();
         startSlotCountdownTimers();
+
+        // Restore active hold from localStorage if active and unexpired
+        const activeHold = getActiveHold();
+        if (activeHold) {
+            showActiveHoldBanner();
+            updateMyHeldSlotsInDOM();
+        }
     });
 
     // Auto-scroll directly to targeted court card in booking engine with pulse animation
@@ -886,6 +1153,10 @@
 
     // Unified Slot Interaction Handler (Click to select/resize/trim, and Drag to expand/shrink)
     function handleSlotClickOrDrag(slotBtn, isDragMove = false) {
+        if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) {
+            return;
+        }
+
         const courtId = parseInt(slotBtn.getAttribute('data-court-id'));
         const courtGrid = slotBtn.closest('.court-slots-grid');
         const courtName = courtGrid.getAttribute('data-court-name');
@@ -898,6 +1169,10 @@
         if (status !== 'available') {
             if (!isDragMove) {
                 const isHeld = status === 'held';
+                if (isHeld && (slotBtn.classList.contains('slot-my-hold') || isSlotHeldByMe(courtId, time))) {
+                    // Disabled for the client who reserved it - do not show warning modal
+                    return;
+                }
                 resetSelection();
                 Swal.fire({
                     icon: 'warning',
@@ -957,6 +1232,9 @@
                     });
                     bookingState.isDragging = false;
                     resetSelection();
+                    if (heldSlot && isSlotHeldByMe(courtId, heldSlot)) {
+                        return;
+                    }
                     Swal.fire({
                         icon: 'warning',
                         title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
@@ -998,6 +1276,9 @@
                     return btn && btn.getAttribute('data-status') === 'held';
                 });
                 resetSelection();
+                if (heldSlot && isSlotHeldByMe(courtId, heldSlot)) {
+                    return;
+                }
                 Swal.fire({
                     icon: 'warning',
                     title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
@@ -1024,6 +1305,9 @@
                     return btn && btn.getAttribute('data-status') === 'held';
                 });
                 resetSelection();
+                if (heldSlot && isSlotHeldByMe(courtId, heldSlot)) {
+                    return;
+                }
                 Swal.fire({
                     icon: 'warning',
                     title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
@@ -1050,6 +1334,9 @@
                     return btn && btn.getAttribute('data-status') === 'held';
                 });
                 resetSelection();
+                if (heldSlot && isSlotHeldByMe(courtId, heldSlot)) {
+                    return;
+                }
                 Swal.fire({
                     icon: 'warning',
                     title: heldSlot ? 'Slot Held by Another Customer' : 'Range Unavailable',
@@ -1074,7 +1361,7 @@
         // Mouse Down
         container.addEventListener('mousedown', (e) => {
             const slotBtn = e.target.closest('.court-slot');
-            if (!slotBtn) return;
+            if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
 
             bookingState.isDragging = true;
             handleSlotClickOrDrag(slotBtn, false);
@@ -1084,7 +1371,7 @@
         container.addEventListener('mouseover', (e) => {
             if (!bookingState.isDragging) return;
             const slotBtn = e.target.closest('.court-slot');
-            if (!slotBtn) return;
+            if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
 
             const courtId = parseInt(slotBtn.getAttribute('data-court-id'));
             if (bookingState.selectedCourtId && bookingState.selectedCourtId !== courtId) return;
@@ -1101,7 +1388,9 @@
         container.addEventListener('click', (e) => {
             if (e.detail === 0) {
                 const slotBtn = e.target.closest('.court-slot');
-                if (slotBtn) handleSlotClickOrDrag(slotBtn, false);
+                if (slotBtn && !slotBtn.disabled && !slotBtn.classList.contains('slot-my-hold')) {
+                    handleSlotClickOrDrag(slotBtn, false);
+                }
             }
         });
 
@@ -1110,7 +1399,7 @@
             const touch = e.touches[0];
             const target = document.elementFromPoint(touch.clientX, touch.clientY);
             const slotBtn = target?.closest('.court-slot');
-            if (!slotBtn) return;
+            if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
             handleSlotClickOrDrag(slotBtn, false);
         }, { passive: true });
 
@@ -1140,20 +1429,37 @@
             if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(time) && (status === 'available' || bookingState.activeHoldRef)) {
                 btn.classList.add('slot-selected');
                 btn.classList.remove('slot-available', 'pointer-events-none', 'cursor-not-allowed', 'select-none');
+                btn.disabled = false;
                 if (statusLabel) {
                     statusLabel.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
                 }
             } else if (status === 'available') {
-                btn.classList.remove('slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'select-none');
+                btn.classList.remove('slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'slot-my-hold');
                 btn.classList.add('slot-available', 'cursor-pointer');
+                btn.disabled = false;
                 if (statusLabel) {
                     statusLabel.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
                 }
+            } else if (status === 'held') {
+                const isMine = isSlotHeldByMe(courtId, time);
+                if (isMine) {
+                    // DISABLED FOR THE CLIENT WHO SUCCESSFULLY RESERVED IT
+                    btn.disabled = true;
+                    btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer');
+                    btn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
+                    btn.title = 'Your held reservation';
+                } else {
+                    // CLICKABLE FOR OTHER CLIENTS
+                    btn.disabled = false;
+                    btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold');
+                    btn.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
+                    btn.title = 'Temporarily held by another customer';
+                }
             } else {
-                // Held, confirmed, or in-review: allow clicking to trigger error warning & unselection
-                btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer', 'pointer-events-none');
-                btn.classList.add('cursor-not-allowed', 'select-none', 'opacity-80');
+                // Confirmed or in-review: allow clicking to trigger error warning & unselection
                 btn.disabled = false;
+                btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'slot-my-hold');
+                btn.classList.add('cursor-not-allowed', 'select-none', 'opacity-80');
             }
         });
 
@@ -1267,6 +1573,9 @@
                     return;
                 }
 
+                document.getElementById('mrCourtId').value = bookingState.selectedCourtId;
+                document.getElementById('mrDate').value = document.getElementById('selectedDateInput').value;
+                document.getElementById('mrSlots').value = JSON.stringify(bookingState.selectedSlots);
                 document.getElementById('mrCustName').value = name;
                 document.getElementById('mrCustPhone').value = phone;
                 document.getElementById('mrCustEmail').value = email;
@@ -1276,7 +1585,7 @@
         }
     }
 
-    // 4. Xendit 2-Minute Hold Checkout Flow
+    // 4. Xendit & PayMongo Hold Checkout Flow
     function setupXenditCheckout() {
         const holdBtn = document.getElementById('startHoldAndPayBtn');
         const modal = document.getElementById('xenditHoldModal');
@@ -1293,6 +1602,16 @@
                 : `<i class="fa-solid fa-lock"></i> Hold ${holdMinsLabel} Mins & Pay with Xendit`;
 
             holdBtn.addEventListener('click', async () => {
+                // If current selection is already held by this client, re-open checkout summary modal directly!
+                const existingHold = getActiveHold();
+                if (existingHold && parseInt(existingHold.courtId) === parseInt(bookingState.selectedCourtId) && existingHold.slots.length > 0) {
+                    const isAllHeld = bookingState.selectedSlots.length === 0 || bookingState.selectedSlots.every(s => existingHold.slots.includes(s));
+                    if (isAllHeld) {
+                        openHoldCheckoutModal();
+                        return;
+                    }
+                }
+
                 const name = document.getElementById('custName').value.trim();
                 const phone = document.getElementById('custPhone').value.trim();
                 const email = document.getElementById('custEmail').value.trim();
@@ -1356,58 +1675,49 @@
                         return;
                     }
 
+                    // Store active hold in local storage & bookingState
+                    const remainingSec = data.remaining_seconds || {{ (int) ($settings->holding_duration_seconds ?: 120) }};
+                    const holdData = {
+                        reference: data.reference,
+                        court_id: bookingState.selectedCourtId,
+                        court_name: bookingState.selectedCourtName,
+                        date: document.getElementById('selectedDateInput').value,
+                        slots: [...bookingState.selectedSlots],
+                        expires_at: Date.now() + remainingSec * 1000,
+                        remaining_seconds: remainingSec,
+                        formatted_amount: data.formatted_amount,
+                        invoice_url: data.invoice_url,
+                        gateway: data.gateway || (isPayMongo ? 'paymongo' : 'xendit'),
+                        gateway_name: data.gateway_name || (isPayMongo ? 'PayMongo' : 'Xendit')
+                    };
+
+                    bookingState.activeHold = {
+                        reference: holdData.reference,
+                        courtId: parseInt(holdData.court_id),
+                        courtName: holdData.court_name,
+                        date: holdData.date,
+                        slots: (holdData.slots || []).map(s => normalizeSlotTime(s)),
+                        expiresAt: holdData.expires_at,
+                        formattedAmount: holdData.formatted_amount,
+                        invoiceUrl: holdData.invoice_url,
+                        gateway: holdData.gateway,
+                        gatewayName: holdData.gateway_name
+                    };
                     bookingState.activeHoldRef = data.reference;
-                    bookingState.holdRemainingSeconds = data.remaining_seconds || {{ (int) ($settings->holding_duration_seconds ?: 120) }};
-                    const holdMins = Math.max(1, Math.round(bookingState.holdRemainingSeconds / 60));
+                    bookingState.holdRemainingSeconds = remainingSec;
 
-                    // Open Modal and apply gateway styling
-                    const isResponsePayMongo = (data.gateway === 'paymongo') || isPayMongo;
-                    const modalGatewayIcon = document.getElementById('modalGatewayIcon');
-                    const modalGatewayBadge = document.getElementById('modalGatewayBadge');
-                    const modalPayLink = document.getElementById('modalXenditPayLink');
-                    const modalPayText = document.getElementById('modalPayButtonText');
+                    try {
+                        localStorage.setItem('paddle_active_hold', JSON.stringify(holdData));
+                    } catch (e) {}
 
-                    if (isResponsePayMongo) {
-                        if (modalGatewayIcon) {
-                            modalGatewayIcon.className = 'w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-2xl mx-auto border border-emerald-500/40 animate-pulse';
-                            modalGatewayIcon.innerHTML = '<i class="fa-solid fa-bolt"></i>';
-                        }
-                        if (modalGatewayBadge) {
-                            modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 uppercase tracking-widest';
-                            modalGatewayBadge.textContent = `PayMongo ${holdMins}-Minute Checkout Active`;
-                        }
-                        if (modalPayLink) {
-                            modalPayLink.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all';
-                        }
-                        if (modalPayText) {
-                            modalPayText.textContent = 'Proceed to Pay with PayMongo (GCash / Maya / Card)';
-                        }
-                    } else {
-                        if (modalGatewayIcon) {
-                            modalGatewayIcon.className = 'w-16 h-16 rounded-full bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-2xl mx-auto border border-cyan-500/40 animate-pulse';
-                            modalGatewayIcon.innerHTML = '<i class="fa-solid fa-stopwatch"></i>';
-                        }
-                        if (modalGatewayBadge) {
-                            modalGatewayBadge.className = 'px-3 py-1 rounded-full text-xs font-extrabold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase tracking-widest';
-                            modalGatewayBadge.textContent = `Xendit ${holdMins}-Minute Slot Hold Active`;
-                        }
-                        if (modalPayLink) {
-                            modalPayLink.className = 'w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all';
-                        }
-                        if (modalPayText) {
-                            modalPayText.textContent = 'Proceed to Pay with Xendit (GCash / Maya / Card)';
-                        }
-                    }
+                    bookingState.selectedSlots = [];
+                    bookingState.selectedCourtId = null;
+                    bookingState.selectedCourtName = '';
+                    renderSelectionUI();
 
-                    document.getElementById('modalRefCode').textContent = data.reference;
-                    document.getElementById('modalCourtTime').textContent = `${bookingState.selectedCourtName} (${bookingState.selectedSlots.length} hrs)`;
-                    document.getElementById('modalTotalDue').textContent = data.formatted_amount;
-                    document.getElementById('modalXenditPayLink').href = data.invoice_url;
-
-                    modal.classList.remove('opacity-0', 'pointer-events-none');
-                    modal.classList.add('opacity-100', 'pointer-events-auto');
-
-                    startModalCountdown();
+                    updateMyHeldSlotsInDOM();
+                    showActiveHoldBanner();
+                    openHoldCheckoutModal();
 
                 } catch (err) {
                     console.error('Hold error:', err);
@@ -1424,15 +1734,31 @@
             });
         }
 
-        // Close modal
-        closeBtn?.addEventListener('click', () => {
+        // Close modal (accidentally or deliberately) - keeps hold active and shows resume banner
+        function closeModal() {
             modal.classList.add('opacity-0', 'pointer-events-none');
             modal.classList.remove('opacity-100', 'pointer-events-auto');
+            showActiveHoldBanner();
+            updateMyHeldSlotsInDOM();
+        }
+
+        closeBtn?.addEventListener('click', closeModal);
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modal.classList.contains('opacity-100')) {
+                closeModal();
+            }
         });
 
         // Cancel Hold
         cancelBtn?.addEventListener('click', async () => {
-            if (!bookingState.activeHoldRef) return;
+            const hold = getActiveHold();
+            const ref = hold ? hold.reference : bookingState.activeHoldRef;
+            if (!ref) return;
 
             const confirmResult = await Swal.fire({
                 title: 'Cancel Reservation Hold?',
@@ -1448,7 +1774,7 @@
             if (!confirmResult.isConfirmed) return;
 
             try {
-                await fetch(`/api/cancel-hold/${bookingState.activeHoldRef}`, {
+                await fetch(`/api/cancel-hold/${ref}`, {
                     method: 'POST',
                     headers: {
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
@@ -1460,31 +1786,38 @@
             clearInterval(bookingState.holdTimerInterval);
             modal.classList.add('opacity-0', 'pointer-events-none');
             modal.classList.remove('opacity-100', 'pointer-events-auto');
+            clearActiveHold();
             resetSelection();
             location.reload();
         });
 
         // Simulate Instant Payment (For demo & testing)
         simulateBtn?.addEventListener('click', async () => {
-            if (!bookingState.activeHoldRef) return;
+            const hold = getActiveHold();
+            const ref = hold ? hold.reference : bookingState.activeHoldRef;
+            if (!ref) return;
             simulateBtn.disabled = true;
             simulateBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing Payment...';
 
             try {
-                const res = await fetch(`/simulate-payment/${bookingState.activeHoldRef}`, {
+                const res = await fetch(`/simulate-payment/${ref}`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                         'Accept': 'application/json'
                     },
-                    body: JSON.stringify({ payment_channel: 'GCash Xendit' })
+                    body: JSON.stringify({ payment_channel: 'GCash' })
                 });
                 const resData = await res.json();
+                clearActiveHold();
                 if (resData.success) {
                     window.location.href = resData.track_url;
+                } else {
+                    window.location.href = `/track/${ref}`;
                 }
             } catch (e) {
+                clearActiveHold();
                 Swal.fire({
                     icon: 'success',
                     title: 'Payment Simulated',
@@ -1492,7 +1825,7 @@
                     timer: 1500,
                     showConfirmButton: false
                 }).then(() => {
-                    window.location.href = `/track/${bookingState.activeHoldRef}`;
+                    window.location.href = `/track/${ref}`;
                 });
             }
         });
@@ -1501,15 +1834,25 @@
     function startModalCountdown() {
         clearInterval(bookingState.holdTimerInterval);
         const timerEl = document.getElementById('modalHoldCountdown');
+        const bannerTimerEl = document.getElementById('activeHoldBannerTimer');
 
         const updateTimer = () => {
+            const hold = getActiveHold();
+            if (hold && hold.expiresAt) {
+                bookingState.holdRemainingSeconds = Math.max(0, Math.floor((hold.expiresAt - Date.now()) / 1000));
+            }
+
             if (bookingState.holdRemainingSeconds <= 0) {
                 clearInterval(bookingState.holdTimerInterval);
-                timerEl.textContent = '00:00';
+                if (timerEl) timerEl.textContent = '00:00';
+                if (bannerTimerEl) bannerTimerEl.textContent = '00:00';
+
+                const refToCancel = bookingState.activeHoldRef;
+                clearActiveHold();
 
                 // Instantly notify server to release hold so Reverb broadcasts 'released' to all players
-                if (bookingState.activeHoldRef) {
-                    fetch(`/api/cancel-hold/${bookingState.activeHoldRef}`, {
+                if (refToCancel) {
+                    fetch(`/api/cancel-hold/${refToCancel}`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1535,7 +1878,9 @@
 
             const m = Math.floor(bookingState.holdRemainingSeconds / 60);
             const s = bookingState.holdRemainingSeconds % 60;
-            timerEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            if (timerEl) timerEl.textContent = timeStr;
+            if (bannerTimerEl) bannerTimerEl.textContent = timeStr;
             bookingState.holdRemainingSeconds--;
         };
 
@@ -1552,29 +1897,54 @@
 
             const normalizedStatus = (status === 'released') ? 'available' : status;
             slotBtn.setAttribute('data-status', normalizedStatus);
-            slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected');
+            slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold');
 
             if (normalizedStatus === 'available') {
-                slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked');
+                slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold');
                 slotBtn.classList.add('slot-available', 'cursor-pointer');
                 slotBtn.disabled = false;
+                slotBtn.title = '';
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
-            } else if (normalizedStatus === 'held') {
-                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
-                slotBtn.classList.add('slot-held', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = false;
-                const rem = Math.max(0, parseInt(remainingSeconds) || 0);
-                slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${Math.floor(rem / 60)}:${String(rem % 60).padStart(2, '0')}</span></span>`;
 
-                // If another user had this slot selected (and not the current active hold owner), silently update selection
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
-                    bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
-                    renderSelectionUI();
+                // If my hold was released, clear local state
+                if (isSlotHeldByMe(courtId, slotTime)) {
+                    clearActiveHold();
+                }
+            } else if (normalizedStatus === 'held') {
+                const isMine = isSlotHeldByMe(courtId, slotTime);
+                const rem = Math.max(0, parseInt(remainingSeconds) || 0);
+                slotBtn.setAttribute('data-remaining-seconds', rem);
+
+                if (isMine) {
+                    // DISABLED FOR THE CLIENT WHO SUCCESSFULLY RESERVED IT
+                    slotBtn.disabled = true;
+                    slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'cursor-pointer');
+                    slotBtn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
+                    slotBtn.title = 'Your held reservation';
+                    const m = Math.floor(rem / 60);
+                    const s = rem % 60;
+                    slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center gap-1"><i class="fa-solid fa-lock text-[9px]"></i> Your Hold (<span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span>)</span>`;
+                } else {
+                    // CLICKABLE FOR OTHER CLIENTS
+                    slotBtn.disabled = false;
+                    slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold');
+                    slotBtn.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
+                    slotBtn.title = 'Temporarily held by another customer';
+                    const m = Math.floor(rem / 60);
+                    const s = rem % 60;
+                    slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span></span>`;
+
+                    // If another user had this slot selected (and not the current active hold owner), silently update selection
+                    if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
+                        bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
+                        renderSelectionUI();
+                    }
                 }
             } else if (normalizedStatus === 'pending_approval') {
-                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
+                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
                 slotBtn.classList.add('slot-pending', 'cursor-not-allowed', 'select-none', 'opacity-80');
                 slotBtn.disabled = false;
+                slotBtn.title = 'Pending approval';
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-indigo-700 dark:text-indigo-300">In Review</span>';
 
                 if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
@@ -1582,10 +1952,15 @@
                     renderSelectionUI();
                 }
             } else if (normalizedStatus === 'confirmed') {
-                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none');
+                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
                 slotBtn.classList.add('slot-booked', 'cursor-not-allowed', 'select-none', 'opacity-80');
                 slotBtn.disabled = false;
+                slotBtn.title = 'Reserved';
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-rose-700 dark:text-rose-400">Booked</span>';
+
+                if (isSlotHeldByMe(courtId, slotTime)) {
+                    clearActiveHold();
+                }
 
                 if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
@@ -1636,9 +2011,23 @@
         }, 6000);
     }
 
-    // 6. Timers for held slots on grid
+    // 6. Timers for held slots on grid & banner synchronization
     function startSlotCountdownTimers() {
         setInterval(() => {
+            // Keep banner & active hold in sync every second
+            const hold = getActiveHold();
+            if (hold && hold.expiresAt) {
+                const sec = Math.max(0, Math.floor((hold.expiresAt - Date.now()) / 1000));
+                const m = Math.floor(sec / 60);
+                const s = sec % 60;
+                const timeStr = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                const bannerTimer = document.getElementById('activeHoldBannerTimer');
+                if (bannerTimer) bannerTimer.textContent = timeStr;
+                if (sec <= 0) {
+                    clearActiveHold();
+                }
+            }
+
             document.querySelectorAll('.slot-timer').forEach(el => {
                 let sec = parseInt(el.getAttribute('data-seconds'));
                 if (sec > 0) {
@@ -1651,9 +2040,10 @@
                     const slotBtn = el.closest('.court-slot');
                     if (slotBtn) {
                         slotBtn.setAttribute('data-status', 'available');
-                        slotBtn.classList.remove('slot-held', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
+                        slotBtn.classList.remove('slot-held', 'slot-my-hold', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
                         slotBtn.classList.add('slot-available', 'cursor-pointer');
                         slotBtn.disabled = false;
+                        slotBtn.title = '';
                         const labelEl = slotBtn.querySelector('.slot-status-label');
                         if (labelEl) {
                             labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
