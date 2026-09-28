@@ -62,7 +62,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $assistant = User::create([
-            'name' => 'Maria Santos (Admin Assistant)',
+            'name' => 'Jane',
             'email' => 'assistant@paddlefield.com',
             'password' => Hash::make('password123'),
             'role' => 'admin_assistant',
@@ -73,7 +73,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $client = User::create([
-            'name' => 'Marcus Vance (Player)',
+            'name' => 'Michael Austria',
             'email' => 'player@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'client',
@@ -81,7 +81,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $client2 = User::create([
-            'name' => 'Elena Cruz (Player 2)',
+            'name' => 'Jeric Dela Cruz',
             'email' => 'player2@gmail.com',
             'password' => Hash::make('password123'),
             'role' => 'client',
@@ -103,7 +103,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Indoor tournament-certified court with cushioned 9-layer acrylic surface and spectator gallery view.',
             'type' => 'indoor',
             'surface_type' => 'Pro Cushion Acrylic',
-            'price_per_hour' => 150.00,
+            'price_per_hour' => 1.00,
             'max_players' => 4,
             'image_path' => 'courts/court-1.jpg',
             'is_active' => true,
@@ -115,7 +115,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Spacious indoor court with anti-glare floodlighting, player rest bench, and tournament acrylic court surface.',
             'type' => 'indoor',
             'surface_type' => 'Pro Cushion Acrylic',
-            'price_per_hour' => 150.00,
+            'price_per_hour' => 1.00,
             'max_players' => 4,
             'image_path' => 'courts/court-1.jpg',
             'is_active' => true,
@@ -127,7 +127,7 @@ class DatabaseSeeder extends Seeder
             'description' => 'Fully air-conditioned indoor court ideal for competitive doubles, coaching sessions, and private drills.',
             'type' => 'indoor',
             'surface_type' => 'Pro Cushion Acrylic',
-            'price_per_hour' => 150.00,
+            'price_per_hour' => 1.00,
             'max_players' => 4,
             'image_path' => 'courts/court-1.jpg',
             'is_active' => true,

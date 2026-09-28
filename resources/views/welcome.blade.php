@@ -61,7 +61,7 @@
             <!-- Hero Feature Image / Card -->
             <div class="lg:col-span-5 relative">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-300 dark:border-stone-700 group">
-                    <img src="{{ asset('storage/courts/court-1.jpg') }}" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img src="{{ asset('storage/courts/court-1.jpg') }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
 
                     <!-- Overlay Info Card -->
@@ -571,7 +571,9 @@
             @forelse($photos as $photo)
                 <div class="glass-panel rounded-3xl overflow-hidden group shadow-xl">
                     <div class="relative h-64 overflow-hidden">
-                        <img src="{{ $photo->url }}" alt="{{ $photo->title }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                        <img src="{{ $photo->url }}" alt="{{ $photo->title }}"
+                            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=800&q=80';"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
                         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-stone-900/80 backdrop-blur-md text-cyan-400 border border-white/10 uppercase">
                             {{ ucfirst($photo->category) }}

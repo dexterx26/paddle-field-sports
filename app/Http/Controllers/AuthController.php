@@ -84,9 +84,9 @@ class AuthController extends Controller
 
             if ($user->isStaffOrAdmin()) {
                 if ($user->isAdminAssistant()) {
-                    return redirect()->route($user->getFirstAllowedRoute())->with('success', "Logged in as Admin Assistant: {$user->name}");
+                    return redirect()->route($user->getFirstAllowedRoute())->with('success', "Logged in as {$user->name}");
                 }
-                return redirect()->route('owner.dashboard')->with('success', "Logged in as {$user->name} ({$user->role})");
+                return redirect()->route('owner.dashboard')->with('success', "Logged in as {$user->name}");
             }
 
             return redirect()->route('home')->with('success', "Logged in as {$user->name}");

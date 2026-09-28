@@ -459,7 +459,7 @@
     }
 
     function openEditAssistantModal(assistant, permissions) {
-        document.getElementById('editAssistantForm').action = `/owner/assistants/${assistant.id}`;
+        document.getElementById('editAssistantForm').action = "{{ url('owner/assistants') }}/" + assistant.id;
         document.getElementById('edit_name').value = assistant.name || '';
         document.getElementById('edit_email').value = assistant.email || '';
         document.getElementById('edit_phone').value = assistant.phone || '';

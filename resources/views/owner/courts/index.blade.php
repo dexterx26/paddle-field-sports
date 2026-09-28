@@ -32,9 +32,10 @@
         @foreach($courts as $court)
             <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 overflow-hidden shadow-xl flex flex-col justify-between group hover:border-cyan-500/40 transition-all">
                 <div>
-                    <!-- Court Photo -->
                     <div class="relative h-48 overflow-hidden bg-stone-900">
-                        <img src="{{ $court->display_image }}" alt="{{ $court->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="{{ $court->display_image }}" alt="{{ $court->name }}"
+                            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';"
+                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold {{ $court->type === 'indoor' ? 'bg-cyan-500 text-slate-950' : 'bg-amber-600 text-white' }} uppercase">
                             {{ ucfirst($court->type) }}
                         </div>
@@ -178,13 +179,25 @@
                     class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:outline-none focus:border-cyan-500"></textarea>
             </div>
 
-            <div>
-                <label class="block font-semibold text-theme-body mb-1">Court Photo</label>
-                <input type="file" name="image" accept="image/*"
+            <!-- Court Photo Upload & URL -->
+            <div class="space-y-2 p-3.5 rounded-2xl bg-stone-100/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800">
+                <label class="block font-semibold text-theme-heading mb-1">Court Photo</label>
+                <input type="file" name="image" id="addCourtPhotoInput" accept="image/*" onchange="previewAddCourtImage(event)"
                     class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
+                
+                <div id="addCourtPreviewContainer" class="hidden relative mt-2">
+                    <img id="addCourtPreviewImg" src="" alt="Preview" class="h-32 w-full object-cover rounded-xl border border-stone-200 dark:border-stone-700">
+                    <span id="addCourtSizeBadge" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-950/80 text-[10px] text-cyan-400 font-bold"></span>
+                </div>
+
+                <div class="pt-1">
+                    <label class="block text-[11px] text-theme-muted mb-0.5">Or provide direct image URL:</label>
+                    <input type="url" name="image_url" id="addCourtImageUrl" placeholder="https://images.unsplash.com/..." oninput="previewAddCourtUrl(this.value)"
+                        class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:outline-none focus:border-cyan-500 text-xs">
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 pt-2">
+            <div class="flex items-center gap-2 pt-1">
                 <input type="checkbox" name="is_active" id="addCourtActive" value="1" checked class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
                 <label for="addCourtActive" class="text-xs text-theme-body font-medium">Activate Court for Public Reservations</label>
             </div>
@@ -202,8 +215,8 @@
 </div>
 
 <!-- EDIT COURT MODAL -->
-<div id="editCourtModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto">
+<div id="editCourtModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300" onclick="if(event.target === this) closeEditCourtModal()">
+    <div class="glass-dropdown p-6 sm:p-8 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
         <div class="flex items-start justify-between pb-3 border-b border-stone-200 dark:border-stone-800 gap-3">
             <div class="min-w-0 pr-2">
                 <h3 class="text-lg font-bold text-theme-heading">Edit Court Details & Pricing</h3>
@@ -268,13 +281,34 @@
                     class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:outline-none focus:border-cyan-500"></textarea>
             </div>
 
-            <div>
-                <label class="block font-semibold text-theme-body mb-1">Replace Court Photo</label>
-                <input type="file" name="image" accept="image/*"
-                    class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
+            <!-- Current Image & Replace Photo -->
+            <div class="space-y-2 p-3.5 rounded-2xl bg-stone-100/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800">
+                <span class="block font-semibold text-theme-heading mb-1">Court Image</span>
+                
+                <div class="relative mb-2">
+                    <img id="editCourtCurrentImg" src="" alt="Current Court Image" class="h-32 w-full object-cover rounded-xl border border-stone-200 dark:border-stone-700">
+                    <span class="absolute top-2 left-2 px-2 py-0.5 rounded-md bg-slate-950/80 text-[10px] text-white">Current</span>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="block text-[11px] text-theme-muted">Upload new photo file:</label>
+                    <input type="file" name="image" id="editCourtPhotoInput" accept="image/*" onchange="previewEditCourtImage(event)"
+                        class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
+                    
+                    <div id="editCourtNewPreviewContainer" class="hidden relative mt-2">
+                        <img id="editCourtNewPreviewImg" src="" alt="New Image Preview" class="h-32 w-full object-cover rounded-xl border border-cyan-500/50">
+                        <span id="editCourtSizeBadge" class="absolute bottom-2 right-2 px-2 py-0.5 rounded-md bg-slate-950/80 text-[10px] text-cyan-400 font-bold"></span>
+                    </div>
+
+                    <div class="pt-1">
+                        <label class="block text-[11px] text-theme-muted mb-0.5">Or enter image URL:</label>
+                        <input type="url" name="image_url" id="editCourtImageUrl" placeholder="Or enter image URL (https://...)" oninput="previewEditCourtUrl(this.value)"
+                            class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:outline-none focus:border-cyan-500 text-xs">
+                    </div>
+                </div>
             </div>
 
-            <div class="flex items-center gap-2 pt-2">
+            <div class="flex items-center gap-2 pt-1">
                 <input type="checkbox" name="is_active" id="editCourtActive" value="1" class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
                 <label for="editCourtActive" class="text-xs text-theme-body font-medium">Court is Active and Bookable</label>
             </div>
@@ -283,8 +317,8 @@
                 <button type="button" onclick="closeEditCourtModal()" class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer">
                     Cancel
                 </button>
-                <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 cursor-pointer">
-                    Save Changes
+                <button type="submit" class="px-5 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 cursor-pointer flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Changes
                 </button>
             </div>
         </form>
@@ -305,26 +339,127 @@
         modal.classList.remove('opacity-100', 'pointer-events-auto');
     }
 
+    function previewAddCourtImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const badge = document.getElementById('addCourtSizeBadge');
+        if (badge) {
+            badge.textContent = `${sizeMB} MB`;
+            if (file.size > 10 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Too Large',
+                    text: `Court photo is ${sizeMB}MB. Please select an image under 10MB to avoid upload failure.`,
+                    confirmButtonColor: '#0891b2'
+                });
+                event.target.value = '';
+                return;
+            }
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('addCourtPreviewImg').src = e.target.result;
+            document.getElementById('addCourtPreviewContainer').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function previewAddCourtUrl(url) {
+        if (url && url.trim().length > 10) {
+            document.getElementById('addCourtPreviewImg').src = url.trim();
+            document.getElementById('addCourtPreviewContainer').classList.remove('hidden');
+        }
+    }
+
     function openEditCourtModal(court) {
-        document.getElementById('editCourtForm').action = `/owner/courts/${court.id}`;
-        document.getElementById('editCourtName').value = court.name;
-        document.getElementById('editCourtNumber').value = court.court_number;
-        document.getElementById('editCourtType').value = court.type;
-        document.getElementById('editCourtSurface').value = court.surface_type;
-        document.getElementById('editCourtPrice').value = court.price_per_hour;
-        document.getElementById('editCourtMaxPlayers').value = court.max_players;
+        // Correctly route to full application URL (compatible with subfolder and root domain)
+        const courtBaseUrl = "{{ url('owner/courts') }}";
+        document.getElementById('editCourtForm').action = `${courtBaseUrl}/${court.id}`;
+
+        document.getElementById('editCourtName').value = court.name || '';
+        document.getElementById('editCourtNumber').value = court.court_number || 1;
+        document.getElementById('editCourtType').value = court.type || 'indoor';
+        document.getElementById('editCourtSurface').value = court.surface_type || 'Pro Cushion Acrylic';
+        document.getElementById('editCourtPrice').value = court.price_per_hour || '150.00';
+        document.getElementById('editCourtMaxPlayers').value = court.max_players || 4;
         document.getElementById('editCourtDesc').value = court.description || '';
-        document.getElementById('editCourtActive').checked = court.is_active;
+        document.getElementById('editCourtActive').checked = Boolean(court.is_active);
+        document.getElementById('editCourtImageUrl').value = (court.image_path && court.image_path.startsWith('http')) ? court.image_path : '';
+
+        // Reset new photo preview
+        document.getElementById('editCourtPhotoInput').value = '';
+        document.getElementById('editCourtNewPreviewContainer').classList.add('hidden');
+
+        // Set current photo
+        const currentImg = document.getElementById('editCourtCurrentImg');
+        let imgUrl = court.display_image;
+        if (!imgUrl) {
+            if (court.image_path && court.image_path.startsWith('http')) {
+                imgUrl = court.image_path;
+            } else if (court.image_path) {
+                imgUrl = "{{ asset('storage') }}/" + court.image_path.replace(/^storage\//, '');
+            } else {
+                imgUrl = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';
+            }
+        }
+        currentImg.src = imgUrl;
+        currentImg.onerror = function() {
+            this.src = 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';
+        };
 
         const modal = document.getElementById('editCourtModal');
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.classList.add('opacity-100', 'pointer-events-auto');
     }
+
     function closeEditCourtModal() {
         const modal = document.getElementById('editCourtModal');
         modal.classList.add('opacity-0', 'pointer-events-none');
         modal.classList.remove('opacity-100', 'pointer-events-auto');
     }
+
+    function previewEditCourtImage(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+        const badge = document.getElementById('editCourtSizeBadge');
+        if (badge) {
+            badge.textContent = `${sizeMB} MB`;
+            if (file.size > 10 * 1024 * 1024) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Too Large',
+                    text: `Court photo is ${sizeMB}MB. Please select an image under 10MB to avoid upload failure.`,
+                    confirmButtonColor: '#0891b2'
+                });
+                event.target.value = '';
+                return;
+            }
+        }
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('editCourtNewPreviewImg').src = e.target.result;
+            document.getElementById('editCourtNewPreviewContainer').classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function previewEditCourtUrl(url) {
+        if (url && url.trim().length > 10) {
+            document.getElementById('editCourtNewPreviewImg').src = url.trim();
+            document.getElementById('editCourtNewPreviewContainer').classList.remove('hidden');
+        }
+    }
+
+    // Backdrop click dismiss for modals
+    document.getElementById('addCourtModal')?.addEventListener('click', function(e) {
+        if (e.target === this) closeAddCourtModal();
+    });
 
     function confirmArchiveCourt(courtId, courtName) {
         Swal.fire({
@@ -342,5 +477,12 @@
             }
         });
     }
+
+    // Auto-reopen edit modal if validation errors exist
+    @if($errors->any())
+        document.addEventListener('DOMContentLoaded', () => {
+            openAddCourtModal();
+        });
+    @endif
 </script>
 @endpush

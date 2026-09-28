@@ -34,11 +34,30 @@ class Court extends Model
         return '₱' . number_format($this->price_per_hour, 2);
     }
 
+    public const DEFAULT_COURT_IMAGES = [
+        'courts/court-1.jpg' => 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80',
+        'courts/court-2.jpg' => 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1000&q=80',
+    ];
+
     public function getDisplayImageAttribute(): string
     {
-        if ($this->image_path && file_exists(public_path('storage/' . $this->image_path))) {
-            return asset('storage/' . $this->image_path);
+        if (empty($this->image_path)) {
+            return self::DEFAULT_COURT_IMAGES['courts/court-1.jpg'];
         }
-        return asset('images/court-default.jpg');
+
+        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://')) {
+            return $this->image_path;
+        }
+
+        $cleanPath = preg_replace('/^storage\//', '', ltrim($this->image_path, '/'));
+        if (file_exists(public_path('storage/' . $cleanPath)) || file_exists(storage_path('app/public/' . $cleanPath))) {
+            return asset('storage/' . $cleanPath);
+        }
+
+        if (isset(self::DEFAULT_COURT_IMAGES[$cleanPath])) {
+            return self::DEFAULT_COURT_IMAGES[$cleanPath];
+        }
+
+        return self::DEFAULT_COURT_IMAGES['courts/court-1.jpg'];
     }
 }

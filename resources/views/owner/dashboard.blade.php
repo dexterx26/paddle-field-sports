@@ -686,7 +686,7 @@
         // Pending Approval actions
         const pendingActions = document.getElementById('resModalPendingActions');
         if (b.booking_status === 'pending_approval') {
-            document.getElementById('resModalApproveForm').action = `/owner/approvals/${b.id}/approve`;
+            document.getElementById('resModalApproveForm').action = "{{ url('owner/approvals') }}/" + b.id + "/approve";
             const rejectBtn = document.getElementById('resModalRejectBtn');
             rejectBtn.onclick = function() {
                 closeReservationModal();
@@ -835,7 +835,7 @@
     }
 
     function openRejectModal(id, ref) {
-        document.getElementById('rejectForm').action = `/owner/approvals/${id}/reject`;
+        document.getElementById('rejectForm').action = "{{ url('owner/approvals') }}/" + id + "/reject";
         document.getElementById('rejectModalRefText').textContent = `Declining reservation: ${ref}. Slots will be released back to the schedule.`;
 
         const modal = document.getElementById('rejectModal');

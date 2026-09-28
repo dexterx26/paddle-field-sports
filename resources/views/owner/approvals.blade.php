@@ -205,7 +205,7 @@
     }
 
     function openRejectModal(id, ref) {
-        document.getElementById('rejectForm').action = `/owner/approvals/${id}/reject`;
+        document.getElementById('rejectForm').action = "{{ url('owner/approvals') }}/" + id + "/reject";
         document.getElementById('rejectModalRefText').textContent = `Declining reservation: ${ref}. Slots will be released back to the schedule.`;
 
         const modal = document.getElementById('rejectModal');

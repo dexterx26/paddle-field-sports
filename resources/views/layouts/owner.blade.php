@@ -235,6 +235,23 @@
                     <button type="button" onclick="this.parentElement.remove()" class="text-theme-muted hover:text-theme-heading cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
+
+            @if($errors->any())
+                <div class="p-4 mb-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-900 dark:text-rose-200 text-sm flex items-start justify-between">
+                    <div class="flex items-start gap-3">
+                        <i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-400 text-lg mt-0.5 shrink-0"></i>
+                        <div>
+                            <span class="font-bold">Please check the following error(s):</span>
+                            <ul class="list-disc list-inside text-xs mt-1 space-y-0.5">
+                                @foreach($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                    <button type="button" onclick="this.parentElement.remove()" class="text-theme-muted hover:text-theme-heading cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            @endif
         </div>
 
         <!-- Main Body -->
@@ -278,6 +295,19 @@
                 title: 'Information',
                 text: @json(session('info')),
                 confirmButtonColor: '#0891b2'
+            });
+        });
+    </script>
+    @endif
+
+    @if($errors->any())
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Failed',
+                html: `<div class="text-left text-xs space-y-1.5 mt-2">@foreach($errors->all() as $error)<div class="text-rose-600 font-semibold flex items-start gap-1.5"><span class="shrink-0">•</span><span>{{ addslashes($error) }}</span></div>@endforeach</div>`,
+                confirmButtonColor: '#e11d48'
             });
         });
     </script>

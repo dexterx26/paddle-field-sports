@@ -157,6 +157,20 @@ class OwnerController extends Controller
      */
     public function storeCourt(Request $request)
     {
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            if (!$file->isValid()) {
+                $errorCode = $file->getError();
+                $errorMsg = match ($errorCode) {
+                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The uploaded court photo exceeds the server upload limit. Please select an image under 5MB or compress it.',
+                    UPLOAD_ERR_PARTIAL => 'The photo was only partially uploaded. Please try again.',
+                    UPLOAD_ERR_NO_FILE => 'No photo file was received.',
+                    default => 'Court image upload failed (Error code: ' . $errorCode . '). Please try again.',
+                };
+                return back()->withInput()->with('error', $errorMsg);
+            }
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'court_number' => 'required|integer|min:1',
@@ -165,13 +179,23 @@ class OwnerController extends Controller
             'surface_type' => 'required|string|max:100',
             'price_per_hour' => 'required|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
+            'image_url' => 'nullable|url|max:500',
             'is_active' => 'nullable|boolean',
         ]);
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('courts', 'public');
+            try {
+                $publicTargetDir = public_path('storage/courts');
+                if (!file_exists($publicTargetDir)) {
+                    @mkdir($publicTargetDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $imagePath), public_path('storage/' . $imagePath));
+            } catch (\Throwable $e) {}
+        } elseif ($request->filled('image_url')) {
+            $imagePath = trim($request->input('image_url'));
         } else {
             // Default image based on type
             $imagePath = $data['type'] === 'outdoor' ? 'courts/court-2.jpg' : 'courts/court-1.jpg';
@@ -186,7 +210,7 @@ class OwnerController extends Controller
             'price_per_hour' => $data['price_per_hour'],
             'max_players' => $data['max_players'],
             'image_path' => $imagePath,
-            'is_active' => $request->boolean('is_active', true),
+            'is_active' => $request->has('is_active'),
         ]);
 
         return redirect()->route('owner.courts.index')
@@ -203,6 +227,20 @@ class OwnerController extends Controller
     {
         $court = Court::withTrashed()->findOrFail($id);
 
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            if (!$file->isValid()) {
+                $errorCode = $file->getError();
+                $errorMsg = match ($errorCode) {
+                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The uploaded court photo exceeds the server upload limit. Please select an image under 5MB or compress it.',
+                    UPLOAD_ERR_PARTIAL => 'The photo was only partially uploaded. Please try again.',
+                    UPLOAD_ERR_NO_FILE => 'No photo file was received.',
+                    default => 'Court image upload failed (Error code: ' . $errorCode . '). Please try again.',
+                };
+                return back()->withInput()->with('error', $errorMsg);
+            }
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:100',
             'court_number' => 'required|integer|min:1',
@@ -211,7 +249,8 @@ class OwnerController extends Controller
             'surface_type' => 'required|string|max:100',
             'price_per_hour' => 'required|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
+            'image_url' => 'nullable|url|max:500',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -223,17 +262,39 @@ class OwnerController extends Controller
             'surface_type' => $data['surface_type'],
             'price_per_hour' => $data['price_per_hour'], // New rate applied only for future bookings!
             'max_players' => $data['max_players'],
-            'is_active' => $request->boolean('is_active', true),
+            'is_active' => $request->has('is_active'),
         ];
 
         if ($request->hasFile('image')) {
-            $updateData['image_path'] = $request->file('image')->store('courts', 'public');
+            // Delete old court image from storage if it was a local file
+            if ($court->image_path && !str_starts_with($court->image_path, 'http')) {
+                if (Storage::disk('public')->exists($court->image_path)) {
+                    Storage::disk('public')->delete($court->image_path);
+                }
+                if (file_exists(public_path('storage/' . $court->image_path))) {
+                    @unlink(public_path('storage/' . $court->image_path));
+                }
+            }
+
+            $path = $request->file('image')->store('courts', 'public');
+            $updateData['image_path'] = $path;
+
+            // Dual storage: Also copy to public/storage if directory exists
+            try {
+                $publicTargetDir = public_path('storage/courts');
+                if (!file_exists($publicTargetDir)) {
+                    @mkdir($publicTargetDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $path), public_path('storage/' . $path));
+            } catch (\Throwable $e) {}
+        } elseif ($request->filled('image_url')) {
+            $updateData['image_path'] = trim($request->input('image_url'));
         }
 
         $court->update($updateData);
 
         return redirect()->route('owner.courts.index')
-            ->with('success', "{$court->name} updated! New price (₱" . number_format($data['price_per_hour'], 2) . "/hr) and player capacity ({$data['max_players']} players) applied to all future bookings.");
+            ->with('success', "{$court->name} updated successfully! New price (₱" . number_format($data['price_per_hour'], 2) . "/hr) and player capacity ({$data['max_players']} players) applied to all future bookings.");
     }
 
     /**
@@ -276,28 +337,138 @@ class OwnerController extends Controller
      */
     public function storePhoto(Request $request)
     {
+        // 1. Check for PHP upload-level errors (e.g. upload_max_filesize exceeded)
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            if (!$file->isValid()) {
+                $errorCode = $file->getError();
+                $errorMsg = match ($errorCode) {
+                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The uploaded photo exceeds the server upload limit. Please select an image under 5MB or compress it.',
+                    UPLOAD_ERR_PARTIAL => 'The photo was only partially uploaded. Please try again.',
+                    UPLOAD_ERR_NO_FILE => 'No photo file was received. Please select an image to upload.',
+                    default => 'Photo upload failed (Error code: ' . $errorCode . '). Please try again.',
+                };
+                return back()->withInput()->with('error', $errorMsg);
+            }
+        }
+
+        // 2. Validate form input
         $request->validate([
             'title' => 'required|string|max:150',
             'category' => 'required|string|in:court,lounge,amenity,event,general',
             'caption' => 'nullable|string|max:300',
             'sort_order' => 'nullable|integer|min:0',
             'is_featured' => 'nullable|boolean',
-            'photo' => 'required|image|mimes:jpeg,png,jpg,webp|max:6144', // Max 6MB
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240', // Max 10MB
+            'image_url' => 'nullable|url|max:500',
         ]);
 
-        $path = $request->file('photo')->store('gallery', 'public');
+        $imagePath = null;
+
+        // If a file was uploaded
+        if ($request->hasFile('photo')) {
+            $path = $request->file('photo')->store('gallery', 'public');
+            $imagePath = $path;
+
+            // Dual storage: Also copy to public/storage if directory exists or can be created
+            try {
+                $publicTargetDir = public_path('storage/gallery');
+                if (!file_exists($publicTargetDir)) {
+                    @mkdir($publicTargetDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $path), public_path('storage/' . $path));
+            } catch (\Throwable $e) {
+                // Ignore copy errors, fallback route will serve from storage_path
+            }
+        } elseif ($request->filled('image_url')) {
+            $imagePath = trim($request->input('image_url'));
+        } else {
+            return back()->withInput()->with('error', 'Please select an image file to upload or enter an image URL.');
+        }
+
+        $sortOrder = (int) ($request->input('sort_order') ?: 0);
+        $isFeatured = $request->has('is_featured');
 
         FacilityPhoto::create([
             'title' => trim($request->input('title')),
             'category' => $request->input('category'),
-            'image_path' => $path,
+            'image_path' => $imagePath,
             'caption' => $request->input('caption'),
-            'sort_order' => $request->input('sort_order', 0),
-            'is_featured' => $request->boolean('is_featured', true),
+            'sort_order' => $sortOrder,
+            'is_featured' => $isFeatured,
         ]);
 
         return redirect()->route('owner.photos.index')
             ->with('success', 'Photo uploaded successfully! It is now live on the website main page.');
+    }
+
+    /**
+     * Update photo details
+     */
+    public function updatePhoto(Request $request, int $id)
+    {
+        $photo = FacilityPhoto::findOrFail($id);
+
+        if ($request->hasFile('photo')) {
+            $file = $request->file('photo');
+            if (!$file->isValid()) {
+                $errorCode = $file->getError();
+                $errorMsg = match ($errorCode) {
+                    UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'The uploaded photo exceeds the server upload limit. Please select an image under 5MB or compress it.',
+                    UPLOAD_ERR_PARTIAL => 'The photo was only partially uploaded. Please try again.',
+                    UPLOAD_ERR_NO_FILE => 'No photo file was received. Please select an image to upload.',
+                    default => 'Photo upload failed (Error code: ' . $errorCode . '). Please try again.',
+                };
+                return back()->withInput()->with('error', $errorMsg);
+            }
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:150',
+            'category' => 'required|string|in:court,lounge,amenity,event,general',
+            'caption' => 'nullable|string|max:300',
+            'sort_order' => 'nullable|integer|min:0',
+            'is_featured' => 'nullable|boolean',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
+            'image_url' => 'nullable|url|max:500',
+        ]);
+
+        $imagePath = $photo->image_path;
+
+        if ($request->hasFile('photo')) {
+            // Delete old file if present
+            if ($imagePath && Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->delete($imagePath);
+            }
+            if ($imagePath && file_exists(public_path('storage/' . $imagePath))) {
+                @unlink(public_path('storage/' . $imagePath));
+            }
+
+            $path = $request->file('photo')->store('gallery', 'public');
+            $imagePath = $path;
+
+            try {
+                $publicTargetDir = public_path('storage/gallery');
+                if (!file_exists($publicTargetDir)) {
+                    @mkdir($publicTargetDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $path), public_path('storage/' . $path));
+            } catch (\Throwable $e) {}
+        } elseif ($request->filled('image_url')) {
+            $imagePath = trim($request->input('image_url'));
+        }
+
+        $photo->update([
+            'title' => trim($request->input('title')),
+            'category' => $request->input('category'),
+            'image_path' => $imagePath,
+            'caption' => $request->input('caption'),
+            'sort_order' => (int) ($request->input('sort_order') ?: 0),
+            'is_featured' => $request->has('is_featured'),
+        ]);
+
+        return redirect()->route('owner.photos.index')
+            ->with('success', 'Photo details updated successfully!');
     }
 
     /**
@@ -307,8 +478,13 @@ class OwnerController extends Controller
     {
         $photo = FacilityPhoto::findOrFail($id);
 
-        if ($photo->image_path && Storage::disk('public')->exists($photo->image_path)) {
-            Storage::disk('public')->delete($photo->image_path);
+        if ($photo->image_path) {
+            if (Storage::disk('public')->exists($photo->image_path)) {
+                Storage::disk('public')->delete($photo->image_path);
+            }
+            if (file_exists(public_path('storage/' . $photo->image_path))) {
+                @unlink(public_path('storage/' . $photo->image_path));
+            }
         }
 
         $photo->delete();

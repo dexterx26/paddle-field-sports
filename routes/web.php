@@ -75,6 +75,7 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
     Route::middleware('module:photos')->group(function () {
         Route::get('/photos', [OwnerController::class, 'photos'])->name('photos.index');
         Route::post('/photos', [OwnerController::class, 'storePhoto'])->name('photos.store');
+        Route::put('/photos/{id}', [OwnerController::class, 'updatePhoto'])->name('photos.update');
         Route::delete('/photos/{id}', [OwnerController::class, 'destroyPhoto'])->name('photos.destroy');
     });
 
@@ -96,3 +97,24 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
         Route::post('/{id}/toggle-status', [OwnerController::class, 'toggleAssistantStatus'])->name('toggle');
     });
 });
+
+/*
+|--------------------------------------------------------------------------
+| Local Storage Asset Delivery (Fallback for Windows/XAMPP environments without symlinks)
+|--------------------------------------------------------------------------
+*/
+Route::get('/storage/{path}', function (string $path) {
+    if (str_contains($path, '..')) {
+        abort(403);
+    }
+
+    $fullPath = storage_path('app/public/' . $path);
+    if (!file_exists($fullPath)) {
+        abort(404);
+    }
+
+    return response()->file($fullPath, [
+        'Cache-Control' => 'public, max-age=86400',
+    ]);
+})->where('path', '.*')->name('storage.serve');
+
