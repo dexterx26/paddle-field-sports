@@ -97,6 +97,13 @@
                                     <div class="text-[10px] text-theme-muted">Manage courts, prices, approvals</div>
                                 </div>
                             </a>
+                            <a href="{{ route('quick.login', 'assistant') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                                <div>
+                                    <div class="font-bold">Admin Assistant</div>
+                                    <div class="text-[10px] text-theme-muted">Schedule & reservation approvals</div>
+                                </div>
+                            </a>
                             <a href="{{ route('quick.login', 'admin') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
                                 <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                                 <div>
@@ -116,9 +123,9 @@
 
                     @auth
                         @if(Auth::user()->isStaffOrAdmin())
-                            <a href="{{ route('owner.dashboard') }}" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all">
+                            <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all">
                                 <i class="fa-solid fa-gauge-high"></i>
-                                <span>Owner Hub</span>
+                                <span>{{ Auth::user()->isAdminAssistant() ? 'Staff Hub' : 'Owner Hub' }}</span>
                             </a>
                         @else
                             <div class="flex items-center gap-2">
