@@ -172,6 +172,19 @@
             </div>
 
             <div class="flex items-center gap-3.5">
+                <!-- Environment & DB Indicator -->
+                <div>
+                    @if(app()->isProduction())
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30" title="Environment: Production | Database: MySQL">
+                            <i class="fa-solid fa-cloud text-[10px]"></i> PROD (MySQL)
+                        </span>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" title="Environment: Local | Database: SQLite">
+                            <i class="fa-solid fa-laptop-code text-[10px]"></i> DEV (SQLite)
+                        </span>
+                    @endif
+                </div>
+
                 <!-- Reverb Status Indicator -->
                 <div class="reverb-status-indicator">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-700 border border-cyan-500/30">
