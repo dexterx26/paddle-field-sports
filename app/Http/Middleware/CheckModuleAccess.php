@@ -51,6 +51,7 @@ class CheckModuleAccess
                 'approvals' => 'Approval of Reservation',
                 'courts' => 'Courts & Pricing',
                 'photos' => 'Website Photos',
+                'users' => 'User Management',
                 'settings' => 'Payment & Center Config',
             ];
 

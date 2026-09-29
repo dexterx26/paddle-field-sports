@@ -37,6 +37,7 @@ class User extends Authenticatable
     public const MODULE_COURTS = 'courts';
     public const MODULE_PHOTOS = 'photos';
     public const MODULE_SETTINGS = 'settings';
+    public const MODULE_USERS = 'users';
 
     public static function availableModules(): array
     {
@@ -64,6 +65,12 @@ class User extends Authenticatable
                 'description' => 'Upload, replace, and delete facility gallery photos on the public website',
                 'default' => false,
                 'icon' => 'fa-images',
+            ],
+            self::MODULE_USERS => [
+                'name' => 'User Management',
+                'description' => 'View, create, and manage registered player profiles, staff accounts, and account statuses',
+                'default' => false,
+                'icon' => 'fa-users',
             ],
             self::MODULE_SETTINGS => [
                 'name' => 'Payment & Center Config',
@@ -95,6 +102,11 @@ class User extends Authenticatable
     public function isAdminAssistant(): bool
     {
         return $this->role === 'admin_assistant';
+    }
+
+    public function isClient(): bool
+    {
+        return $this->role === 'client';
     }
 
     public function isStaffOrAdmin(): bool
@@ -154,6 +166,9 @@ class User extends Authenticatable
         }
         if ($this->hasModuleAccess('photos')) {
             return 'owner.photos.index';
+        }
+        if ($this->hasModuleAccess('users')) {
+            return 'owner.users.index';
         }
         if ($this->hasModuleAccess('settings')) {
             return 'owner.settings';

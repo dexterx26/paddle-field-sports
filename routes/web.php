@@ -88,6 +88,15 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
     // All Bookings Ledger (Schedule & Reservations)
     Route::get('/bookings', [OwnerController::class, 'allBookings'])->middleware('module:schedule')->name('bookings.index');
 
+    // User Management (Accessible to Owner, Admin, and Admin Assistant with 'users' module access)
+    Route::middleware('module:users')->prefix('users')->name('users.')->group(function () {
+        Route::get('/', [OwnerController::class, 'usersIndex'])->name('index');
+        Route::post('/', [OwnerController::class, 'storeUser'])->name('store');
+        Route::put('/{id}', [OwnerController::class, 'updateUser'])->name('update');
+        Route::delete('/{id}', [OwnerController::class, 'destroyUser'])->name('destroy');
+        Route::post('/{id}/toggle-status', [OwnerController::class, 'toggleUserStatus'])->name('toggle');
+    });
+
     // Admin Assistants Management (Accessible only to Court Owners and System Administrators)
     Route::middleware('role:court_owner,admin')->prefix('assistants')->name('assistants.')->group(function () {
         Route::get('/', [OwnerController::class, 'assistantsIndex'])->name('index');

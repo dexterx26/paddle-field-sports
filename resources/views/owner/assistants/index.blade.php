@@ -158,6 +158,13 @@
                                             </span>
                                         @endif
 
+                                        @if(in_array('users', $perms))
+                                            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                                                <i class="fa-solid fa-users text-[10px]"></i>
+                                                User Management
+                                            </span>
+                                        @endif
+
                                         @if(in_array('settings', $perms))
                                             <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
                                                 <i class="fa-solid fa-sliders text-[10px]"></i>
@@ -465,7 +472,7 @@
         document.getElementById('edit_phone').value = assistant.phone || '';
         document.getElementById('edit_is_active').checked = !!assistant.is_active;
 
-        const availableModules = ['schedule', 'approvals', 'courts', 'photos', 'settings'];
+        const availableModules = ['schedule', 'approvals', 'courts', 'photos', 'users', 'settings'];
         availableModules.forEach(mod => {
             const cb = document.getElementById(`edit_module_${mod}`);
             if (cb) {

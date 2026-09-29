@@ -653,7 +653,7 @@ class OwnerController extends Controller
             'phone' => 'nullable|string|max:50',
             'password' => 'required|string|min:6|confirmed',
             'modules' => 'nullable|array',
-            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings,users',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -701,7 +701,7 @@ class OwnerController extends Controller
             'phone' => 'nullable|string|max:50',
             'password' => 'nullable|string|min:6|confirmed',
             'modules' => 'nullable|array',
-            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings,users',
             'is_active' => 'nullable|boolean',
         ]);
 
@@ -768,5 +768,280 @@ class OwnerController extends Controller
         $assistant->delete();
 
         return back()->with('success', "Admin Assistant '{$name}' has been removed.");
+    }
+
+    /**
+     * User Management Index (Accessible to Court Owner, System Admin, and Admin Assistant with 'users' module access)
+     */
+    public function usersIndex(Request $request)
+    {
+        $settings = VenueSetting::getSettings();
+        $currentUser = Auth::user();
+
+        $allowedRoles = ['admin', 'court_owner', 'admin_assistant', 'client'];
+        $roleFilter = $request->input('role');
+        $statusFilter = $request->input('status');
+        $search = $request->input('search');
+
+        $query = User::with(['courtOwner'])->withCount('bookings');
+
+        // Role filtering
+        if ($roleFilter && in_array($roleFilter, $allowedRoles)) {
+            $query->where('role', $roleFilter);
+        }
+
+        // Status filtering
+        if ($statusFilter === 'active') {
+            $query->where('is_active', true);
+        } elseif ($statusFilter === 'inactive') {
+            $query->where('is_active', false);
+        }
+
+        // Search filtering
+        if ($request->filled('search')) {
+            $search = trim($request->input('search'));
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Ordering: Admins & Owners first, then Assistants, then Clients, ordered by newest
+        $users = $query->orderByRaw("CASE 
+            WHEN role = 'admin' THEN 1 
+            WHEN role = 'court_owner' THEN 2 
+            WHEN role = 'admin_assistant' THEN 3 
+            ELSE 4 END")
+            ->orderBy('id', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        // Counts for tabs & summary
+        $counts = [
+            'all' => User::count(),
+            'client' => User::where('role', 'client')->count(),
+            'admin_assistant' => User::where('role', 'admin_assistant')->count(),
+            'court_owner' => User::where('role', 'court_owner')->count(),
+            'admin' => User::where('role', 'admin')->count(),
+            'active' => User::where('is_active', true)->count(),
+            'inactive' => User::where('is_active', false)->count(),
+        ];
+
+        $availableModules = User::availableModules();
+        $defaultPermissions = User::defaultAssistantPermissions();
+        $courtOwners = User::where('role', 'court_owner')->orderBy('name')->get();
+
+        return view('owner.users.index', compact(
+            'settings',
+            'users',
+            'counts',
+            'roleFilter',
+            'statusFilter',
+            'search',
+            'availableModules',
+            'defaultPermissions',
+            'courtOwners'
+        ));
+    }
+
+    /**
+     * Store new User from User Management
+     */
+    public function storeUser(Request $request)
+    {
+        $currentUser = Auth::user();
+
+        // Validate allowed roles based on actor's permission level
+        $allowedRoles = ['client', 'admin_assistant', 'court_owner', 'admin'];
+        if ($currentUser->isAdminAssistant()) {
+            $allowedRoles = ['client', 'admin_assistant'];
+        } elseif ($currentUser->isOwner()) {
+            $allowedRoles = ['client', 'admin_assistant', 'court_owner'];
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|max:150|unique:users,email',
+            'phone' => 'nullable|string|max:50',
+            'password' => 'required|string|min:6|confirmed',
+            'role' => 'required|string|in:' . implode(',', $allowedRoles),
+            'court_owner_id' => 'nullable|exists:users,id',
+            'modules' => 'nullable|array',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings,users',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $role = $request->input('role');
+        $courtOwnerId = null;
+        $permissions = null;
+
+        if ($role === 'admin_assistant') {
+            $modules = $request->input('modules');
+            if ($modules === null) {
+                $modules = User::defaultAssistantPermissions();
+            }
+            $permissions = array_values($modules);
+
+            if ($request->filled('court_owner_id')) {
+                $courtOwnerId = $request->input('court_owner_id');
+            } elseif ($currentUser->isOwner()) {
+                $courtOwnerId = $currentUser->id;
+            } elseif ($currentUser->isAdminAssistant() && $currentUser->court_owner_id) {
+                $courtOwnerId = $currentUser->court_owner_id;
+            }
+        }
+
+        $user = User::create([
+            'name' => trim($request->input('name')),
+            'email' => strtolower(trim($request->input('email'))),
+            'phone' => $request->input('phone'),
+            'password' => Hash::make($request->input('password')),
+            'role' => $role,
+            'court_owner_id' => $courtOwnerId,
+            'permissions' => $permissions,
+            'is_active' => $request->boolean('is_active', true),
+        ]);
+
+        $roleTitle = match ($role) {
+            'admin' => 'System Administrator',
+            'court_owner' => 'Court Owner',
+            'admin_assistant' => 'Admin Assistant',
+            default => 'Player / Client',
+        };
+
+        return redirect()->route('owner.users.index')
+            ->with('success', "{$roleTitle} '{$user->name}' created successfully!");
+    }
+
+    /**
+     * Update User details, role, permissions, and active status
+     */
+    public function updateUser(Request $request, int $id)
+    {
+        $currentUser = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        // Security restrictions based on role hierarchy
+        if ($currentUser->isAdminAssistant()) {
+            if ($targetUser->isAdmin() || $targetUser->isOwner()) {
+                abort(403, 'You do not have permission to edit administrators or court owners.');
+            }
+            $allowedRoles = ['client', 'admin_assistant'];
+        } elseif ($currentUser->isOwner()) {
+            if ($targetUser->isAdmin()) {
+                abort(403, 'You do not have permission to edit system administrators.');
+            }
+            $allowedRoles = ['client', 'admin_assistant', 'court_owner'];
+        } else {
+            $allowedRoles = ['client', 'admin_assistant', 'court_owner', 'admin'];
+        }
+
+        $request->validate([
+            'name' => 'required|string|max:150',
+            'email' => 'required|email|max:150|unique:users,email,' . $targetUser->id,
+            'phone' => 'nullable|string|max:50',
+            'password' => 'nullable|string|min:6|confirmed',
+            'role' => 'required|string|in:' . implode(',', $allowedRoles),
+            'court_owner_id' => 'nullable|exists:users,id',
+            'modules' => 'nullable|array',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings,users',
+            'is_active' => 'nullable|boolean',
+        ]);
+
+        $newRole = $request->input('role');
+        // Users cannot demote or change their own role
+        if ($targetUser->id === $currentUser->id) {
+            $newRole = $currentUser->role;
+        }
+
+        $updateData = [
+            'name' => trim($request->input('name')),
+            'email' => strtolower(trim($request->input('email'))),
+            'phone' => $request->input('phone'),
+            'role' => $newRole,
+            // Users cannot deactivate their own active account
+            'is_active' => $targetUser->id === $currentUser->id ? true : $request->boolean('is_active', true),
+        ];
+
+        if ($request->filled('password')) {
+            $updateData['password'] = Hash::make($request->input('password'));
+        }
+
+        if ($newRole === 'admin_assistant') {
+            $updateData['permissions'] = array_values($request->input('modules', []));
+            if ($request->filled('court_owner_id')) {
+                $updateData['court_owner_id'] = $request->input('court_owner_id');
+            } elseif ($currentUser->isOwner() && !$targetUser->court_owner_id) {
+                $updateData['court_owner_id'] = $currentUser->id;
+            }
+        } else {
+            $updateData['permissions'] = null;
+            $updateData['court_owner_id'] = null;
+        }
+
+        $targetUser->update($updateData);
+
+        return redirect()->route('owner.users.index')
+            ->with('success', "User '{$targetUser->name}' updated successfully!");
+    }
+
+    /**
+     * Toggle User active/inactive status
+     */
+    public function toggleUserStatus(int $id)
+    {
+        $currentUser = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        if ($targetUser->id === $currentUser->id) {
+            return back()->with('error', 'You cannot deactivate your own account.');
+        }
+
+        if ($currentUser->isAdminAssistant() && ($targetUser->isAdmin() || $targetUser->isOwner())) {
+            abort(403, 'You do not have permission to modify this user account.');
+        }
+
+        if ($currentUser->isOwner() && $targetUser->isAdmin()) {
+            abort(403, 'You do not have permission to modify a system administrator.');
+        }
+
+        $targetUser->update([
+            'is_active' => !$targetUser->is_active,
+        ]);
+
+        $statusText = $targetUser->is_active ? 'activated' : 'deactivated';
+
+        return back()->with('success', "User '{$targetUser->name}' has been {$statusText}.");
+    }
+
+    /**
+     * Delete a User
+     */
+    public function destroyUser(int $id)
+    {
+        $currentUser = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        if ($targetUser->id === $currentUser->id) {
+            return back()->with('error', 'You cannot delete your own account.');
+        }
+
+        if ($targetUser->email === 'admin@paddlefield.com') {
+            return back()->with('error', 'The primary system administrator account cannot be deleted.');
+        }
+
+        if ($currentUser->isAdminAssistant() && ($targetUser->isAdmin() || $targetUser->isOwner())) {
+            abort(403, 'You do not have permission to delete this user.');
+        }
+
+        if ($currentUser->isOwner() && $targetUser->isAdmin()) {
+            abort(403, 'You do not have permission to delete a system administrator.');
+        }
+
+        $name = $targetUser->name;
+        $targetUser->delete();
+
+        return back()->with('success', "User '{$name}' has been permanently deleted.");
     }
 }
