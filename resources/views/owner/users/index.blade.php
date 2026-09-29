@@ -22,7 +22,7 @@
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg">
                 <i class="fa-solid fa-users"></i>
@@ -62,6 +62,24 @@
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['court_owner'] + $counts['admin'] }}</h3>
             </div>
         </div>
+
+        <a href="{{ route('owner.users.index', array_merge(request()->except('status', 'page'), ['status' => $statusFilter === 'has_held' ? null : 'has_held'])) }}"
+            class="p-4 rounded-2xl glass-panel border {{ $statusFilter === 'has_held' ? 'border-amber-500/60 bg-amber-500/10 shadow-lg shadow-amber-500/10' : 'border-stone-200 dark:border-stone-800 hover:border-amber-500/40' }} flex items-center gap-4 transition-all group cursor-pointer"
+            title="Click to filter users with held timeslots">
+            <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div>
+                <p class="text-xs text-theme-muted font-medium flex items-center gap-1.5">
+                    <span>Held Slots</span>
+                    @if($counts['has_held'] > 0)
+                        <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                    @endif
+                </p>
+                <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['total_held_slots'] }}</h3>
+                <p class="text-[10px] text-amber-800 dark:text-amber-300 font-semibold">{{ $counts['has_held'] }} {{ Str::plural('user', $counts['has_held']) }} flagged</p>
+            </div>
+        </a>
     </div>
 
     <!-- Filters & Search Toolbar -->
@@ -113,11 +131,18 @@
             </div>
 
             <div class="flex items-center gap-2 w-full md:w-auto">
+                <select name="sort" onchange="this.form.submit()"
+                    class="px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none">
+                    <option value="" {{ empty($sort) ? 'selected' : '' }}>Role Order</option>
+                    <option value="held_desc" {{ ($sort ?? '') === 'held_desc' ? 'selected' : '' }}>Most Held Timeslots</option>
+                </select>
+
                 <select name="status" onchange="this.form.submit()"
                     class="px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none">
                     <option value="" {{ empty($statusFilter) ? 'selected' : '' }}>All Statuses</option>
                     <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>Active Only ({{ $counts['active'] }})</option>
                     <option value="inactive" {{ $statusFilter === 'inactive' ? 'selected' : '' }}>Deactivated Only ({{ $counts['inactive'] }})</option>
+                    <option value="has_held" {{ $statusFilter === 'has_held' ? 'selected' : '' }}>⚠️ With Held Slots ({{ $counts['has_held'] }})</option>
                 </select>
 
                 <button type="submit"
@@ -125,7 +150,7 @@
                     Filter
                 </button>
 
-                @if($search || $statusFilter || $roleFilter)
+                @if($search || $statusFilter || $roleFilter || !empty($sort))
                     <a href="{{ route('owner.users.index') }}"
                         class="px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-theme-muted hover:text-theme-heading transition-all whitespace-nowrap text-center">
                         Clear
@@ -169,6 +194,7 @@
                             <th class="py-3.5 px-6">Role</th>
                             <th class="py-3.5 px-6">Phone</th>
                             <th class="py-3.5 px-6">Permissions / Activity</th>
+                            <th class="py-3.5 px-6 text-center">Held Timeslots</th>
                             <th class="py-3.5 px-6 text-center">Status</th>
                             <th class="py-3.5 px-6 text-right">Actions</th>
                         </tr>
@@ -186,6 +212,8 @@
                                 if (!is_array($perms)) {
                                     $perms = json_decode($perms, true) ?? [];
                                 }
+                                $heldCount = (int) ($user->held_timeslots_count ?? 0);
+                                $activeHeldCount = (int) ($user->active_held_slots_count ?? 0);
                             @endphp
                             <tr class="hover:bg-stone-100/50 dark:hover:bg-stone-900/50 transition-colors">
                                 <!-- User Info -->
@@ -266,9 +294,17 @@
                                             @endif
                                         </div>
                                     @elseif($user->role === 'client')
-                                        <div class="flex items-center gap-1.5 text-theme-muted">
-                                            <i class="fa-solid fa-calendar-check text-[11px] text-cyan-600 dark:text-cyan-400"></i>
-                                            <span><strong>{{ $user->bookings_count }}</strong> total bookings</span>
+                                        <div class="space-y-1">
+                                            <div class="flex items-center gap-1.5 text-theme-muted">
+                                                <i class="fa-solid fa-calendar-check text-[11px] text-cyan-600 dark:text-cyan-400"></i>
+                                                <span><strong>{{ $user->bookings_count }}</strong> total bookings</span>
+                                            </div>
+                                            @if($heldCount > 0)
+                                                <div class="flex items-center gap-1.5 text-[11px] {{ $heldCount >= 3 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-amber-600 dark:text-amber-400 font-medium' }}">
+                                                    <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                                                    <span>{{ $heldCount }} held {{ Str::plural('slot', $heldCount) }} without payment</span>
+                                                </div>
+                                            @endif
                                         </div>
                                     @elseif($user->role === 'court_owner')
                                         <div class="text-[11px] text-theme-muted">
@@ -278,6 +314,32 @@
                                         <div class="text-[11px] text-amber-600 dark:text-amber-400 font-semibold">
                                             <i class="fa-solid fa-lock-open text-[10px] mr-1"></i> Full System Access
                                         </div>
+                                    @endif
+                                </td>
+
+                                <!-- Held Timeslots Counter -->
+                                <td class="py-4 px-6 text-center whitespace-nowrap">
+                                    @if($heldCount > 0)
+                                        <button type="button"
+                                            onclick="openHeldSlotsModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ $heldCount }}, {{ $activeHeldCount }})"
+                                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm group
+                                                {{ $heldCount >= 3 
+                                                    ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30 hover:bg-rose-500/25' 
+                                                    : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 hover:bg-amber-500/25' }}"
+                                            title="Click to inspect held timeslots and abandoned checkouts">
+                                            <i class="fa-solid fa-clock-rotate-left text-[11px] group-hover:rotate-[-45deg] transition-transform"></i>
+                                            <span><strong>{{ $heldCount }}</strong> held {{ Str::plural('slot', $heldCount) }}</span>
+                                            @if($activeHeldCount > 0)
+                                                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-cyan-500 text-slate-950 uppercase animate-pulse" title="{{ $activeHeldCount }} currently active hold in checkout">
+                                                    {{ $activeHeldCount }} live
+                                                </span>
+                                            @endif
+                                        </button>
+                                    @else
+                                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700">
+                                            <i class="fa-solid fa-check text-[10px] text-emerald-500/70"></i>
+                                            0 held
+                                        </span>
                                     @endif
                                 </td>
 
@@ -647,6 +709,96 @@
         </form>
     </div>
 </div>
+<!-- ========================================== -->
+<!-- HELD TIMESLOTS DETAILS MODAL               -->
+<!-- ========================================== -->
+<div id="heldSlotsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+    <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 shadow-2xl relative overflow-hidden bg-white/95 dark:bg-stone-900/95">
+        <!-- Header -->
+        <div class="p-6 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                </div>
+                <div>
+                    <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
+                        <span>Held Timeslots History</span>
+                    </h3>
+                    <p class="text-xs text-theme-muted" id="modalUserSubtitle">Loading user details...</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeHeldSlotsModal()" class="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content Body -->
+        <div class="p-6 overflow-y-auto space-y-4 flex-1">
+            <!-- Summary KPI Cards -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
+                    <div class="text-[10px] uppercase font-bold text-theme-muted">Total Held Slots</div>
+                    <div class="text-xl font-extrabold text-amber-600 dark:text-amber-400 mt-0.5" id="modalTotalHeldSlots">0</div>
+                    <div class="text-[10px] text-theme-muted" id="modalHeldSessions">0 sessions</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
+                    <div class="text-[10px] uppercase font-bold text-theme-muted">Currently Active</div>
+                    <div class="text-xl font-extrabold text-cyan-600 dark:text-cyan-400 mt-0.5" id="modalActiveHeldSlots">0</div>
+                    <div class="text-[10px] text-theme-muted">In checkout</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
+                    <div class="text-[10px] uppercase font-bold text-theme-muted">Expired (Unpaid)</div>
+                    <div class="text-xl font-extrabold text-stone-600 dark:text-stone-400 mt-0.5" id="modalExpiredHeldSlots">0</div>
+                    <div class="text-[10px] text-theme-muted">Timed out</div>
+                </div>
+                <div class="p-3 rounded-2xl bg-stone-100 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60">
+                    <div class="text-[10px] uppercase font-bold text-theme-muted">Cancelled</div>
+                    <div class="text-xl font-extrabold text-rose-600 dark:text-rose-400 mt-0.5" id="modalCancelledHeldSlots">0</div>
+                    <div class="text-[10px] text-theme-muted">Abandoned</div>
+                </div>
+            </div>
+
+            <!-- Context Alert / Warning -->
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+                <i class="fa-solid fa-circle-exclamation text-amber-500 mt-0.5 shrink-0 text-sm"></i>
+                <div class="leading-relaxed">
+                    <strong class="font-bold">Reservation Hold Monitoring:</strong>
+                    These timeslots were temporarily locked during online checkout but were never completed with payment.
+                    Use this ledger to detect customers who repeatedly hold slots without paying.
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="modalLoadingState" class="py-12 text-center text-theme-muted space-y-2">
+                <i class="fa-solid fa-circle-notch fa-spin text-2xl text-cyan-500"></i>
+                <p class="text-xs">Fetching held timeslot records...</p>
+            </div>
+
+            <!-- Empty State -->
+            <div id="modalEmptyState" class="py-10 text-center text-theme-muted space-y-2 hidden">
+                <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center mx-auto text-xl">
+                    <i class="fa-solid fa-check"></i>
+                </div>
+                <h4 class="text-xs font-bold text-theme-heading">No Held Timeslot Incidents</h4>
+                <p class="text-[11px] max-w-xs mx-auto">This customer has never abandoned or timed out on a held timeslot reservation.</p>
+            </div>
+
+            <!-- Timeslot List -->
+            <div id="modalSlotsList" class="space-y-2 hidden">
+                <!-- Dynamically generated rows -->
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="p-4 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between shrink-0 bg-stone-50 dark:bg-stone-900/60">
+            <span class="text-[11px] text-theme-muted font-mono" id="modalUserContactInfo"></span>
+            <button type="button" onclick="closeHeldSlotsModal()"
+                class="px-4 py-2 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -711,6 +863,107 @@
         }
     }
 
+    function openHeldSlotsModal(userId, userName, userEmail, heldCount, activeCount) {
+        const modal = document.getElementById('heldSlotsModal');
+        modal.classList.remove('hidden');
+
+        document.getElementById('modalUserSubtitle').innerText = `${userName} (${userEmail})`;
+        document.getElementById('modalUserContactInfo').innerText = `User ID: #${userId} • ${userEmail}`;
+        document.getElementById('modalTotalHeldSlots').innerText = heldCount;
+        document.getElementById('modalActiveHeldSlots').innerText = activeCount;
+
+        const loading = document.getElementById('modalLoadingState');
+        const emptyState = document.getElementById('modalEmptyState');
+        const list = document.getElementById('modalSlotsList');
+
+        loading.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        list.classList.add('hidden');
+        list.innerHTML = '';
+
+        fetch(`{{ url('owner/users') }}/${userId}/held-slots`)
+            .then(res => res.json())
+            .then(data => {
+                loading.classList.add('hidden');
+                if (!data.success || !data.bookings || data.bookings.length === 0) {
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                document.getElementById('modalTotalHeldSlots').innerText = data.total_held_slots || 0;
+                document.getElementById('modalActiveHeldSlots').innerText = data.active_held_slots || 0;
+                document.getElementById('modalHeldSessions').innerText = `${data.held_bookings_count || data.bookings.length} reservations`;
+
+                let expiredCount = 0;
+                let cancelledCount = 0;
+
+                let html = '';
+                data.bookings.forEach(b => {
+                    if (b.booking_status === 'cancelled') {
+                        cancelledCount += b.total_hours;
+                    } else if (b.booking_status === 'expired') {
+                        expiredCount += b.total_hours;
+                    }
+
+                    let statusBadge = '';
+                    if (b.is_held) {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 border border-cyan-500/30 uppercase animate-pulse">Live Hold (${Math.max(0, b.remaining_seconds)}s left)</span>`;
+                    } else if (b.booking_status === 'expired') {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-500/15 text-stone-600 dark:text-stone-400 border border-stone-500/30 uppercase">Expired Hold</span>`;
+                    } else if (b.booking_status === 'cancelled') {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase">Cancelled</span>`;
+                    } else {
+                        statusBadge = `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-700 dark:text-amber-400 uppercase">${b.booking_status}</span>`;
+                    }
+
+                    const slotsDisplay = (b.slots && b.slots.length > 0)
+                        ? b.slots.map(s => `<span class="px-1.5 py-0.5 rounded bg-stone-200 dark:bg-stone-800 text-[10px] font-mono">${s}</span>`).join(' ')
+                        : `${b.start_time} - ${b.end_time}`;
+
+                    html += `
+                        <div class="p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-50/70 dark:bg-stone-900/40 hover:border-amber-500/30 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                            <div class="space-y-1">
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="font-mono font-bold text-theme-heading">${b.reference}</span>
+                                    ${statusBadge}
+                                    <span class="text-[11px] text-theme-muted capitalize">• ${b.payment_method} checkout</span>
+                                </div>
+                                <div class="text-[11px] text-theme-muted flex items-center gap-2 flex-wrap">
+                                    <span class="font-semibold text-theme-heading"><i class="fa-solid fa-table-tennis-paddle-ball text-[10px] mr-1 text-cyan-600 dark:text-cyan-400"></i>${b.court_name}</span>
+                                    <span>•</span>
+                                    <span>${b.booking_date}</span>
+                                    <span>•</span>
+                                    <span>${b.total_hours} hour(s)</span>
+                                </div>
+                                <div class="pt-0.5 flex items-center gap-1 flex-wrap">
+                                    <span class="text-[10px] text-theme-muted">Slots held:</span>
+                                    ${slotsDisplay}
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="font-extrabold text-theme-heading text-sm">${b.formatted_amount}</div>
+                                <div class="text-[10px] text-theme-muted mt-0.5">Held on ${b.created_at}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('modalExpiredHeldSlots').innerText = expiredCount;
+                document.getElementById('modalCancelledHeldSlots').innerText = cancelledCount;
+
+                list.innerHTML = html;
+                list.classList.remove('hidden');
+            })
+            .catch(err => {
+                loading.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+            });
+    }
+
+    function closeHeldSlotsModal() {
+        document.getElementById('heldSlotsModal').classList.add('hidden');
+    }
+
     function confirmDeleteUser(id, name, roleLabel) {
         Swal.fire({
             title: `Delete ${roleLabel}?`,
@@ -733,6 +986,7 @@
         if (e.key === 'Escape') {
             closeAddUserModal();
             closeEditUserModal();
+            closeHeldSlotsModal();
         }
     });
 </script>

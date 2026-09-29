@@ -783,18 +783,41 @@ class OwnerController extends Controller
         $statusFilter = $request->input('status');
         $search = $request->input('search');
 
-        $query = User::with(['courtOwner'])->withCount('bookings');
+        $sort = $request->input('sort');
+
+        $query = User::with(['courtOwner'])
+            ->withCount('bookings')
+            ->withSum([
+                'bookings as held_timeslots_count' => function ($q) {
+                    $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
+                }
+            ], 'total_hours')
+            ->withSum([
+                'bookings as active_held_slots_count' => function ($q) {
+                    $q->where('booking_status', 'held')->where('held_until', '>', now());
+                }
+            ], 'total_hours');
 
         // Role filtering
         if ($roleFilter && in_array($roleFilter, $allowedRoles)) {
             $query->where('role', $roleFilter);
         }
 
-        // Status filtering
+        // Status & Held filtering
         if ($statusFilter === 'active') {
             $query->where('is_active', true);
         } elseif ($statusFilter === 'inactive') {
             $query->where('is_active', false);
+        } elseif ($statusFilter === 'has_held') {
+            $query->whereHas('bookings', function ($q) {
+                $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
+            });
+        }
+
+        if ($request->boolean('held_only')) {
+            $query->whereHas('bookings', function ($q) {
+                $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
+            });
         }
 
         // Search filtering
@@ -807,15 +830,20 @@ class OwnerController extends Controller
             });
         }
 
-        // Ordering: Admins & Owners first, then Assistants, then Clients, ordered by newest
-        $users = $query->orderByRaw("CASE 
-            WHEN role = 'admin' THEN 1 
-            WHEN role = 'court_owner' THEN 2 
-            WHEN role = 'admin_assistant' THEN 3 
-            ELSE 4 END")
-            ->orderBy('id', 'desc')
-            ->paginate(15)
-            ->withQueryString();
+        // Ordering: if requested sort by held timeslots desc, otherwise role hierarchy
+        if ($sort === 'held_desc') {
+            $query->orderByDesc('held_timeslots_count')->orderBy('id', 'desc');
+        } else {
+            // Admins & Owners first, then Assistants, then Clients, ordered by newest
+            $query->orderByRaw("CASE 
+                WHEN role = 'admin' THEN 1 
+                WHEN role = 'court_owner' THEN 2 
+                WHEN role = 'admin_assistant' THEN 3 
+                ELSE 4 END")
+                ->orderBy('id', 'desc');
+        }
+
+        $users = $query->paginate(15)->withQueryString();
 
         // Counts for tabs & summary
         $counts = [
@@ -826,6 +854,12 @@ class OwnerController extends Controller
             'admin' => User::where('role', 'admin')->count(),
             'active' => User::where('is_active', true)->count(),
             'inactive' => User::where('is_active', false)->count(),
+            'has_held' => User::whereHas('bookings', function ($q) {
+                $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
+            })->count(),
+            'total_held_slots' => (int) Booking::whereNotNull('user_id')
+                ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
+                ->sum('total_hours'),
         ];
 
         $availableModules = User::availableModules();
@@ -839,6 +873,7 @@ class OwnerController extends Controller
             'roleFilter',
             'statusFilter',
             'search',
+            'sort',
             'availableModules',
             'defaultPermissions',
             'courtOwners'
@@ -1043,5 +1078,55 @@ class OwnerController extends Controller
         $targetUser->delete();
 
         return back()->with('success', "User '{$name}' has been permanently deleted.");
+    }
+
+    /**
+     * Retrieve held timeslots details for a specific user (Modal / AJAX)
+     */
+    public function userHeldSlots(int $id)
+    {
+        $user = User::findOrFail($id);
+
+        $heldBookings = $user->bookings()
+            ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
+            ->with(['court', 'slots'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($b) {
+                return [
+                    'id' => $b->id,
+                    'reference' => $b->booking_reference,
+                    'court_name' => $b->court?->name ?? 'Paddle Court',
+                    'booking_date' => $b->booking_date ? $b->booking_date->format('M d, Y') : '—',
+                    'start_time' => $b->start_time,
+                    'end_time' => $b->end_time,
+                    'total_hours' => (int) $b->total_hours,
+                    'slots' => $b->slots->pluck('slot_time')->toArray(),
+                    'payment_method' => $b->payment_method,
+                    'payment_status' => $b->payment_status,
+                    'booking_status' => $b->booking_status,
+                    'is_held' => $b->isHeld(),
+                    'remaining_seconds' => $b->remaining_hold_seconds,
+                    'total_amount' => (float) $b->total_amount,
+                    'formatted_amount' => $b->formatted_amount,
+                    'created_at' => $b->created_at ? $b->created_at->format('M d, Y h:i A') : '—',
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'phone' => $user->phone ?: '—',
+                'role' => $user->role,
+                'is_active' => (bool) $user->is_active,
+            ],
+            'total_held_slots' => $user->held_timeslots_count,
+            'active_held_slots' => $user->active_held_slots_count,
+            'held_bookings_count' => $user->held_bookings_count,
+            'bookings' => $heldBookings,
+        ]);
     }
 }

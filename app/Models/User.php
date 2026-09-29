@@ -191,6 +191,60 @@ class User extends Authenticatable
         return $this->hasMany(Booking::class);
     }
 
+    public function bookingSlots()
+    {
+        return $this->hasManyThrough(BookingSlot::class, Booking::class);
+    }
+
+    public function heldBookings()
+    {
+        return $this->hasMany(Booking::class)->whereIn('booking_status', ['held', 'expired', 'cancelled']);
+    }
+
+    /**
+     * Total number of held timeslots for this user (including currently held, expired, and cancelled holds).
+     * Corresponds to reservations placed on hold where payment was not completed or is in-progress.
+     */
+    public function getHeldTimeslotsCountAttribute(): int
+    {
+        if (array_key_exists('held_timeslots_count', $this->attributes) && $this->attributes['held_timeslots_count'] !== null) {
+            return (int) $this->attributes['held_timeslots_count'];
+        }
+
+        return (int) $this->bookings()
+            ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
+            ->sum('total_hours');
+    }
+
+    /**
+     * Number of currently active held timeslots (within holding window, not yet expired)
+     */
+    public function getActiveHeldSlotsCountAttribute(): int
+    {
+        if (array_key_exists('active_held_slots_count', $this->attributes) && $this->attributes['active_held_slots_count'] !== null) {
+            return (int) $this->attributes['active_held_slots_count'];
+        }
+
+        return (int) $this->bookings()
+            ->where('booking_status', 'held')
+            ->where('held_until', '>', now())
+            ->sum('total_hours');
+    }
+
+    /**
+     * Total count of distinct held booking sessions
+     */
+    public function getHeldBookingsCountAttribute(): int
+    {
+        if (array_key_exists('held_bookings_count', $this->attributes) && $this->attributes['held_bookings_count'] !== null) {
+            return (int) $this->attributes['held_bookings_count'];
+        }
+
+        return (int) $this->bookings()
+            ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
+            ->count();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *
