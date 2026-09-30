@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingApiController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OwnerController;
+use App\Http\Controllers\SocialAuthController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -46,6 +47,12 @@ Route::get('/register', [AuthController::class, 'showRegister'])->name('register
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
+// Social Authentication (Google / Gmail & Facebook OAuth)
+Route::get('/auth/{provider}/redirect', [SocialAuthController::class, 'redirect'])->name('auth.social.redirect');
+Route::get('/auth/{provider}/callback', [SocialAuthController::class, 'callback'])->name('auth.social.callback');
+Route::get('/auth/{provider}/mock', [SocialAuthController::class, 'showMock'])->name('auth.social.mock');
+Route::post('/auth/{provider}/mock', [SocialAuthController::class, 'processMock'])->name('auth.social.mock.process');
+
 /*
 |--------------------------------------------------------------------------
 | Protected Owner & Admin Portal
@@ -86,7 +93,11 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
     });
 
     // All Bookings Ledger (Schedule & Reservations)
-    Route::get('/bookings', [OwnerController::class, 'allBookings'])->middleware('module:schedule')->name('bookings.index');
+    Route::middleware('module:schedule')->group(function () {
+        Route::get('/bookings', [OwnerController::class, 'allBookings'])->name('bookings.index');
+        Route::post('/bookings/reserve', [OwnerController::class, 'manualReserve'])->name('bookings.reserve');
+        Route::post('/bookings/{id}/cancel', [OwnerController::class, 'cancelBooking'])->name('bookings.cancel');
+    });
 
     // User Management (Accessible to Owner, Admin, and Admin Assistant with 'users' module access)
     Route::middleware('module:users')->prefix('users')->name('users.')->group(function () {

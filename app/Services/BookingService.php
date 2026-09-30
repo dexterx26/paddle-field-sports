@@ -115,11 +115,6 @@ class BookingService
         $settings = VenueSetting::getSettings();
         $courts = Court::where('is_active', true)->orderBy('court_number')->get();
 
-        $startHour = (int) substr($settings->opening_time, 0, 2);
-        $closingHour = (int) substr($settings->closing_time, 0, 2);
-        // If closing time is 00:00 (12:00 AM midnight), it represents the 24th hour of the day
-        $endHour = ($closingHour === 0 || $settings->closing_time === '00:00') ? 24 : $closingHour;
-
         // Fetch all non-released slots for this date
         $occupiedSlots = BookingSlot::whereDate('date', $date)
             ->whereIn('status', ['held', 'pending_approval', 'confirmed'])
@@ -135,7 +130,11 @@ class BookingService
             $courtOccupied = $occupiedSlots->get($court->id, collect())->keyBy('slot_time');
             $hours = [];
 
-            for ($h = $startHour; $h < $endHour; $h++) {
+            // Per-court operating hours: defaults to venue settings if not set
+            $courtStartHour = $court->start_hour;
+            $courtEndHour = $court->end_hour;
+
+            for ($h = $courtStartHour; $h < $courtEndHour; $h++) {
                 $timeKey = sprintf('%02d:00', $h);
                 $slot = $courtOccupied->get($timeKey);
 
@@ -189,6 +188,9 @@ class BookingService
                     'formatted_price' => $court->formatted_price,
                     'max_players' => $court->max_players,
                     'display_image' => $court->display_image,
+                    'opening_time' => $court->effective_opening_time,
+                    'closing_time' => $court->effective_closing_time,
+                    'operating_hours' => $court->operating_hours_label,
                 ],
                 'slots' => $hours,
             ];
@@ -198,11 +200,23 @@ class BookingService
     }
 
     /**
-     * Check if a set of slots is free
+     * Check if a set of slots is free and within court operating hours
      */
     public function areSlotsAvailable(int $courtId, string $date, array $slots): bool
     {
         $this->releaseExpiredHolds();
+
+        $court = Court::find($courtId);
+        if ($court) {
+            $courtStart = $court->start_hour;
+            $courtEnd = $court->end_hour;
+            foreach ($slots as $slot) {
+                $h = (int) substr($slot, 0, 2);
+                if ($h < $courtStart || $h >= $courtEnd) {
+                    return false;
+                }
+            }
+        }
 
         $conflict = BookingSlot::where('court_id', $courtId)
             ->whereDate('date', $date)
@@ -528,5 +542,159 @@ class BookingService
         }
 
         return true;
+    }
+
+    /**
+     * Reserve court manually by Court Owner / Admin (offline / whole-court rental)
+     */
+    public function manualReserveCourt(array $data, int $approvedByUserId): Booking
+    {
+        $this->releaseExpiredHolds();
+
+        $courtId = (int) $data['court_id'];
+        $date = $data['date'];
+        $slots = $data['slots'];
+        $court = Court::findOrFail($courtId);
+
+        if (empty($slots)) {
+            throw new \Exception('Please select at least one timeslot for this reservation.');
+        }
+
+        // Conflict check against active reservations
+        $conflicts = BookingSlot::where('court_id', $courtId)
+            ->whereDate('date', $date)
+            ->whereIn('slot_time', $slots)
+            ->where(function ($q) {
+                $q->whereIn('status', ['confirmed', 'pending_approval'])
+                  ->orWhere(function ($sub) {
+                      $sub->where('status', 'held')
+                          ->where('held_until', '>', now());
+                  });
+            })
+            ->pluck('slot_time')
+            ->toArray();
+
+        if (!empty($conflicts)) {
+            $formattedConflicts = array_map(function ($s) {
+                return Carbon::createFromFormat('H:i', $s)->format('g:i A');
+            }, $conflicts);
+            throw new \Exception('The following timeslot(s) are already booked: ' . implode(', ', $formattedConflicts) . '. Please unselect them.');
+        }
+
+        sort($slots);
+        $startTime = reset($slots);
+        $lastSlot = end($slots);
+        $endHour = (int) substr($lastSlot, 0, 2) + 1;
+        $endTime = sprintf('%02d:00', $endHour);
+        $totalHours = count($slots);
+        $ratePerHour = $court->price_per_hour;
+
+        $totalAmount = (isset($data['total_amount']) && $data['total_amount'] !== '' && $data['total_amount'] !== null)
+            ? (float) $data['total_amount']
+            : ($ratePerHour * $totalHours);
+
+        $reference = 'PF-OWN-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+
+        return DB::transaction(function () use (
+            $reference, $data, $court, $date, $startTime, $endTime,
+            $totalHours, $ratePerHour, $totalAmount, $slots, $approvedByUserId
+        ) {
+            $booking = Booking::create([
+                'booking_reference' => $reference,
+                'user_id' => $data['user_id'] ?? null,
+                'customer_name' => $data['customer_name'],
+                'customer_phone' => $data['customer_phone'],
+                'customer_email' => $data['customer_email'] ?? null,
+                'court_id' => $court->id,
+                'booking_date' => $date,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'total_hours' => $totalHours,
+                'rate_per_hour' => $ratePerHour,
+                'total_amount' => $totalAmount,
+                'players_count' => $data['players_count'] ?? $court->max_players,
+                'notes' => $data['notes'] ?? 'Reserved by Court Owner / Whole-court rental (offline)',
+                'payment_method' => $data['payment_method'] ?? 'walk_in_offline',
+                'payment_status' => $data['payment_status'] ?? 'paid',
+                'booking_status' => 'confirmed',
+                'approved_by' => $approvedByUserId,
+                'approved_at' => now(),
+            ]);
+
+            foreach ($slots as $time) {
+                BookingSlot::create([
+                    'booking_id' => $booking->id,
+                    'court_id' => $court->id,
+                    'date' => $date,
+                    'slot_time' => $time,
+                    'rate_per_hour' => $ratePerHour,
+                    'status' => 'confirmed',
+                    'held_until' => null,
+                ]);
+            }
+
+            try {
+                broadcast(new CourtSlotsUpdated(
+                    $date,
+                    $court->id,
+                    $slots,
+                    'confirmed',
+                    $reference,
+                    "Court {$court->name} reserved by Court Owner."
+                ));
+            } catch (\Throwable $e) {
+                Log::warning('Reverb broadcast error: ' . $e->getMessage());
+            }
+
+            return $booking;
+        });
+    }
+
+    /**
+     * Cancel an existing reservation of any user (called by Court Owner / Admin)
+     */
+    public function cancelReservation(int|Booking $booking, ?string $reason = null, ?int $cancelledByUserId = null): Booking
+    {
+        if (is_numeric($booking)) {
+            $booking = Booking::with(['court', 'slots'])->findOrFail($booking);
+        }
+
+        $booking->update([
+            'booking_status' => 'cancelled',
+            'rejection_reason' => $reason ? "Cancelled by Court Owner: {$reason}" : 'Cancelled by Court Owner.',
+            'approved_by' => $cancelledByUserId ?? $booking->approved_by,
+            'held_until' => null,
+        ]);
+
+        BookingSlot::where('booking_id', $booking->id)->update([
+            'status' => 'released',
+            'held_until' => null,
+        ]);
+
+        // Expire PayMongo session if active
+        if ($booking->payment_method === 'paymongo' && !empty($booking->paymongo_checkout_id)) {
+            try {
+                $paymongo = app(PayMongoService::class);
+                $paymongo->expireCheckoutSession($booking->paymongo_checkout_id);
+            } catch (\Throwable $e) {}
+        }
+
+        $slotTimes = $booking->slots()->pluck('slot_time')->toArray();
+        $date = $booking->booking_date->format('Y-m-d');
+
+        try {
+            broadcast(new CourtSlotsUpdated(
+                $date,
+                $booking->court_id,
+                $slotTimes,
+                'released',
+                null,
+                "Reservation {$booking->booking_reference} on {$booking->court->name} was cancelled by Court Owner."
+            ));
+        } catch (\Throwable $e) {
+            Log::warning('Reverb broadcast error: ' . $e->getMessage());
+        }
+
+        return $booking;
     }
 }

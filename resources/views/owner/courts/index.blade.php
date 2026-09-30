@@ -73,6 +73,13 @@
                                 <span class="font-black text-cyan-600 dark:text-cyan-400 text-base">{{ $court->formatted_price }}<span class="text-xs text-theme-muted font-normal">/hr</span></span>
                             </div>
                             <div class="flex justify-between items-center">
+                                <span class="text-theme-muted">Available Hours:</span>
+                                <span class="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock text-[10px]"></i>
+                                    {{ $court->operating_hours_label }}
+                                </span>
+                            </div>
+                            <div class="flex justify-between items-center">
                                 <span class="text-theme-muted">Max Players:</span>
                                 <span class="font-bold text-theme-heading">{{ $court->max_players }} Players</span>
                             </div>
@@ -171,6 +178,42 @@
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
                     <span class="text-[10px] text-theme-muted">Players allowed per court</span>
                 </div>
+            </div>
+
+            <!-- AVAILABLE TIME SLOTS / OPERATING HOURS (Req #1) -->
+            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <label class="block font-bold text-cyan-800 dark:text-cyan-400 text-xs">
+                        <i class="fa-regular fa-clock"></i> Available Operating Time Slots <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[10px] text-theme-muted font-medium">Daily bookable range</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-theme-body mb-1">Opens At (Start Time)</label>
+                        <select name="opening_time" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500">
+                            @for($i = 0; $i < 24; $i++)
+                                @php $val = sprintf('%02d:00', $i); $lbl = \Carbon\Carbon::createFromFormat('H:i', $val)->format('g:i A'); @endphp
+                                <option value="{{ $val }}" {{ $val === '06:00' ? 'selected' : '' }}>{{ $lbl }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-theme-body mb-1">Closes At (End Time)</label>
+                        <select name="closing_time" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500">
+                            @for($i = 1; $i <= 24; $i++)
+                                @php 
+                                    $val = ($i === 24) ? '00:00' : sprintf('%02d:00', $i); 
+                                    $lbl = ($i === 24) ? '12:00 AM Midnight' : \Carbon\Carbon::createFromFormat('H:i', $val)->format('g:i A');
+                                @endphp
+                                <option value="{{ $val }}" {{ ($val === '00:00') ? 'selected' : '' }}>{{ $lbl }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                </div>
+                <p class="text-[10px] text-theme-muted">
+                    Example: Select <strong>6:00 AM to 5:00 PM</strong> for daytime hours, or <strong>6:00 AM to 12:00 AM Midnight</strong> for all-day.
+                </p>
             </div>
 
             <div>
@@ -273,6 +316,42 @@
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
                     <span class="text-[10px] text-theme-muted">Players per booking</span>
                 </div>
+            </div>
+
+            <!-- AVAILABLE TIME SLOTS / OPERATING HOURS (Req #1) -->
+            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <label class="block font-bold text-cyan-800 dark:text-cyan-400 text-xs">
+                        <i class="fa-regular fa-clock"></i> Available Operating Time Slots <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[10px] text-theme-muted font-medium">Daily bookable range</span>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[11px] font-semibold text-theme-body mb-1">Opens At (Start Time)</label>
+                        <select name="opening_time" id="editCourtOpeningTime" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500">
+                            @for($i = 0; $i < 24; $i++)
+                                @php $val = sprintf('%02d:00', $i); $lbl = \Carbon\Carbon::createFromFormat('H:i', $val)->format('g:i A'); @endphp
+                                <option value="{{ $val }}">{{ $lbl }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-semibold text-theme-body mb-1">Closes At (End Time)</label>
+                        <select name="closing_time" id="editCourtClosingTime" class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500">
+                            @for($i = 1; $i <= 24; $i++)
+                                @php 
+                                    $val = ($i === 24) ? '00:00' : sprintf('%02d:00', $i); 
+                                    $lbl = ($i === 24) ? '12:00 AM Midnight' : \Carbon\Carbon::createFromFormat('H:i', $val)->format('g:i A');
+                                @endphp
+                                <option value="{{ $val }}">{{ $lbl }}</option>
+                            @endfor
+                        </select>
+                    </div>
+                </div>
+                <p class="text-[10px] text-theme-muted">
+                    Example: Select <strong>6:00 AM to 5:00 PM</strong> for daytime hours, or <strong>6:00 AM to 12:00 AM Midnight</strong> for all-day.
+                </p>
             </div>
 
             <div>
@@ -386,6 +465,8 @@
         document.getElementById('editCourtPrice').value = court.price_per_hour || '150.00';
         document.getElementById('editCourtMaxPlayers').value = court.max_players || 4;
         document.getElementById('editCourtDesc').value = court.description || '';
+        document.getElementById('editCourtOpeningTime').value = court.opening_time || '06:00';
+        document.getElementById('editCourtClosingTime').value = court.closing_time || '00:00';
         document.getElementById('editCourtActive').checked = Boolean(court.is_active);
         document.getElementById('editCourtImageUrl').value = (court.image_path && court.image_path.startsWith('http')) ? court.image_path : '';
 

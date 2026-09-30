@@ -177,6 +177,8 @@ class OwnerController extends Controller
             'description' => 'nullable|string|max:500',
             'type' => 'required|in:indoor,outdoor',
             'surface_type' => 'required|string|max:100',
+            'opening_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
+            'closing_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'price_per_hour' => 'required|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
@@ -207,6 +209,8 @@ class OwnerController extends Controller
             'description' => $data['description'] ?? null,
             'type' => $data['type'],
             'surface_type' => $data['surface_type'],
+            'opening_time' => $data['opening_time'] ?? '06:00',
+            'closing_time' => $data['closing_time'] ?? '00:00',
             'price_per_hour' => $data['price_per_hour'],
             'max_players' => $data['max_players'],
             'image_path' => $imagePath,
@@ -247,6 +251,8 @@ class OwnerController extends Controller
             'description' => 'nullable|string|max:500',
             'type' => 'required|in:indoor,outdoor',
             'surface_type' => 'required|string|max:100',
+            'opening_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
+            'closing_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'price_per_hour' => 'required|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
@@ -260,6 +266,8 @@ class OwnerController extends Controller
             'description' => $data['description'] ?? null,
             'type' => $data['type'],
             'surface_type' => $data['surface_type'],
+            'opening_time' => $data['opening_time'] ?? '06:00',
+            'closing_time' => $data['closing_time'] ?? '00:00',
             'price_per_hour' => $data['price_per_hour'], // New rate applied only for future bookings!
             'max_players' => $data['max_players'],
             'is_active' => $request->has('is_active'),
@@ -561,7 +569,7 @@ class OwnerController extends Controller
         $settings = VenueSetting::getSettings();
         $courts = Court::orderBy('court_number')->get();
 
-        $allowedStatuses = ['confirmed', 'pending_approval', 'held', 'rejected', 'expired'];
+        $allowedStatuses = ['confirmed', 'pending_approval', 'held', 'cancelled', 'rejected', 'expired'];
 
         // Default status is 'confirmed' unless explicitly provided
         if ($request->has('status')) {
@@ -602,11 +610,74 @@ class OwnerController extends Controller
             'confirmed' => Booking::where('booking_status', 'confirmed')->count(),
             'pending_approval' => Booking::where('booking_status', 'pending_approval')->count(),
             'held' => Booking::where('booking_status', 'held')->count(),
+            'cancelled' => Booking::where('booking_status', 'cancelled')->count(),
             'rejected' => Booking::where('booking_status', 'rejected')->count(),
             'expired' => Booking::where('booking_status', 'expired')->count(),
         ];
 
         return view('owner.bookings.index', compact('settings', 'courts', 'bookings', 'status', 'statusCounts'));
+    }
+
+    /**
+     * Reserve / Block Court manually by Court Owner / Admin (offline / whole-court rental)
+     */
+    public function manualReserve(Request $request)
+    {
+        $data = $request->validate([
+            'court_id' => 'required|exists:courts,id',
+            'date' => 'required|date',
+            'slot_mode' => 'required|in:all_day,custom',
+            'slots' => 'nullable|array',
+            'customer_name' => 'required|string|max:100',
+            'customer_phone' => 'required|string|max:25',
+            'customer_email' => 'nullable|email|max:100',
+            'players_count' => 'nullable|integer|min:1|max:20',
+            'total_amount' => 'nullable|numeric|min:0',
+            'payment_status' => 'required|in:paid,unpaid',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $court = Court::findOrFail($data['court_id']);
+
+        if ($data['slot_mode'] === 'all_day') {
+            $slots = [];
+            $startHour = $court->start_hour;
+            $endHour = $court->end_hour;
+            for ($h = $startHour; $h < $endHour; $h++) {
+                $slots[] = sprintf('%02d:00', $h);
+            }
+            $data['slots'] = $slots;
+        } else {
+            if (empty($data['slots'])) {
+                return back()->withInput()->with('error', 'Please select at least one timeslot when choosing Specific Time Slots.');
+            }
+        }
+
+        try {
+            $booking = $this->bookingService->manualReserveCourt($data, Auth::id());
+
+            return back()->with('success', "Court {$court->name} reserved successfully for {$booking->customer_name} ({$booking->booking_reference}) on {$booking->booking_date->format('M d, Y')} from " . date('g:i A', strtotime($booking->start_time)) . " to " . date('g:i A', strtotime($booking->end_time)) . "!");
+        } catch (\Exception $e) {
+            return back()->withInput()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Cancel an existing reservation of any user
+     */
+    public function cancelBooking(Request $request, int $id)
+    {
+        $booking = Booking::with('court')->findOrFail($id);
+
+        if ($booking->booking_status === 'cancelled') {
+            return back()->with('error', "Booking {$booking->booking_reference} is already cancelled.");
+        }
+
+        $reason = $request->input('reason', 'Cancelled by Court Owner.');
+
+        $this->bookingService->cancelReservation($booking, $reason, Auth::id());
+
+        return back()->with('success', "Reservation {$booking->booking_reference} for {$booking->customer_name} on {$booking->court->name} has been CANCELLED and timeslots released.");
     }
 
     /**

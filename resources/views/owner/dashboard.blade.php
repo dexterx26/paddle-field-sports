@@ -280,6 +280,15 @@
                                 <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400"></i>
                                 <span>Details</span>
                             </button>
+
+                            @if(!in_array($tb->booking_status, ['cancelled', 'rejected', 'expired']))
+                                <button type="button"
+                                    onclick="openDashboardCancelModal({{ $tb->id }}, '{{ addslashes($tb->booking_reference) }}', '{{ addslashes($tb->customer_name) }}', '{{ addslashes($tb->court->name) }}')"
+                                    class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 text-xs transition-colors cursor-pointer"
+                                    title="Cancel Reservation of this user">
+                                    <i class="fa-solid fa-ban text-[11px]"></i>
+                                </button>
+                            @endif
                         </div>
                     </div>
                 @empty
@@ -518,13 +527,27 @@
                     </button>
                 </div>
 
-                <button type="button" onclick="closeReservationModal()" class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors cursor-pointer">
-                    Close
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="resModalCancelBtn" onclick="dashboardCancelCurrentModalBooking()"
+                        class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                        title="Cancel reservation and release slots">
+                        <i class="fa-solid fa-ban"></i> Cancel Reservation
+                    </button>
+
+                    <button type="button" onclick="closeReservationModal()" class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors cursor-pointer">
+                        Close
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- HIDDEN FORM FOR DASHBOARD CANCELLATION -->
+<form id="dashboardCancelForm" method="POST" action="" class="hidden">
+    @csrf
+    <input type="hidden" name="reason" id="dashboardCancelReason">
+</form>
 
 <!-- High-Resolution Receipt Preview Modal -->
 <div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
@@ -697,10 +720,66 @@
             pendingActions.classList.add('hidden');
         }
 
+        // Cancel button visibility
+        const cancelBtn = document.getElementById('resModalCancelBtn');
+        if (cancelBtn) {
+            if (['cancelled', 'rejected', 'expired'].includes(b.booking_status) || b.is_past) {
+                cancelBtn.classList.add('hidden');
+            } else {
+                cancelBtn.classList.remove('hidden');
+            }
+        }
+
         // Open Modal
         const modal = document.getElementById('reservationDetailsModal');
         modal.classList.remove('opacity-0', 'pointer-events-none');
         modal.classList.add('opacity-100', 'pointer-events-auto');
+    }
+
+    function openDashboardCancelModal(id, reference, customerName, courtName) {
+        Swal.fire({
+            title: `Cancel Reservation ${reference}?`,
+            html: `
+                <div class="text-left space-y-2 text-xs text-stone-600 dark:text-stone-300">
+                    <p>Are you sure you want to cancel the reservation for <strong class="text-stone-900 dark:text-white">${customerName}</strong> on <strong class="text-stone-900 dark:text-white">${courtName}</strong>?</p>
+                    <p class="text-rose-500 font-semibold">All reserved timeslots will immediately be released and become available for other players on the website.</p>
+                </div>
+            `,
+            input: 'textarea',
+            inputPlaceholder: 'Enter cancellation reason (optional, e.g. Customer requested cancellation / Maintenance)...',
+            inputAttributes: {
+                'aria-label': 'Cancellation reason'
+            },
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-ban"></i> Yes, Cancel Reservation',
+            cancelButtonText: 'Keep Reservation',
+            customClass: {
+                popup: 'rounded-3xl',
+                confirmButton: 'rounded-xl font-bold text-xs px-4 py-2.5',
+                cancelButton: 'rounded-xl font-bold text-xs px-4 py-2.5'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('dashboardCancelForm');
+                form.action = `{{ url('owner/bookings') }}/${id}/cancel`;
+                document.getElementById('dashboardCancelReason').value = result.value || 'Cancelled by Court Owner';
+                form.submit();
+            }
+        });
+    }
+
+    function dashboardCancelCurrentModalBooking() {
+        if (!currentModalBooking) return;
+        closeReservationModal();
+        openDashboardCancelModal(
+            currentModalBooking.id,
+            currentModalBooking.reference,
+            currentModalBooking.customer_name,
+            currentModalBooking.court_name
+        );
     }
 
     function closeReservationModal() {

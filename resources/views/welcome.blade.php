@@ -1888,7 +1888,7 @@
         bookingState.holdTimerInterval = setInterval(updateTimer, 1000);
     }
 
-    // 5. Live Reverb Synchronization & Periodic Availability Sync
+    // 5. Live Real-Time Reverb WebSocket Synchronization (No HTTP Polling)
     function listenToReverbUpdates() {
         // Handle incoming court update payload
         function applyCourtSlotUpdate(courtId, slotTime, status, remainingSeconds = {{ (int) ($settings->holding_duration_seconds ?: 120) }}) {
@@ -1897,14 +1897,30 @@
 
             const normalizedStatus = (status === 'released') ? 'available' : status;
             slotBtn.setAttribute('data-status', normalizedStatus);
+
+            // Check if THIS slot is currently selected by the active user in the booking engine
+            const isCurrentlySelectedByMe = (
+                bookingState.selectedCourtId === courtId &&
+                bookingState.selectedSlots.includes(slotTime)
+            );
+
             slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold');
 
             if (normalizedStatus === 'available') {
                 slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold');
-                slotBtn.classList.add('slot-available', 'cursor-pointer');
                 slotBtn.disabled = false;
                 slotBtn.title = '';
-                slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+
+                if (isCurrentlySelectedByMe) {
+                    // PRESERVE SELECTION! Do not unselect user's chosen timeslots during updates
+                    slotBtn.classList.add('slot-selected');
+                    const label = slotBtn.querySelector('.slot-status-label');
+                    if (label) label.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
+                } else {
+                    slotBtn.classList.add('slot-available', 'cursor-pointer');
+                    const label = slotBtn.querySelector('.slot-status-label');
+                    if (label) label.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                }
 
                 // If my hold was released, clear local state
                 if (isSlotHeldByMe(courtId, slotTime)) {
@@ -1934,8 +1950,8 @@
                     const s = rem % 60;
                     slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span></span>`;
 
-                    // If another user had this slot selected (and not the current active hold owner), silently update selection
-                    if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
+                    // Only if ANOTHER customer held this slot while we had it selected, eject it from selection
+                    if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
                         bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                         renderSelectionUI();
                     }
@@ -1947,7 +1963,7 @@
                 slotBtn.title = 'Pending approval';
                 slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-indigo-700 dark:text-indigo-300">In Review</span>';
 
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
+                if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                     renderSelectionUI();
                 }
@@ -1962,17 +1978,17 @@
                     clearActiveHold();
                 }
 
-                if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(slotTime) && !bookingState.activeHoldRef) {
+                if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
                     bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
                     renderSelectionUI();
                 }
             }
         }
 
-        // WebSockets Reverb listener
+        // WebSockets Reverb listener: pure real-time push events without HTTP polling
         if (typeof window.subscribeCourtUpdates === 'function') {
             window.subscribeCourtUpdates((data) => {
-                const selectedDate = document.getElementById('selectedDateInput').value;
+                const selectedDate = document.getElementById('selectedDateInput')?.value;
                 if (data.date === selectedDate) {
                     let remSec = {{ (int) ($settings->holding_duration_seconds ?: 120) }};
                     if (data.remaining_seconds != null && data.remaining_seconds !== undefined) {
@@ -1981,34 +1997,12 @@
                         remSec = Math.max(0, data.held_until_timestamp - Math.floor(Date.now() / 1000));
                     }
 
-                    data.slots.forEach(slotTime => {
+                    (data.slots || []).forEach(slotTime => {
                         applyCourtSlotUpdate(data.court_id, slotTime, data.status, remSec);
                     });
                 }
             });
         }
-
-        // Fallback live polling (every 6 seconds) for high reliability
-        setInterval(async () => {
-            const selectedDate = document.getElementById('selectedDateInput')?.value;
-            if (!selectedDate) return;
-
-            try {
-                const res = await fetch(`/api/availability?date=${selectedDate}`);
-                const data = await res.json();
-                if (data.success && Array.isArray(data.courts)) {
-                    data.courts.forEach(courtItem => {
-                        const courtId = courtItem.court ? courtItem.court.id : courtItem.id;
-                        const slotsList = Array.isArray(courtItem.slots) ? courtItem.slots : Object.values(courtItem.slots || {});
-                        slotsList.forEach(slot => {
-                            applyCourtSlotUpdate(courtId, slot.time, slot.status, slot.remaining_seconds || 0);
-                        });
-                    });
-                }
-            } catch (e) {
-                // Silently ignore network hiccup during background polling
-            }
-        }, 6000);
     }
 
     // 6. Timers for held slots on grid & banner synchronization
@@ -2039,14 +2033,23 @@
                 } else {
                     const slotBtn = el.closest('.court-slot');
                     if (slotBtn) {
+                        const courtId = parseInt(slotBtn.getAttribute('data-court-id'));
+                        const slotTime = slotBtn.getAttribute('data-slot-time');
+                        const isCurrentlySelected = (
+                            bookingState.selectedCourtId === courtId &&
+                            bookingState.selectedSlots.includes(slotTime)
+                        );
                         slotBtn.setAttribute('data-status', 'available');
                         slotBtn.classList.remove('slot-held', 'slot-my-hold', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                        slotBtn.classList.add('slot-available', 'cursor-pointer');
                         slotBtn.disabled = false;
                         slotBtn.title = '';
                         const labelEl = slotBtn.querySelector('.slot-status-label');
-                        if (labelEl) {
-                            labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                        if (isCurrentlySelected) {
+                            slotBtn.classList.add('slot-selected');
+                            if (labelEl) labelEl.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
+                        } else {
+                            slotBtn.classList.add('slot-available', 'cursor-pointer');
+                            if (labelEl) labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
                         }
                     }
                 }
