@@ -12,35 +12,36 @@
 
     <!-- Main Login Card -->
     <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
-        <!-- 1-Click Fast Demo Login Switcher -->
-        <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2.5">
-            <div class="flex items-center justify-between">
-                <span class="text-[11px] font-bold text-theme-muted uppercase tracking-wider">Fast Demo Accounts (1-Click)</span>
-                <i class="fa-solid fa-bolt text-amber-500 text-xs"></i>
+        @if(!app()->isProduction())
+            <!-- 1-Click Fast Demo Login Switcher -->
+            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[11px] font-bold text-theme-muted uppercase tracking-wider">Fast Demo Accounts (1-Click)</span>
+                    <i class="fa-solid fa-bolt text-amber-500 text-xs"></i>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+                    <a href="{{ route('quick.login', 'owner') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
+                        Owner
+                    </a>
+                    <a href="{{ route('quick.login', 'assistant') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-teal-500 hover:text-slate-950 text-center font-bold text-xs text-teal-700 dark:text-teal-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Maria Santos (Admin Assistant)">
+                        Assistant
+                    </a>
+                    <a href="{{ route('quick.login', 'admin') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500 hover:text-slate-950 text-center font-bold text-xs text-amber-700 dark:text-amber-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
+                        Admin
+                    </a>
+                    <a href="{{ route('quick.login', 'player') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Marcus Vance">
+                        Player 1
+                    </a>
+                    <a href="{{ route('quick.login', 'player2') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-emerald-500 hover:text-slate-950 text-center font-bold text-xs text-emerald-700 dark:text-emerald-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Elena Cruz">
+                        Player 2
+                    </a>
+                    <a href="{{ route('quick.login', 'paolo') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-violet-500 hover:text-slate-950 text-center font-bold text-xs text-violet-700 dark:text-violet-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Paolo Soriano">
+                        Paolo (P3)
+                    </a>
+                </div>
+                <div class="text-[10px] text-theme-muted text-center">Click any role to log in instantly without typing credentials!</div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                <a href="{{ route('quick.login', 'owner') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
-                    Owner
-                </a>
-                <a href="{{ route('quick.login', 'assistant') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-teal-500 hover:text-slate-950 text-center font-bold text-xs text-teal-700 dark:text-teal-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Maria Santos (Admin Assistant)">
-                    Assistant
-                </a>
-                <a href="{{ route('quick.login', 'admin') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500 hover:text-slate-950 text-center font-bold text-xs text-amber-700 dark:text-amber-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
-                    Admin
-                </a>
-                <a href="{{ route('quick.login', 'player') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Marcus Vance">
-                    Player 1
-                </a>
-                <a href="{{ route('quick.login', 'player2') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-emerald-500 hover:text-slate-950 text-center font-bold text-xs text-emerald-700 dark:text-emerald-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Elena Cruz">
-                    Player 2
-                </a>
-                <a href="{{ route('quick.login', 'paolo') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-violet-500 hover:text-slate-950 text-center font-bold text-xs text-violet-700 dark:text-violet-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Paolo Soriano">
-                    Paolo (P3)
-                </a>
-            </div>
-            <div class="text-[10px] text-theme-muted text-center">Click any role to log in instantly without typing credentials!</div>
-        </div>
-
+        @endif
         <!-- 1-Click Social Sign-In Options -->
         <div class="space-y-2.5">
             <a href="{{ route('auth.social.redirect', 'google') }}"
