@@ -24,11 +24,11 @@
                 <span>Continue with Google</span>
             </a>
 
-            <a href="{{ route('auth.social.redirect', 'facebook') }}"
+            <!-- <a href="{{ route('auth.social.redirect', 'facebook') }}"
                 class="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-blue-600/20 transition-all cursor-pointer">
                 <i class="fa-brands fa-facebook text-base"></i>
                 <span>Continue with Facebook</span>
-            </a>
+            </a> -->
         </div>
 
         <!-- Divider -->

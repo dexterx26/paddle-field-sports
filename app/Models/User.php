@@ -259,6 +259,29 @@ class User extends Authenticatable
     ];
 
     /**
+     * Check if user has a password set (social login users might not have one initially).
+     */
+    public function hasPassword(): bool
+    {
+        return !empty($this->password);
+    }
+
+    /**
+     * Get avatar URL or auto-generated initial avatar.
+     */
+    public function getAvatarUrlAttribute(): string
+    {
+        if (!empty($this->avatar)) {
+            if (str_starts_with($this->avatar, 'http://') || str_starts_with($this->avatar, 'https://')) {
+                return $this->avatar;
+            }
+            return asset('storage/' . $this->avatar);
+        }
+
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=0891b2&color=fff&bold=true';
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

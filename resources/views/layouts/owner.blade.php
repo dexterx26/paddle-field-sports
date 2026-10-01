@@ -140,6 +140,12 @@
                 </a>
             @endif
 
+            <!-- Profile & Security Link -->
+            <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold {{ request()->routeIs('profile.*') ? 'bg-cyan-500 text-slate-950 font-bold shadow-md shadow-cyan-500/20' : 'text-theme-body hover:bg-stone-200 dark:hover:bg-stone-800' }} transition-colors">
+                <i class="fa-solid fa-user-gear w-4 text-center"></i>
+                <span>My Profile & Password</span>
+            </a>
+
             <div class="pt-4 border-t border-stone-200 dark:border-stone-800">
                 <a href="{{ route('home') }}" target="_blank" class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
                     <i class="fa-solid fa-arrow-up-right-from-square w-4 text-center"></i>
@@ -151,15 +157,16 @@
         <!-- User Profile Bar -->
         <div class="p-4 border-t border-stone-200 dark:border-stone-800 bg-stone-200/40 dark:bg-stone-950/60">
             <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center text-xs font-bold text-cyan-700 dark:text-cyan-400">
-                        {{ strtoupper(substr(Auth::user()->name ?? 'O', 0, 1)) }}
+                <a href="{{ route('profile.edit') }}" title="Edit Profile & Security" class="flex items-center gap-3 group flex-1 min-w-0 pr-2">
+                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-8 h-8 rounded-full object-cover border border-cyan-500/40 shadow-xs group-hover:scale-105 transition-transform">
+                    <div class="text-xs truncate">
+                        <div class="font-bold text-theme-heading leading-tight truncate group-hover:text-cyan-600 transition-colors">{{ Auth::user()->name ?? 'User' }}</div>
+                        <div class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold capitalize flex items-center gap-1">
+                            <span>{{ str_replace('_', ' ', Auth::user()->role ?? 'Staff') }}</span>
+                            <i class="fa-solid fa-pen text-[9px] opacity-60"></i>
+                        </div>
                     </div>
-                    <div class="text-xs">
-                        <div class="font-bold text-theme-heading leading-tight truncate w-28">{{ Auth::user()->name ?? 'Owner' }}</div>
-                        <div class="text-[10px] text-cyan-600 dark:text-cyan-400 font-bold capitalize">{{ str_replace('_', ' ', Auth::user()->role ?? 'Court Owner') }}</div>
-                    </div>
-                </div>
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
                     <button type="submit" title="Logout" class="p-2 text-theme-muted hover:text-rose-500 transition-colors cursor-pointer">
@@ -224,6 +231,12 @@
                         <span>Add Court</span>
                     </a>
                 @endif
+
+                <!-- My Profile Shortcut -->
+                <a href="{{ route('profile.edit') }}" title="My Profile & Security" class="px-3 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-theme-heading text-xs font-bold border border-stone-300 dark:border-stone-700 flex items-center gap-2 transition-all cursor-pointer">
+                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-4 h-4 rounded-full object-cover border border-cyan-500/40">
+                    <span class="hidden md:inline">Profile</span>
+                </a>
             </div>
         </header>
 

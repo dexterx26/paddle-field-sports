@@ -122,24 +122,66 @@
                             </div>
                         </div>
                     @endif
-                    
+
                     @auth
-                        @if(Auth::user()->isStaffOrAdmin())
-                            <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all">
-                                <i class="fa-solid fa-gauge-high"></i>
-                                <span>{{ Auth::user()->isAdminAssistant() ? 'Staff Hub' : 'Owner Hub' }}</span>
-                            </a>
-                        @else
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs text-theme-heading font-semibold hidden sm:inline">{{ Auth::user()->name }}</span>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit" class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs text-theme-heading transition-colors cursor-pointer">
-                                        Logout
-                                    </button>
-                                </form>
+                        <div class="flex items-center gap-2 sm:gap-3">
+                            @if(Auth::user()->isStaffOrAdmin())
+                                <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all">
+                                    <i class="fa-solid fa-gauge-high"></i>
+                                    <span class="hidden sm:inline">{{ Auth::user()->isAdminAssistant() ? 'Staff Hub' : 'Owner Hub' }}</span>
+                                </a>
+                            @endif
+
+                            <!-- User Profile & Account Dropdown -->
+                            <div class="relative group">
+                                <button type="button" class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-stone-200/80 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-heading transition-all cursor-pointer">
+                                    <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-6 h-6 rounded-full object-cover border border-cyan-500/40">
+                                    <span class="max-w-[110px] truncate hidden sm:inline">{{ Auth::user()->name }}</span>
+                                    <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted transition-transform group-hover:rotate-180"></i>
+                                </button>
+                                
+                                <div class="absolute right-0 mt-2 w-56 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                    <div class="px-3.5 py-2 border-b border-stone-200 dark:border-stone-800">
+                                        <div class="font-bold text-xs text-theme-heading truncate">{{ Auth::user()->name }}</div>
+                                        <div class="text-[10px] text-theme-muted truncate">{{ Auth::user()->email }}</div>
+                                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30">
+                                            {{ str_replace('_', ' ', Auth::user()->role) }}
+                                        </span>
+                                    </div>
+
+                                    <div class="py-1">
+                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                            <i class="fa-solid fa-user-pen w-4 text-center text-cyan-600 dark:text-cyan-400"></i>
+                                            <span>My Profile & Password</span>
+                                        </a>
+
+                                        @if(Auth::user()->isClient())
+                                            <button type="button" onclick="openLookupModal()" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer">
+                                                <i class="fa-solid fa-ticket w-4 text-center text-amber-500"></i>
+                                                <span>Check My Bookings</span>
+                                            </button>
+                                        @endif
+
+                                        @if(Auth::user()->isStaffOrAdmin())
+                                            <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                                <i class="fa-solid fa-gauge-high w-4 text-center text-teal-500"></i>
+                                                <span>Admin Portal</span>
+                                            </a>
+                                        @endif
+                                    </div>
+
+                                    <div class="pt-1 border-t border-stone-200 dark:border-stone-800">
+                                        <form method="POST" action="{{ route('logout') }}">
+                                            @csrf
+                                            <button type="submit" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer">
+                                                <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>
+                                                <span>Sign Out</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
                             </div>
-                        @endif
+                        </div>
                     @else
                         <a href="{{ route('login') }}" class="px-3.5 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors">
                             Sign In
@@ -221,6 +263,9 @@
                         <li><a href="{{ route('home') }}#courts-section" class="hover:text-cyan-600 transition-colors">Courts & Pricing</a></li>
                         <li><a href="{{ route('home') }}#gallery-section" class="hover:text-cyan-600 transition-colors">Facility Photos</a></li>
                         <li><button type="button" onclick="openLookupModal()" class="hover:text-cyan-600 transition-colors cursor-pointer">Search My Booking</button></li>
+                        @auth
+                            <li><a href="{{ route('profile.edit') }}" class="hover:text-cyan-600 transition-colors">My Profile & Security</a></li>
+                        @endauth
                         <li><a href="{{ route('owner.dashboard') }}" class="hover:text-cyan-600 transition-colors">Owner & Admin Portal</a></li>
                     </ul>
                 </div>
@@ -254,7 +299,7 @@
 
             <div class="mt-12 pt-8 border-t border-stone-200 dark:border-stone-800 flex flex-col md:flex-row items-center justify-between text-xs text-theme-muted gap-4">
                 <p>&copy; {{ date('Y') }} Paddle Field Sports Center. All rights reserved.</p>
-                <p class="flex items-center gap-1 font-medium">Powered by Laravel & Reverb Real-Time Engine</p>
+                <p class="flex items-center gap-1 font-medium" hidden>Powered by Laravel & Reverb Real-Time Engine</p>
             </div>
         </div>
     </footer>

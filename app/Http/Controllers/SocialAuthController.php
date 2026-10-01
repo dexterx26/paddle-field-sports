@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
@@ -156,6 +157,9 @@ class SocialAuthController extends Controller
                 'avatar' => $avatar,
                 'is_active' => true,
             ]);
+
+            // Dispatch welcome confirmation email to new player
+            EmailNotificationService::sendRegistrationConfirmation($user);
         }
 
         // Log the user into Laravel session

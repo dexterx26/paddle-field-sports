@@ -8,6 +8,7 @@ use App\Models\FacilityPhoto;
 use App\Models\User;
 use App\Models\VenueSetting;
 use App\Services\BookingService;
+use App\Services\EmailNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -747,6 +748,9 @@ class OwnerController extends Controller
             'is_active' => $request->boolean('is_active', true),
         ]);
 
+        // Send registration confirmation email
+        EmailNotificationService::sendRegistrationConfirmation($assistant);
+
         return redirect()->route('owner.assistants.index')
             ->with('success', "Admin Assistant '{$assistant->name}' created successfully with configured module access!");
     }
@@ -1008,6 +1012,9 @@ class OwnerController extends Controller
             'permissions' => $permissions,
             'is_active' => $request->boolean('is_active', true),
         ]);
+
+        // Send registration confirmation email
+        EmailNotificationService::sendRegistrationConfirmation($user);
 
         $roleTitle = match ($role) {
             'admin' => 'System Administrator',

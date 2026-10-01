@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\VenueSetting;
+use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -118,11 +119,19 @@ class AuthController extends Controller
             'role' => 'client', // standard client registration
         ]);
 
+        // Dispatch welcome registration confirmation email
+        EmailNotificationService::sendRegistrationConfirmation($user);
+
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('home')->with('success', 'Registration successful! Welcome to Paddle Field Sports Center.');
+        $message = EmailNotificationService::isEnabled()
+            ? 'Registration successful! A welcome confirmation email has been dispatched to your email.'
+            : 'Registration successful! Welcome to ' . config('app.name', 'Paddle Field Sports Center') . '.';
+
+        return redirect()->route('home')->with('success', $message);
     }
+
 
     public function logout(Request $request)
     {
