@@ -82,45 +82,47 @@
                     </div>
 
                     <!-- Quick Switcher Demo Dropdown -->
-                    <div class="relative group">
-                        <button type="button" class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition-all cursor-pointer">
-                            <i class="fa-solid fa-bolt text-amber-500"></i>
-                            <span class="hidden sm:inline">Role Switcher</span>
-                            <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted"></i>
-                        </button>
-                        <div class="absolute right-0 mt-2 w-56 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                            <div class="px-3 py-1 text-[11px] font-bold text-theme-muted uppercase tracking-wider">Quick Switch Demo</div>
-                            <a href="{{ route('quick.login', 'owner') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
-                                <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
-                                <div>
-                                    <div class="font-bold">Court Owner</div>
-                                    <div class="text-[10px] text-theme-muted">Manage courts, prices, approvals</div>
-                                </div>
-                            </a>
-                            <a href="{{ route('quick.login', 'assistant') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
-                                <span class="w-2 h-2 rounded-full bg-teal-500"></span>
-                                <div>
-                                    <div class="font-bold">Admin Assistant</div>
-                                    <div class="text-[10px] text-theme-muted">Schedule & reservation approvals</div>
-                                </div>
-                            </a>
-                            <a href="{{ route('quick.login', 'admin') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span>
-                                <div>
-                                    <div class="font-bold">System Admin</div>
-                                    <div class="text-[10px] text-theme-muted">Full platform management</div>
-                                </div>
-                            </a>
-                            <a href="{{ route('quick.login', 'player') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
-                                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
-                                <div>
-                                    <div class="font-bold">Registered Player</div>
-                                    <div class="text-[10px] text-theme-muted">Marcus Vance account</div>
-                                </div>
-                            </a>
+                    @if(!app()->isProduction())
+                        <div class="relative group">
+                            <button type="button" class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition-all cursor-pointer">
+                                <i class="fa-solid fa-bolt text-amber-500"></i>
+                                <span class="hidden sm:inline">Role Switcher</span>
+                                <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-56 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                                <div class="px-3 py-1 text-[11px] font-bold text-theme-muted uppercase tracking-wider">Quick Switch Demo</div>
+                                <a href="{{ route('quick.login', 'owner') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                    <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                                    <div>
+                                        <div class="font-bold">Court Owner</div>
+                                        <div class="text-[10px] text-theme-muted">Manage courts, prices, approvals</div>
+                                    </div>
+                                </a>
+                                <a href="{{ route('quick.login', 'assistant') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                    <span class="w-2 h-2 rounded-full bg-teal-500"></span>
+                                    <div>
+                                        <div class="font-bold">Admin Assistant</div>
+                                        <div class="text-[10px] text-theme-muted">Schedule & reservation approvals</div>
+                                    </div>
+                                </a>
+                                <a href="{{ route('quick.login', 'admin') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
+                                    <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+                                    <div>
+                                        <div class="font-bold">System Admin</div>
+                                        <div class="text-[10px] text-theme-muted">Full platform management</div>
+                                    </div>
+                                </a>
+                                <a href="{{ route('quick.login', 'player') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                    <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                                    <div>
+                                        <div class="font-bold">Registered Player</div>
+                                        <div class="text-[10px] text-theme-muted">Marcus Vance account</div>
+                                    </div>
+                                </a>
+                            </div>
                         </div>
-                    </div>
-
+                    @endif
+                    
                     @auth
                         @if(Auth::user()->isStaffOrAdmin())
                             <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-2 transition-all">

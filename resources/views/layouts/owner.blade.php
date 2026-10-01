@@ -202,19 +202,19 @@
 
                 <!-- Fast Demo Role Switcher -->
                 @if(!app()->isProduction())
-                <div class="relative group">
-                    <button type="button" class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition-all cursor-pointer">
-                        <i class="fa-solid fa-bolt text-amber-500"></i>
-                        <span>Switch Role</span>
-                        <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted"></i>
-                    </button>
-                    <div class="absolute right-0 mt-2 w-48 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                        <a href="{{ route('quick.login', 'owner') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Court Owner</a>
-                        <a href="{{ route('quick.login', 'assistant') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400">Admin Assistant</a>
-                        <a href="{{ route('quick.login', 'admin') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">System Admin</a>
-                        <a href="{{ route('quick.login', 'player') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Client / Player</a>
+                    <div class="relative group">
+                        <button type="button" class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition-all cursor-pointer">
+                            <i class="fa-solid fa-bolt text-amber-500"></i>
+                            <span>Switch Role</span>
+                            <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted"></i>
+                        </button>
+                        <div class="absolute right-0 mt-2 w-48 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
+                            <a href="{{ route('quick.login', 'owner') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Court Owner</a>
+                            <a href="{{ route('quick.login', 'assistant') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-400">Admin Assistant</a>
+                            <a href="{{ route('quick.login', 'admin') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400">System Admin</a>
+                            <a href="{{ route('quick.login', 'player') }}" class="block px-3 py-1.5 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400">Client / Player</a>
+                        </div>
                     </div>
-                </div>
                 @endif
 
                 <!-- Add Court Shortcut -->
