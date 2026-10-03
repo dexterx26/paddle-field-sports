@@ -398,6 +398,18 @@
                                         @endphp
 
                                         @if($canEdit)
+                                            <!-- Reset Password Button -->
+                                            <form method="POST" action="{{ route('owner.users.reset_password', $user->id) }}"
+                                                id="reset-password-form-{{ $user->id }}" class="inline-block">
+                                                @csrf
+                                                <button type="button"
+                                                    onclick="confirmResetPassword({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}')"
+                                                    class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/10 hover:text-amber-500 text-theme-muted transition-colors cursor-pointer"
+                                                    title="Reset Password to PaddleField2026!">
+                                                    <i class="fa-solid fa-key"></i>
+                                                </button>
+                                            </form>
+
                                             <button type="button"
                                                 onclick='openEditUserModal(@json($user), @json($perms))'
                                                 class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 text-theme-muted transition-colors cursor-pointer"
@@ -674,16 +686,24 @@
             </div>
 
             <!-- Optional Password Change -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-theme-heading mb-1.5">New Password (Blank to keep)</label>
-                    <input type="password" name="password" minlength="6" placeholder="••••••••"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+            <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                    <label class="block text-xs font-bold text-theme-heading">New Password (Blank to keep)</label>
+                    <button type="button"
+                        onclick="document.getElementById('edit_user_password').value='PaddleField2026!'; document.getElementById('edit_user_password_confirmation').value='PaddleField2026!';"
+                        class="text-[11px] font-semibold text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer">
+                        <i class="fa-solid fa-key text-[10px] mr-1"></i>Fill with PaddleField2026!
+                    </button>
                 </div>
-                <div>
-                    <label class="block text-xs font-bold text-theme-heading mb-1.5">Confirm New Password</label>
-                    <input type="password" name="password_confirmation" minlength="6" placeholder="••••••••"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <input type="password" id="edit_user_password" name="password" minlength="6" placeholder="••••••••"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <input type="password" id="edit_user_password_confirmation" name="password_confirmation" minlength="6" placeholder="Confirm new password"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none">
+                    </div>
                 </div>
             </div>
 
@@ -828,6 +848,10 @@
         document.getElementById('edit_user_email').value = user.email || '';
         document.getElementById('edit_user_phone').value = user.phone || '';
         document.getElementById('edit_user_is_active').checked = !!user.is_active;
+        const passField = document.getElementById('edit_user_password');
+        const passConfField = document.getElementById('edit_user_password_confirmation');
+        if (passField) passField.value = '';
+        if (passConfField) passConfField.value = '';
 
         const roleSelect = document.getElementById('edit_user_role');
         if (roleSelect) {
@@ -977,6 +1001,23 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById(`delete-user-form-${id}`).submit();
+            }
+        });
+    }
+
+    function confirmResetPassword(id, name, email) {
+        Swal.fire({
+            title: 'Reset Password?',
+            html: `Are you sure you want to reset the password for <strong>${name}</strong> (${email}) to <code class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs">PaddleField2026!</code>?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#f59e0b',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: 'Yes, Reset Password',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(`reset-password-form-${id}`).submit();
             }
         });
     }

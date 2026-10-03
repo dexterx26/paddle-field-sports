@@ -118,6 +118,7 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
         Route::put('/{id}', [OwnerController::class, 'updateUser'])->name('update');
         Route::delete('/{id}', [OwnerController::class, 'destroyUser'])->name('destroy');
         Route::post('/{id}/toggle-status', [OwnerController::class, 'toggleUserStatus'])->name('toggle');
+        Route::post('/{id}/reset-password', [OwnerController::class, 'resetUserPassword'])->name('reset_password');
         Route::get('/{id}/held-slots', [OwnerController::class, 'userHeldSlots'])->name('held_slots');
     });
 

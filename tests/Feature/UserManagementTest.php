@@ -209,4 +209,26 @@ class UserManagementTest extends TestCase
         $adminDelete = $this->actingAs($this->owner)->delete(route('owner.users.destroy', $this->admin->id));
         $this->assertDatabaseHas('users', ['id' => $this->admin->id]);
     }
+
+    public function test_user_management_reset_password_to_default(): void
+    {
+        $target = User::where('role', 'client')->first();
+
+        // Target initial password is not PaddleField2026!
+        $this->assertFalse(\Illuminate\Support\Facades\Hash::check('PaddleField2026!', $target->password));
+
+        $response = $this->actingAs($this->owner)->post(route('owner.users.reset_password', $target->id));
+        $response->assertSessionHas('success');
+
+        // Password should now be PaddleField2026!
+        $this->assertTrue(\Illuminate\Support\Facades\Hash::check('PaddleField2026!', $target->fresh()->password));
+
+        // Owner cannot reset admin password
+        $ownerResetAdmin = $this->actingAs($this->owner)->post(route('owner.users.reset_password', $this->admin->id));
+        $ownerResetAdmin->assertForbidden();
+
+        // Assistant cannot reset owner password
+        $assistantResetOwner = $this->actingAs($this->assistant)->post(route('owner.users.reset_password', $this->owner->id));
+        $assistantResetOwner->assertForbidden();
+    }
 }

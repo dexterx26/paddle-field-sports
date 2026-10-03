@@ -1159,6 +1159,29 @@ class OwnerController extends Controller
     }
 
     /**
+     * Reset a User's password to default (PaddleField2026!)
+     */
+    public function resetUserPassword(int $id)
+    {
+        $currentUser = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        if ($currentUser->isAdminAssistant() && ($targetUser->isAdmin() || $targetUser->isOwner())) {
+            abort(403, 'You do not have permission to reset this user\'s password.');
+        }
+
+        if ($currentUser->isOwner() && $targetUser->isAdmin()) {
+            abort(403, 'You do not have permission to reset a system administrator\'s password.');
+        }
+
+        $targetUser->update([
+            'password' => Hash::make('PaddleField2026!'),
+        ]);
+
+        return back()->with('success', "Password for user '{$targetUser->name}' has been reset to 'PaddleField2026!'.");
+    }
+
+    /**
      * Retrieve held timeslots details for a specific user (Modal / AJAX)
      */
     public function userHeldSlots(int $id)
