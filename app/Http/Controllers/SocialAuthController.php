@@ -61,17 +61,21 @@ class SocialAuthController extends Controller
         try {
             // Use stateless() to prevent session state drops across cross-domain redirects & reverse proxies
             $socialUser = Socialite::driver($provider)->stateless()->user();
-        } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error("Social auth callback failed for provider {$provider}: " . $e->getMessage());
-            return redirect()->route('login')->with('error', "Could not authenticate with " . ucfirst($provider) . ": " . $e->getMessage());
-        }
 
-        return $this->loginOrRegisterSocialUser($provider, [
-            'id' => $socialUser->getId(),
-            'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? ucfirst($provider) . ' User',
-            'email' => $socialUser->getEmail(),
-            'avatar' => $socialUser->getAvatar(),
-        ]);
+            return $this->loginOrRegisterSocialUser($provider, [
+                'id' => $socialUser->getId(),
+                'name' => $socialUser->getName() ?? $socialUser->getNickname() ?? ucfirst($provider) . ' User',
+                'email' => $socialUser->getEmail(),
+                'avatar' => $socialUser->getAvatar(),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Social auth callback failed for provider {$provider}: " . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return redirect()->route('login', ['auth_error' => Str::limit($e->getMessage(), 150)])
+                ->with('error', "Could not authenticate with " . ucfirst($provider) . ": " . $e->getMessage());
+        }
     }
 
     /**
@@ -167,12 +171,7 @@ class SocialAuthController extends Controller
         // Log the user into Laravel session
         Auth::login($user, true);
         request()->session()->regenerate();
-
-        // Clear lingering auth URLs from session to prevent redirect loops
-        $intendedUrl = session()->get('url.intended');
-        if ($intendedUrl && (str_contains($intendedUrl, '/login') || str_contains($intendedUrl, '/register') || str_contains($intendedUrl, '/auth/'))) {
-            session()->forget('url.intended');
-        }
+        request()->session()->save();
 
         $actionWord = $isNewUser ? 'registered and logged in' : 'logged in';
         $providerTitle = ucfirst($provider);
@@ -180,14 +179,14 @@ class SocialAuthController extends Controller
         // Redirect based on user role
         if ($user->isStaffOrAdmin()) {
             if ($user->isAdminAssistant()) {
-                return redirect()->intended(route($user->getFirstAllowedRoute()))
+                return redirect()->route($user->getFirstAllowedRoute())
                     ->with('success', "Welcome back, {$user->name}! ({$providerTitle} sign-in)");
             }
-            return redirect()->intended(route('owner.dashboard'))
+            return redirect()->route('owner.dashboard')
                 ->with('success', "Welcome back, {$user->name}! ({$providerTitle} sign-in)");
         }
 
-        return redirect()->intended(route('home'))
+        return redirect()->route('home')
             ->with('success', "You have successfully {$actionWord} with {$providerTitle}!");
     }
 }

@@ -358,13 +358,13 @@
     </script>
     @endif
 
-    @if(session('error'))
+    @if(session('error') || request('auth_error'))
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Swal.fire({
                 icon: 'error',
-                title: 'Notice',
-                text: @json(session('error')),
+                title: 'Authentication Notice',
+                text: @json(session('error') ?: request('auth_error')),
                 confirmButtonColor: '#0891b2'
             });
         });

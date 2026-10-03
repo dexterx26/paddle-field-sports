@@ -42,6 +42,17 @@
                 <div class="text-[10px] text-theme-muted text-center">Click any role to log in instantly without typing credentials!</div>
             </div>
         @endif
+
+        @if(request('auth_error') || session('error'))
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
+                <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
+                <div class="space-y-0.5">
+                    <div class="font-bold">Authentication Issue</div>
+                    <div class="text-[11px] leading-relaxed">{{ request('auth_error') ?: session('error') }}</div>
+                </div>
+            </div>
+        @endif
+
         <!-- 1-Click Social Sign-In Options -->
         <div class="space-y-2.5">
             <a href="{{ route('auth.social.redirect', 'google') }}"
