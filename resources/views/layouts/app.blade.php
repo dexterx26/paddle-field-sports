@@ -266,6 +266,8 @@
                         @auth
                             <li><a href="{{ route('profile.edit') }}" class="hover:text-cyan-600 transition-colors">My Profile & Security</a></li>
                         @endauth
+                        <li><a href="{{ route('privacy') }}" class="hover:text-cyan-600 transition-colors">Privacy Policy</a></li>
+                        <li><a href="{{ route('terms') }}" class="hover:text-cyan-600 transition-colors">Terms of Service</a></li>
                         <li><a href="{{ route('owner.dashboard') }}" class="hover:text-cyan-600 transition-colors">Owner & Admin Portal</a></li>
                     </ul>
                 </div>
@@ -299,7 +301,11 @@
 
             <div class="mt-12 pt-8 border-t border-stone-200 dark:border-stone-800 flex flex-col md:flex-row items-center justify-between text-xs text-theme-muted gap-4">
                 <p>&copy; {{ date('Y') }} Paddle Field Sports Center. All rights reserved.</p>
-                <p class="flex items-center gap-1 font-medium" hidden>Powered by Laravel & Reverb Real-Time Engine</p>
+                <div class="flex items-center gap-4">
+                    <a href="{{ route('privacy') }}" class="hover:text-cyan-600 dark:hover:text-cyan-400 font-medium transition-colors">Privacy Policy</a>
+                    <span class="text-stone-400 dark:text-stone-600">&bull;</span>
+                    <a href="{{ route('terms') }}" class="hover:text-cyan-600 dark:hover:text-cyan-400 font-medium transition-colors">Terms of Service</a>
+                </div>
             </div>
         </div>
     </footer>

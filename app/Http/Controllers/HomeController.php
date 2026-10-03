@@ -108,4 +108,22 @@ class HomeController extends Controller
 
         return back()->with('error', "No reservation found for reference or phone '{$query}'. Please check and try again.");
     }
+
+    /**
+     * Public Privacy Policy Page (Google OAuth Compliance)
+     */
+    public function privacy()
+    {
+        $settings = VenueSetting::getSettings();
+        return view('pages.privacy', compact('settings'));
+    }
+
+    /**
+     * Public Terms of Service Page (Google OAuth Compliance)
+     */
+    public function terms()
+    {
+        $settings = VenueSetting::getSettings();
+        return view('pages.terms', compact('settings'));
+    }
 }

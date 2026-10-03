@@ -39,7 +39,16 @@ class SocialAuthController extends Controller
         // If credentials are configured, initiate real OAuth redirect via Laravel Socialite
         if ($this->isProviderConfigured($provider)) {
             try {
-                return Socialite::driver($provider)->stateless()->redirect();
+                $driver = Socialite::driver($provider)->stateless();
+
+                if ($provider === 'google') {
+                    $driver = $driver->with([
+                        'prompt' => 'select_account consent',
+                        'access_type' => 'offline',
+                    ]);
+                }
+
+                return $driver->redirect();
             } catch (\Throwable $e) {
                 return redirect()->route('login')->with('error', 'OAuth error: ' . $e->getMessage());
             }

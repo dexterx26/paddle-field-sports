@@ -39,6 +39,12 @@
                 <i class="fa-brands fa-facebook text-base"></i>
                 <span>Continue with Facebook</span>
             </a> -->
+            <p class="text-[11px] text-theme-muted text-center pt-0.5">
+                By signing up, you agree to our 
+                <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold">Terms of Service</a> 
+                and 
+                <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold">Privacy Policy</a>.
+            </p>
         </div>
 
         <!-- Divider -->
