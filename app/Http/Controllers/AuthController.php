@@ -13,6 +13,10 @@ class AuthController extends Controller
 {
     public function showLogin()
     {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
         $settings = VenueSetting::getSettings();
         return view('auth.login', compact('settings'));
     }
@@ -98,6 +102,10 @@ class AuthController extends Controller
 
     public function showRegister()
     {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
         $settings = VenueSetting::getSettings();
         return view('auth.register', compact('settings'));
     }

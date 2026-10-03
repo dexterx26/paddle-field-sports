@@ -39,7 +39,7 @@ class SocialAuthController extends Controller
         // If credentials are configured, initiate real OAuth redirect via Laravel Socialite
         if ($this->isProviderConfigured($provider)) {
             try {
-                return Socialite::driver($provider)->redirect();
+                return Socialite::driver($provider)->stateless()->redirect();
             } catch (\Throwable $e) {
                 return redirect()->route('login')->with('error', 'OAuth error: ' . $e->getMessage());
             }
@@ -59,8 +59,10 @@ class SocialAuthController extends Controller
         }
 
         try {
-            $socialUser = Socialite::driver($provider)->user();
+            // Use stateless() to prevent session state drops across cross-domain redirects & reverse proxies
+            $socialUser = Socialite::driver($provider)->stateless()->user();
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("Social auth callback failed for provider {$provider}: " . $e->getMessage());
             return redirect()->route('login')->with('error', "Could not authenticate with " . ucfirst($provider) . ": " . $e->getMessage());
         }
 
@@ -165,6 +167,12 @@ class SocialAuthController extends Controller
         // Log the user into Laravel session
         Auth::login($user, true);
         request()->session()->regenerate();
+
+        // Clear lingering auth URLs from session to prevent redirect loops
+        $intendedUrl = session()->get('url.intended');
+        if ($intendedUrl && (str_contains($intendedUrl, '/login') || str_contains($intendedUrl, '/register') || str_contains($intendedUrl, '/auth/'))) {
+            session()->forget('url.intended');
+        }
 
         $actionWord = $isNewUser ? 'registered and logged in' : 'logged in';
         $providerTitle = ucfirst($provider);
