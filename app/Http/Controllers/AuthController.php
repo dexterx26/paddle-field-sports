@@ -31,9 +31,20 @@ class AuthController extends Controller
         $remember = $request->boolean('remember');
 
         if (Auth::attempt($credentials, $remember)) {
-            $request->session()->regenerate();
-
             $user = Auth::user();
+
+            // Require email confirmation before allowing login
+            if (!$user->hasVerifiedEmail()) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'email' => 'Please confirm your email address before logging in. We have sent a confirmation link to your email.',
+                ])->with('unverified_email', $user->email)->onlyInput('email');
+            }
+
+            $request->session()->regenerate();
 
             if ($user->isAdminAssistant() && !$user->is_active) {
                 Auth::logout();
@@ -80,6 +91,11 @@ class AuthController extends Controller
         $user = User::where('email', $emailMap[$role])->first();
 
         if ($user) {
+            // Ensure demo account has verified email
+            if (!$user->hasVerifiedEmail()) {
+                $user->markEmailAsVerified();
+            }
+
             if ($user->isAdminAssistant() && !$user->is_active) {
                 return redirect()->route('login')->with('error', 'Demo assistant account is currently inactive.');
             }
@@ -125,19 +141,87 @@ class AuthController extends Controller
             'phone' => $data['phone'],
             'password' => Hash::make($data['password']),
             'role' => 'client', // standard client registration
+            'email_verified_at' => null, // Requires confirmation before login
         ]);
 
-        // Dispatch welcome registration confirmation email
-        EmailNotificationService::sendRegistrationConfirmation($user);
+        $verificationUrl = EmailNotificationService::generateVerificationUrl($user);
 
-        Auth::login($user);
-        $request->session()->regenerate();
+        // Dispatch welcome registration confirmation email with verification link
+        EmailNotificationService::sendRegistrationConfirmation($user, $verificationUrl);
 
         $message = EmailNotificationService::isEnabled()
-            ? 'Registration successful! A welcome confirmation email has been dispatched to your email.'
-            : 'Registration successful! Welcome to ' . config('app.name', 'Paddle Field Sports Center') . '.';
+            ? 'Registration successful! Please check your email to confirm your account before logging in.'
+            : 'Registration successful! Please confirm your email before logging in.';
 
-        return redirect()->route('home')->with('success', $message);
+        $redirect = redirect()->route('login')
+            ->with('success', $message)
+            ->with('unverified_email', $user->email);
+
+        // In local environment when email sending is disabled, provide dev verification helper
+        if (app()->isLocal() && !EmailNotificationService::isEnabled()) {
+            $redirect->with('dev_verification_url', $verificationUrl);
+        }
+
+        return $redirect;
+    }
+
+    /**
+     * Verify email via signed URL confirmation link.
+     */
+    public function verifyEmail(Request $request, $id, $hash)
+    {
+        $user = User::findOrFail($id);
+
+        if (!hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            return redirect()->route('login')->with('error', 'Invalid email confirmation link.');
+        }
+
+        if (!$request->hasValidSignature()) {
+            return redirect()->route('login')
+                ->with('error', 'This confirmation link has expired. Please request a new one below.')
+                ->with('unverified_email', $user->email);
+        }
+
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->route('login')->with('info', 'Your email address is already confirmed! Please log in.');
+        }
+
+        $user->markEmailAsVerified();
+
+        return redirect()->route('login')->with('success', 'Email confirmed successfully! You can now log in to your account.');
+    }
+
+    /**
+     * Resend verification confirmation email.
+     */
+    public function resendConfirmation(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            if ($user->hasVerifiedEmail()) {
+                return redirect()->route('login')->with('info', 'Your email is already confirmed! Please log in.');
+            }
+
+            $verificationUrl = EmailNotificationService::generateVerificationUrl($user);
+            EmailNotificationService::sendRegistrationConfirmation($user, $verificationUrl);
+
+            $redirect = redirect()->route('login')
+                ->with('success', 'A new confirmation email has been dispatched. Please check your inbox.')
+                ->with('unverified_email', $user->email);
+
+            if (app()->isLocal() && !EmailNotificationService::isEnabled()) {
+                $redirect->with('dev_verification_url', $verificationUrl);
+            }
+
+            return $redirect;
+        }
+
+        return redirect()->route('login')->with('error', 'We could not find an account with that email address.');
     }
 
 

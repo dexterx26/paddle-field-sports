@@ -36,6 +36,14 @@ class SocialAuthController extends Controller
             return redirect()->route('login')->with('error', 'Unsupported social login provider.');
         }
 
+        // If provider is Google, check if GOOGLE_REDIRECT_URI is configured
+        if ($provider === 'google') {
+            $redirectUri = config('services.google.redirect_uri', env('GOOGLE_REDIRECT_URI'));
+            if (empty($redirectUri) || $redirectUri === 'null') {
+                return redirect()->route('login')->with('error', 'Google sign-in is not configured on this environment.');
+            }
+        }
+
         // If credentials are configured, initiate real OAuth redirect via Laravel Socialite
         if ($this->isProviderConfigured($provider)) {
             try {
@@ -150,10 +158,11 @@ class SocialAuthController extends Controller
         if (!$user && !empty($email)) {
             $user = User::where('email', $email)->first();
             if ($user) {
-                // Link this social provider to existing account
+                // Link this social provider to existing account and verify email
                 $user->update([
                     $idField => $providerId,
                     'avatar' => $user->avatar ?: $avatar,
+                    'email_verified_at' => $user->email_verified_at ?: now(),
                 ]);
             }
         }
@@ -171,6 +180,7 @@ class SocialAuthController extends Controller
                 $idField => $providerId,
                 'avatar' => $avatar,
                 'is_active' => true,
+                'email_verified_at' => now(),
             ]);
 
             // Dispatch welcome confirmation email to new player

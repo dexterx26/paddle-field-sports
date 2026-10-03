@@ -169,14 +169,15 @@ class UserProfileAndRegistrationEmailTest extends TestCase
 
         $response = $this->post(route('register'), $userData);
 
-        $response->assertRedirect(route('home'));
-        $this->assertAuthenticated();
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
 
         // Verify email was dispatched
         Mail::assertSent(RegistrationSuccessfulMail::class, function ($mail) use ($userData) {
             return $mail->hasTo($userData['email']) &&
                    $mail->user->email === $userData['email'] &&
-                   $mail->user->name === $userData['name'];
+                   $mail->user->name === $userData['name'] &&
+                   !empty($mail->verificationUrl);
         });
     }
 
@@ -195,8 +196,8 @@ class UserProfileAndRegistrationEmailTest extends TestCase
 
         $response = $this->post(route('register'), $userData);
 
-        $response->assertRedirect(route('home'));
-        $this->assertAuthenticated();
+        $response->assertRedirect(route('login'));
+        $this->assertGuest();
 
         // Verify no email was dispatched
         Mail::assertNothingSent();

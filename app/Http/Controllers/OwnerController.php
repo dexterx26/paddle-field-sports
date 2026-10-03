@@ -1011,6 +1011,7 @@ class OwnerController extends Controller
             'court_owner_id' => $courtOwnerId,
             'permissions' => $permissions,
             'is_active' => $request->boolean('is_active', true),
+            'email_verified_at' => \Carbon\Carbon::now(),
         ]);
 
         // Send registration confirmation email

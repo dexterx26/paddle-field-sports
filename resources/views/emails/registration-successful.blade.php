@@ -39,19 +39,52 @@
                     <!-- Welcome Body Section -->
                     <tr>
                         <td style="padding: 36px 32px;">
-                            <!-- Welcome Banner Pill -->
-                            <div style="background-color: #ecfeff; border-left: 4px solid #0891b2; padding: 12px 18px; border-radius: 8px; margin-bottom: 24px;">
-                                <p style="margin: 0; color: #0891b2; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
-                                    ✓ Registration Confirmed & Account Active
-                                </p>
-                            </div>
+                            @if(!empty($verificationUrl) && !$user->hasVerifiedEmail())
+                                <!-- Verification Banner Pill -->
+                                <div style="background-color: #fffbeb; border-left: 4px solid #f59e0b; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px;">
+                                    <p style="margin: 0; color: #b45309; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        ⚠️ Action Required: Email Confirmation
+                                    </p>
+                                    <p style="margin: 4px 0 0 0; color: #78350f; font-size: 13px;">
+                                        Please confirm your email address to activate your account before you can log in.
+                                    </p>
+                                </div>
 
-                            <h2 style="margin: 0 0 12px 0; color: #1e232a; font-size: 22px; font-weight: 800;">
-                                Hello, {{ $user->name }}! 🎉
-                            </h2>
-                            <p style="margin: 0 0 20px 0; font-size: 14px; color: #596579; line-height: 1.6;">
-                                Welcome to <strong>Paddle Field Sports Center</strong>! Your player account has been successfully created. You can now effortlessly reserve court slots in real-time, view live schedules, manage holds, and participate in competitive club matches.
-                            </p>
+                                <h2 style="margin: 0 0 12px 0; color: #1e232a; font-size: 22px; font-weight: 800;">
+                                    Hello, {{ $user->name }}! 🏓
+                                </h2>
+                                <p style="margin: 0 0 20px 0; font-size: 14px; color: #596579; line-height: 1.6;">
+                                    Thank you for registering at <strong>{{ $settings->venue_name ?? 'Paddle Field Sports Center' }}</strong>. Before you can log in and book court slots, please confirm that this is your email address by clicking the button below:
+                                </p>
+
+                                <!-- Prominent Verification CTA Button -->
+                                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 24px 0;">
+                                    <tr>
+                                        <td align="center">
+                                            <a href="{{ $verificationUrl }}" target="_blank" style="display: inline-block; padding: 16px 36px; font-size: 14px; font-weight: 800; color: #12151b; background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%); text-decoration: none; text-transform: uppercase; letter-spacing: 0.5px; border-radius: 12px; box-shadow: 0 4px 14px rgba(8, 145, 178, 0.4);">
+                                                ✓ Confirm Email Address
+                                            </a>
+                                            <p style="margin: 10px 0 0 0; font-size: 11px; color: #888888;">
+                                                This confirmation link expires in 24 hours.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            @else
+                                <!-- Welcome Banner Pill -->
+                                <div style="background-color: #ecfeff; border-left: 4px solid #0891b2; padding: 12px 18px; border-radius: 8px; margin-bottom: 24px;">
+                                    <p style="margin: 0; color: #0891b2; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">
+                                        ✓ Registration Confirmed & Account Active
+                                    </p>
+                                </div>
+
+                                <h2 style="margin: 0 0 12px 0; color: #1e232a; font-size: 22px; font-weight: 800;">
+                                    Hello, {{ $user->name }}! 🎉
+                                </h2>
+                                <p style="margin: 0 0 20px 0; font-size: 14px; color: #596579; line-height: 1.6;">
+                                    Welcome to <strong>Paddle Field Sports Center</strong>! Your player account has been successfully created. You can now effortlessly reserve court slots in real-time, view live schedules, manage holds, and participate in competitive club matches.
+                                </p>
+                            @endif
 
                             <!-- Account Details Table Card -->
                             <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #faf6f0; border-radius: 14px; border: 1px solid #eae3d7; margin: 24px 0; overflow: hidden;">

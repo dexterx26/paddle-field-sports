@@ -17,14 +17,16 @@ class RegistrationSuccessfulMail extends Mailable
 
     public User $user;
     public VenueSetting $settings;
+    public ?string $verificationUrl;
 
     /**
      * Create a new message instance.
      */
-    public function __construct(User $user, ?VenueSetting $settings = null)
+    public function __construct(User $user, ?VenueSetting $settings = null, ?string $verificationUrl = null)
     {
         $this->user = $user;
         $this->settings = $settings ?? VenueSetting::getSettings();
+        $this->verificationUrl = $verificationUrl;
     }
 
     /**
@@ -33,13 +35,16 @@ class RegistrationSuccessfulMail extends Mailable
     public function envelope(): Envelope
     {
         $appName = config('app.name', 'Paddle Field Sports Center');
+        $subject = $this->verificationUrl && !$this->user->hasVerifiedEmail()
+            ? "✉️ Please Confirm Your Email – Welcome to {$appName}!"
+            : "🎉 Welcome to {$appName} – Registration Successful!";
 
         return new Envelope(
             from: new Address(
                 config('mail.from.address', 'paddlefieldsports@gmail.com'),
                 config('mail.from.name', $appName)
             ),
-            subject: "🎉 Welcome to {$appName} – Registration Successful!",
+            subject: $subject,
         );
     }
 
@@ -53,6 +58,7 @@ class RegistrationSuccessfulMail extends Mailable
             with: [
                 'user' => $this->user,
                 'settings' => $this->settings,
+                'verificationUrl' => $this->verificationUrl,
                 'loginUrl' => route('login'),
                 'reserveUrl' => route('home') . '#booking-engine',
                 'profileUrl' => route('profile.edit'),

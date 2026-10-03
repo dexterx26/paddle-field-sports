@@ -51,6 +51,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'admin',
             'phone' => '+63 917 000 0001',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         $owner = User::create([
@@ -59,6 +60,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'court_owner',
             'phone' => '+63 917 555 7233',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         $assistant = User::create([
@@ -70,6 +72,7 @@ class DatabaseSeeder extends Seeder
             'permissions' => ['schedule', 'approvals'], // default viewing of schedule and approval of reservation
             'is_active' => true,
             'phone' => '+63 919 123 4567',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         $client = User::create([
@@ -78,6 +81,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'client',
             'phone' => '+63 918 222 3344',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         $client2 = User::create([
@@ -86,6 +90,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'client',
             'phone' => '+63 918 555 6789',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         $client3 = User::create([
@@ -94,6 +99,7 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password123'),
             'role' => 'client',
             'phone' => '+63 918 777 8899',
+            'email_verified_at' => Carbon::now(),
         ]);
 
         // 3. Create Courts (Requirement: exactly 3 courts, all indoor, default 150 pesos/hr)

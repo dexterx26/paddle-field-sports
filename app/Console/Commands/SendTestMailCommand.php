@@ -111,17 +111,18 @@ class SendTestMailCommand extends Command
             $this->newLine();
 
             if (str_contains($e->getMessage(), '525') || str_contains($e->getMessage(), 'Unauthorized IP')) {
-                $this->warn("DIAGNOSIS: Brevo blocked the connection because your IP is not authorized.");
-                $this->line("Your Brevo Login and SMTP Key ARE VALID! Brevo just requires your IP to be authorized.");
+                $currentIp = trim((string) @file_get_contents('https://api.ipify.org')) ?: 'your public IP';
+                $this->warn("DIAGNOSIS: Brevo blocked the connection because your current IP is not authorized.");
+                $this->line("Your Brevo Login and SMTP Key ARE VALID! Brevo's security policy requires this IP to be authorized.");
                 $this->newLine();
                 $this->line("HOW TO FIX (choose one):");
-                $this->info("Option 1: Add your IP to Brevo Authorized IPs:");
+                $this->info("Option 1: Add your current IP ({$currentIp}) to Brevo Authorized IPs:");
                 $this->line("   👉 Go to: https://app.brevo.com/settings/security/authorized-ips");
-                $this->line("   👉 Click 'Authorize IP address' and enter: 124.106.215.62");
+                $this->line("   👉 Click 'Authorize IP address' and enter: {$currentIp}");
                 $this->newLine();
-                $this->info("Option 2: Turn off 'Block unknown IP addresses' in Brevo Security settings.");
+                $this->info("Option 2: Turn off 'Authorized IP addresses' in Brevo Security settings (Recommended for dynamic IPs).");
                 $this->newLine();
-                $this->info("Option 3: Check your Brevo account email inbox for a 'Validate your IP address' email and click the confirmation link.");
+                $this->info("Option 3: Check your Brevo account email inbox ({$fromAddress}) for a 'Validate your IP address' email and click the confirmation link.");
             } elseif (str_contains($e->getMessage(), '530') || str_contains($e->getMessage(), '535')) {
                 $this->warn("DIAGNOSIS: The SMTP server rejected the authentication.");
                 if (str_contains($host, 'brevo') || str_contains($host, 'sendinblue')) {

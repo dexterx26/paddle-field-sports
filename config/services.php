@@ -44,6 +44,7 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect_uri' => env('GOOGLE_REDIRECT_URI'),
         'redirect' => (empty(env('GOOGLE_REDIRECT_URI')) || env('GOOGLE_REDIRECT_URI') === 'null')
             ? rtrim((string) env('APP_URL', 'http://127.0.0.1:8000'), '/') . '/auth/google/callback'
             : str_replace('${APP_URL}', rtrim((string) env('APP_URL', 'http://127.0.0.1:8000'), '/'), (string) env('GOOGLE_REDIRECT_URI')),
@@ -52,6 +53,7 @@ return [
     'facebook' => [
         'client_id' => env('FACEBOOK_CLIENT_ID'),
         'client_secret' => env('FACEBOOK_CLIENT_SECRET'),
+        'redirect_uri' => env('FACEBOOK_REDIRECT_URI'),
         'redirect' => (empty(env('FACEBOOK_REDIRECT_URI')) || env('FACEBOOK_REDIRECT_URI') === 'null')
             ? rtrim((string) env('APP_URL', 'http://127.0.0.1:8000'), '/') . '/auth/facebook/callback'
             : str_replace('${APP_URL}', rtrim((string) env('APP_URL', 'http://127.0.0.1:8000'), '/'), (string) env('FACEBOOK_REDIRECT_URI')),
