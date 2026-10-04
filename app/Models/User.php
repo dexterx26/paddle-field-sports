@@ -26,6 +26,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'court_owner_id',
         'permissions',
         'is_active',
+        'deactivation_reason',
         'phone',
         'password',
         'google_id',

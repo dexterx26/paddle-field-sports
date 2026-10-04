@@ -344,37 +344,45 @@
                                 </td>
 
                                 <!-- Status -->
-                                <td class="py-4 px-6 text-center whitespace-nowrap">
+                                <td class="py-4 px-6 text-center whitespace-nowrap" id="user-status-cell-{{ $user->id }}">
                                     @if($user->id === Auth::id() || (Auth::user()->isAdminAssistant() && ($user->isAdmin() || $user->isOwner())) || (Auth::user()->isOwner() && $user->isAdmin()))
                                         <!-- Protected toggle button -->
                                         @if($user->is_active)
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 opacity-70 cursor-not-allowed" title="Protected account - cannot modify status">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                                 Active
                                             </span>
                                         @else
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 opacity-70 cursor-not-allowed" title="Protected account - cannot modify status">
                                                 <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
                                                 Deactivated
                                             </span>
                                         @endif
                                     @else
-                                        <form method="POST" action="{{ route('owner.users.toggle', $user->id) }}" class="inline-block">
-                                            @csrf
-                                            <button type="submit" title="Click to toggle account status" class="cursor-pointer group">
-                                                @if($user->is_active)
-                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 transition-all">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                        Active
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 transition-all">
-                                                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                                                        Deactivated
+                                        <button type="button"
+                                            id="status-btn-{{ $user->id }}"
+                                            onclick="handleStatusClick({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($roleBadge['label']) }}', {{ $user->is_active ? 1 : 0 }}, '{{ addslashes($user->deactivation_reason ?? '') }}')"
+                                            title="{{ $user->is_active ? 'Click to edit status / deactivate account' : 'Click to edit status / reactivate account' }}"
+                                            class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                                            @if($user->is_active)
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 shadow-sm transition-all">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                    <span>Active</span>
+                                                    <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 group-hover:border-rose-500/50 shadow-sm transition-all">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                    <span>Deactivated</span>
+                                                    <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                                                </span>
+                                                @if(!empty($user->deactivation_reason))
+                                                    <span class="text-[9px] text-theme-muted max-w-[140px] truncate block opacity-75 group-hover:opacity-100 transition-opacity" title="Reason: {{ $user->deactivation_reason }}">
+                                                        <i class="fa-solid fa-circle-info text-[8px] mr-0.5 text-rose-400"></i>{{ $user->deactivation_reason }}
                                                     </span>
                                                 @endif
-                                            </button>
-                                        </form>
+                                            @endif
+                                        </button>
                                     @endif
                                 </td>
 
@@ -383,17 +391,11 @@
                                     <div class="flex items-center justify-end gap-2">
                                         @php
                                             $canEdit = true;
-                                            $canDelete = true;
                                             if (Auth::user()->isAdminAssistant() && ($user->isAdmin() || $user->isOwner())) {
                                                 $canEdit = false;
-                                                $canDelete = false;
                                             }
                                             if (Auth::user()->isOwner() && $user->isAdmin()) {
                                                 $canEdit = false;
-                                                $canDelete = false;
-                                            }
-                                            if ($user->id === Auth::id() || $user->email === 'admin@paddlefield.com') {
-                                                $canDelete = false;
                                             }
                                         @endphp
 
@@ -416,19 +418,6 @@
                                                 title="Edit User">
                                                 <i class="fa-solid fa-pen-to-square"></i>
                                             </button>
-                                        @endif
-
-                                        @if($canDelete)
-                                            <form method="POST" action="{{ route('owner.users.destroy', $user->id) }}"
-                                                id="delete-user-form-{{ $user->id }}" class="inline-block">
-                                                @csrf
-                                                @method('DELETE')
-                                                <button type="button" onclick="confirmDeleteUser({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ $roleBadge['label'] }}')"
-                                                    class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-rose-500/10 hover:text-rose-500 text-theme-muted transition-colors cursor-pointer"
-                                                    title="Delete User">
-                                                    <i class="fa-regular fa-trash-can"></i>
-                                                </button>
-                                            </form>
                                         @endif
                                     </div>
                                 </td>
@@ -707,13 +696,24 @@
                 </div>
             </div>
 
-            <!-- Active Checkbox -->
-            <div class="flex items-center gap-2 pt-1">
-                <input type="checkbox" name="is_active" id="edit_user_is_active" value="1"
-                    class="rounded text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 w-4 h-4 cursor-pointer">
-                <label for="edit_user_is_active" class="text-xs font-semibold text-theme-heading cursor-pointer">
-                    Account is active and able to sign in
-                </label>
+            <!-- Active Checkbox & Deactivation Reason -->
+            <div class="space-y-2 pt-1">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="is_active" id="edit_user_is_active" value="1"
+                        onchange="toggleEditDeactivationReason(this.checked)"
+                        class="rounded text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 w-4 h-4 cursor-pointer">
+                    <label for="edit_user_is_active" class="text-xs font-semibold text-theme-heading cursor-pointer">
+                        Account is active and able to sign in
+                    </label>
+                </div>
+                <div id="edit_deactivation_reason_container" class="hidden space-y-1.5 pl-6">
+                    <label for="edit_user_deactivation_reason" class="block text-[11px] font-bold text-rose-500">
+                        Deactivation Reason
+                    </label>
+                    <textarea name="deactivation_reason" id="edit_user_deactivation_reason" rows="2"
+                        placeholder="State reason for deactivating this user..."
+                        class="w-full px-3 py-2 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-rose-500 focus:outline-none resize-none"></textarea>
+                </div>
             </div>
 
             <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
@@ -819,6 +819,102 @@
         </div>
     </div>
 </div>
+<!-- ========================================== -->
+<!-- DEACTIVATE USER MODAL                      -->
+<!-- ========================================== -->
+<div id="deactivateUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+    <div class="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative">
+        <button type="button" onclick="closeDeactivateModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="flex items-center gap-3.5 mb-5">
+            <div class="w-11 h-11 rounded-2xl bg-rose-500/15 text-rose-500 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-user-slash"></i>
+            </div>
+            <div>
+                <h3 class="text-base md:text-lg font-bold text-theme-heading">Deactivate Account</h3>
+                <p class="text-xs text-theme-muted">Suspend this account and indicate the reason for deactivation.</p>
+            </div>
+        </div>
+
+        <form id="deactivateUserForm" onsubmit="submitDeactivateUser(event)" class="space-y-4">
+            <input type="hidden" id="deactivate_user_id" value="">
+
+            <!-- Target User Info Card -->
+            <div class="p-3.5 rounded-2xl bg-stone-100 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold flex items-center justify-center text-sm shrink-0 uppercase" id="deactivate_user_avatar">
+                        U
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-theme-heading truncate" id="deactivate_user_name">User Name</div>
+                        <div class="text-[11px] text-theme-muted truncate font-mono" id="deactivate_user_email">user@email.com</div>
+                    </div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-[10px] font-bold shrink-0 bg-stone-200 dark:bg-stone-800 text-theme-body border border-stone-300 dark:border-stone-700" id="deactivate_user_role">
+                    Client
+                </span>
+            </div>
+
+            <!-- Reason Input -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label for="deactivate_reason" class="block text-xs font-bold text-theme-heading">
+                        Reason for Deactivation <span class="text-rose-500">*</span>
+                    </label>
+                    <span class="text-[10px] text-theme-muted">Required</span>
+                </div>
+
+                <!-- Reason Preset Chips -->
+                <div class="mb-2 flex flex-wrap gap-1.5">
+                    <button type="button" onclick="setDeactivateReason('Repeated unpaid / expired reservation holds')"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">
+                        ⏱️ Unpaid / Expired Holds
+                    </button>
+                    <button type="button" onclick="setDeactivateReason('Violation of facility court rules / terms')"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">
+                        🚫 Rule Violation
+                    </button>
+                    <button type="button" onclick="setDeactivateReason('Requested by account owner / user')"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">
+                        🙋 Requested by User
+                    </button>
+                    <button type="button" onclick="setDeactivateReason('Suspicious / fraudulent booking activity')"
+                        class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 dark:hover:text-rose-400 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">
+                        ⚠️ Suspicious Activity
+                    </button>
+                </div>
+
+                <textarea id="deactivate_reason" rows="3" required
+                    placeholder="Indicate the reason why you are deactivating this account..."
+                    class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-rose-500 focus:outline-none transition-all resize-none"></textarea>
+                <p id="deactivate_reason_error" class="hidden text-[11px] text-rose-500 mt-1 font-semibold">Please provide a reason for deactivation.</p>
+            </div>
+
+            <!-- Context Alert -->
+            <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-800 dark:text-amber-300 text-xs flex items-start gap-2.5">
+                <i class="fa-solid fa-triangle-exclamation text-amber-500 mt-0.5 shrink-0"></i>
+                <div class="leading-relaxed text-[11px]">
+                    While deactivated, this user will be blocked from logging in, booking courts, or holding slots. You can reactivate this account at any time without data loss.
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-stone-200 dark:border-stone-800">
+                <button type="button" onclick="closeDeactivateModal()"
+                    class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" id="deactivate_submit_btn"
+                    class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 cursor-pointer transition-all flex items-center gap-2">
+                    <span id="deactivate_btn_spinner" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                    <span id="deactivate_btn_text">Confirm Deactivation</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -847,7 +943,19 @@
         document.getElementById('edit_user_name').value = user.name || '';
         document.getElementById('edit_user_email').value = user.email || '';
         document.getElementById('edit_user_phone').value = user.phone || '';
-        document.getElementById('edit_user_is_active').checked = !!user.is_active;
+
+        const isActive = !!user.is_active;
+        const activeCheckbox = document.getElementById('edit_user_is_active');
+        if (activeCheckbox) {
+            activeCheckbox.checked = isActive;
+        }
+
+        const reasonBox = document.getElementById('edit_user_deactivation_reason');
+        if (reasonBox) {
+            reasonBox.value = user.deactivation_reason || '';
+        }
+        toggleEditDeactivationReason(isActive);
+
         const passField = document.getElementById('edit_user_password');
         const passConfField = document.getElementById('edit_user_password_confirmation');
         if (passField) passField.value = '';
@@ -872,6 +980,16 @@
         });
 
         document.getElementById('editUserModal').classList.remove('hidden');
+    }
+
+    function toggleEditDeactivationReason(isActive) {
+        const container = document.getElementById('edit_deactivation_reason_container');
+        if (!container) return;
+        if (isActive) {
+            container.classList.add('hidden');
+        } else {
+            container.classList.remove('hidden');
+        }
     }
 
     function closeEditUserModal() {
@@ -988,27 +1106,234 @@
         document.getElementById('heldSlotsModal').classList.add('hidden');
     }
 
-    function confirmDeleteUser(id, name, roleLabel) {
-        Swal.fire({
-            title: `Delete ${roleLabel}?`,
-            text: `Are you sure you want to permanently delete "${name}"? This action cannot be undone.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#e11d48',
-            cancelButtonColor: '#64748b',
-            confirmButtonText: 'Yes, Delete Account',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                document.getElementById(`delete-user-form-${id}`).submit();
+    // ==========================================
+    // STATUS MODAL & ASYNC TOGGLE (NO REFRESH)
+    // ==========================================
+    let currentDeactivateUser = null;
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function escapeJsString(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/\\/g, '\\\\')
+            .replace(/'/g, "\\'")
+            .replace(/"/g, '\\"')
+            .replace(/\n/g, '\\n')
+            .replace(/\r/g, '');
+    }
+
+    function setDeactivateReason(text) {
+        const textarea = document.getElementById('deactivate_reason');
+        textarea.value = text;
+        textarea.focus();
+        document.getElementById('deactivate_reason_error').classList.add('hidden');
+    }
+
+    function handleStatusClick(userId, userName, userEmail, userRole, isActive, currentReason) {
+        if (isActive) {
+            // Deactivating: show pop up modal to indicate reason
+            openDeactivateModal(userId, userName, userEmail, userRole, currentReason);
+        } else {
+            // Reactivating: show confirm dialog
+            const prevReasonHtml = currentReason 
+                ? `<div class="p-3 my-3 rounded-xl bg-stone-100 dark:bg-stone-800/80 text-xs text-theme-muted text-left border border-stone-200 dark:border-stone-700"><span class="font-bold text-theme-heading">Previous deactivation reason:</span><br>${escapeHtml(currentReason)}</div>` 
+                : '';
+
+            Swal.fire({
+                title: 'Reactivate Account?',
+                html: `Are you sure you want to activate the account for <strong>${escapeHtml(userName)}</strong> (${escapeHtml(userEmail)})?<br>${prevReasonHtml}<p class="text-xs text-theme-muted mt-2">The user will immediately be able to sign in and book courts.</p>`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: '<i class="fa-solid fa-check mr-1.5"></i>Yes, Activate Account',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    performStatusUpdate(userId, true, null, userName, userEmail, userRole);
+                }
+            });
+        }
+    }
+
+    function openDeactivateModal(userId, userName, userEmail, userRole, currentReason) {
+        currentDeactivateUser = { id: userId, name: userName, email: userEmail, role: userRole };
+        document.getElementById('deactivate_user_id').value = userId;
+        document.getElementById('deactivate_user_name').textContent = userName;
+        document.getElementById('deactivate_user_email').textContent = userEmail;
+        document.getElementById('deactivate_user_role').textContent = userRole;
+        document.getElementById('deactivate_user_avatar').textContent = (userName || 'U').charAt(0).toUpperCase();
+        document.getElementById('deactivate_reason').value = '';
+        document.getElementById('deactivate_reason_error').classList.add('hidden');
+        document.getElementById('deactivateUserModal').classList.remove('hidden');
+        setTimeout(() => {
+            document.getElementById('deactivate_reason').focus();
+        }, 100);
+    }
+
+    function closeDeactivateModal() {
+        document.getElementById('deactivateUserModal').classList.add('hidden');
+        document.getElementById('deactivate_reason_error').classList.add('hidden');
+        currentDeactivateUser = null;
+    }
+
+    function submitDeactivateUser(e) {
+        e.preventDefault();
+        if (!currentDeactivateUser) return;
+
+        const reason = document.getElementById('deactivate_reason').value.trim();
+        if (!reason) {
+            document.getElementById('deactivate_reason_error').classList.remove('hidden');
+            document.getElementById('deactivate_reason').focus();
+            return;
+        }
+
+        const submitBtn = document.getElementById('deactivate_submit_btn');
+        const spinner = document.getElementById('deactivate_btn_spinner');
+        const btnText = document.getElementById('deactivate_btn_text');
+
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+        btnText.textContent = 'Deactivating...';
+
+        performStatusUpdate(
+            currentDeactivateUser.id,
+            false,
+            reason,
+            currentDeactivateUser.name,
+            currentDeactivateUser.email,
+            currentDeactivateUser.role,
+            () => {
+                closeDeactivateModal();
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Confirm Deactivation';
+            },
+            () => {
+                submitBtn.disabled = false;
+                spinner.classList.add('hidden');
+                btnText.textContent = 'Confirm Deactivation';
             }
+        );
+    }
+
+    function performStatusUpdate(userId, newActive, reason, userName, userEmail, userRole, onComplete, onError) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+
+        fetch(`{{ url('owner/users') }}/${userId}/toggle-status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify({
+                is_active: newActive ? 1 : 0,
+                reason: reason || ''
+            })
+        })
+        .then(async res => {
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+                throw new Error(data.message || 'Failed to update account status.');
+            }
+            return data;
+        })
+        .then(data => {
+            if (typeof onComplete === 'function') onComplete();
+
+            // Update the table cell without page refresh!
+            updateUserStatusCell(userId, data.is_active, data.deactivation_reason, userName, userEmail, userRole);
+
+            // SweetAlert toast notification
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3500,
+                timerProgressBar: true
+            });
+
+            Toast.fire({
+                icon: data.is_active ? 'success' : 'info',
+                title: data.message || `User account status updated.`
+            });
+        })
+        .catch(err => {
+            if (typeof onError === 'function') onError();
+            Swal.fire({
+                title: 'Action Failed',
+                text: err.message || 'An error occurred while updating the account status.',
+                icon: 'error',
+                confirmButtonColor: '#06b6d4'
+            });
         });
+    }
+
+    function updateUserStatusCell(userId, isActive, reason, userName, userEmail, userRole) {
+        const cell = document.getElementById(`user-status-cell-${userId}`);
+        if (!cell) return;
+
+        const safeName = escapeHtml(userName);
+        const safeEmail = escapeHtml(userEmail);
+        const safeRole = escapeHtml(userRole);
+        const safeReason = reason ? escapeHtml(reason) : '';
+        const jsName = escapeJsString(userName);
+        const jsEmail = escapeJsString(userEmail);
+        const jsRole = escapeJsString(userRole);
+        const jsReason = reason ? escapeJsString(reason) : '';
+
+        if (isActive) {
+            cell.innerHTML = `
+                <button type="button"
+                    id="status-btn-${userId}"
+                    onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 1, '')"
+                    title="Click to edit status / deactivate account"
+                    class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 shadow-sm transition-all">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span>Active</span>
+                        <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                    </span>
+                </button>
+            `;
+        } else {
+            const reasonHtml = safeReason ? `
+                <span class="text-[9px] text-theme-muted max-w-[140px] truncate block opacity-75 group-hover:opacity-100 transition-opacity" title="Reason: ${safeReason}">
+                    <i class="fa-solid fa-circle-info text-[8px] mr-0.5 text-rose-400"></i>${safeReason}
+                </span>
+            ` : '';
+
+            cell.innerHTML = `
+                <button type="button"
+                    id="status-btn-${userId}"
+                    onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 0, '${jsReason}')"
+                    title="Click to edit status / reactivate account"
+                    class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 group-hover:border-rose-500/50 shadow-sm transition-all">
+                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                        <span>Deactivated</span>
+                        <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                    </span>
+                    ${reasonHtml}
+                </button>
+            `;
+        }
     }
 
     function confirmResetPassword(id, name, email) {
         Swal.fire({
             title: 'Reset Password?',
-            html: `Are you sure you want to reset the password for <strong>${name}</strong> (${email}) to <code class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs">PaddleField2026!</code>?`,
+            html: `Are you sure you want to reset the password for <strong>${escapeHtml(name)}</strong> (${escapeHtml(email)}) to <code class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-600 dark:text-amber-400 font-mono font-bold text-xs">PaddleField2026!</code>?`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#f59e0b',
@@ -1028,6 +1353,7 @@
             closeAddUserModal();
             closeEditUserModal();
             closeHeldSlotsModal();
+            closeDeactivateModal();
         }
     });
 </script>

@@ -1069,14 +1069,24 @@ class OwnerController extends Controller
             $newRole = $currentUser->role;
         }
 
+        $isActive = $targetUser->id === $currentUser->id ? true : $request->boolean('is_active', true);
         $updateData = [
             'name' => trim($request->input('name')),
             'email' => strtolower(trim($request->input('email'))),
             'phone' => $request->input('phone'),
             'role' => $newRole,
-            // Users cannot deactivate their own active account
-            'is_active' => $targetUser->id === $currentUser->id ? true : $request->boolean('is_active', true),
+            'is_active' => $isActive,
         ];
+
+        if (!$isActive) {
+            if ($request->filled('deactivation_reason')) {
+                $updateData['deactivation_reason'] = trim($request->input('deactivation_reason'));
+            } elseif (!$targetUser->deactivation_reason) {
+                $updateData['deactivation_reason'] = 'Deactivated by administrator';
+            }
+        } else {
+            $updateData['deactivation_reason'] = null;
+        }
 
         if ($request->filled('password')) {
             $updateData['password'] = Hash::make($request->input('password'));
@@ -1103,30 +1113,71 @@ class OwnerController extends Controller
     /**
      * Toggle User active/inactive status
      */
-    public function toggleUserStatus(int $id)
+    public function toggleUserStatus(Request $request, int $id)
     {
         $currentUser = Auth::user();
         $targetUser = User::findOrFail($id);
 
         if ($targetUser->id === $currentUser->id) {
-            return back()->with('error', 'You cannot deactivate your own account.');
+            $msg = 'You cannot deactivate your own account.';
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 422);
+            }
+            return back()->with('error', $msg);
         }
 
         if ($currentUser->isAdminAssistant() && ($targetUser->isAdmin() || $targetUser->isOwner())) {
-            abort(403, 'You do not have permission to modify this user account.');
+            $msg = 'You do not have permission to modify this user account.';
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+            abort(403, $msg);
         }
 
         if ($currentUser->isOwner() && $targetUser->isAdmin()) {
-            abort(403, 'You do not have permission to modify a system administrator.');
+            $msg = 'You do not have permission to modify a system administrator.';
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $msg], 403);
+            }
+            abort(403, $msg);
+        }
+
+        if ($request->has('is_active')) {
+            $newActive = $request->boolean('is_active');
+        } elseif ($request->has('status')) {
+            $newActive = $request->input('status') === 'active';
+        } else {
+            $newActive = !$targetUser->is_active;
+        }
+
+        $reason = null;
+        if (!$newActive) {
+            $reason = trim($request->input('reason', $request->input('deactivation_reason', 'Deactivated by administrator')));
+            if (empty($reason)) {
+                $reason = 'Deactivated by administrator';
+            }
         }
 
         $targetUser->update([
-            'is_active' => !$targetUser->is_active,
+            'is_active' => $newActive,
+            'deactivation_reason' => $reason,
         ]);
 
         $statusText = $targetUser->is_active ? 'activated' : 'deactivated';
+        $message = "User '{$targetUser->name}' has been {$statusText}.";
 
-        return back()->with('success', "User '{$targetUser->name}' has been {$statusText}.");
+        if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'user_id' => $targetUser->id,
+                'is_active' => (bool) $targetUser->is_active,
+                'status_label' => $targetUser->is_active ? 'Active' : 'Deactivated',
+                'deactivation_reason' => $targetUser->deactivation_reason,
+                'message' => $message,
+            ]);
+        }
+
+        return back()->with('success', $message);
     }
 
     /**

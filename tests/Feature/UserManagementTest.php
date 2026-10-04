@@ -231,4 +231,59 @@ class UserManagementTest extends TestCase
         $assistantResetOwner = $this->actingAs($this->assistant)->post(route('owner.users.reset_password', $this->owner->id));
         $assistantResetOwner->assertForbidden();
     }
+
+    public function test_user_management_ajax_deactivate_with_reason(): void
+    {
+        $target = User::where('role', 'client')->first();
+        $this->assertTrue($target->is_active);
+
+        $response = $this->actingAs($this->owner)
+            ->postJson(route('owner.users.toggle', $target->id), [
+                'is_active' => false,
+                'reason' => 'Repeated unpaid reservation holds',
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+            'is_active' => false,
+            'status_label' => 'Deactivated',
+            'deactivation_reason' => 'Repeated unpaid reservation holds',
+        ]);
+
+        $this->assertFalse($target->fresh()->is_active);
+        $this->assertEquals('Repeated unpaid reservation holds', $target->fresh()->deactivation_reason);
+
+        // Reactivate via AJAX
+        $reactivateResp = $this->actingAs($this->owner)
+            ->postJson(route('owner.users.toggle', $target->id), [
+                'is_active' => true,
+            ]);
+
+        $reactivateResp->assertOk();
+        $reactivateResp->assertJson([
+            'success' => true,
+            'is_active' => true,
+            'status_label' => 'Active',
+            'deactivation_reason' => null,
+        ]);
+
+        $this->assertTrue($target->fresh()->is_active);
+        $this->assertNull($target->fresh()->deactivation_reason);
+    }
+
+    public function test_user_management_view_has_no_delete_button_and_has_deactivate_modal(): void
+    {
+        $response = $this->actingAs($this->owner)->get(route('owner.users.index'));
+        $response->assertOk();
+
+        // Ensure confirmDeleteUser is removed
+        $response->assertDontSee('confirmDeleteUser(');
+        $response->assertDontSee('title="Delete User"');
+
+        // Ensure deactivate modal and status handler exist
+        $response->assertSee('deactivateUserModal');
+        $response->assertSee('Reason for Deactivation');
+        $response->assertSee('handleStatusClick');
+    }
 }
