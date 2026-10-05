@@ -853,7 +853,8 @@ class OwnerController extends Controller
         $settings = VenueSetting::getSettings();
         $currentUser = Auth::user();
 
-        $allowedRoles = ['admin', 'court_owner', 'admin_assistant', 'client'];
+        // System Admin accounts are hidden from /owner/users
+        $allowedRoles = ['court_owner', 'admin_assistant', 'client'];
         $roleFilter = $request->input('role');
         $statusFilter = $request->input('status');
         $search = $request->input('search');
@@ -861,6 +862,7 @@ class OwnerController extends Controller
         $sort = $request->input('sort');
 
         $query = User::with(['courtOwner'])
+            ->where('role', '!=', 'admin')
             ->withCount('bookings')
             ->withSum([
                 'bookings as held_timeslots_count' => function ($q) {
@@ -909,30 +911,31 @@ class OwnerController extends Controller
         if ($sort === 'held_desc') {
             $query->orderByDesc('held_timeslots_count')->orderBy('id', 'desc');
         } else {
-            // Admins & Owners first, then Assistants, then Clients, ordered by newest
+            // Owners first, then Assistants, then Clients, ordered by newest
             $query->orderByRaw("CASE 
-                WHEN role = 'admin' THEN 1 
-                WHEN role = 'court_owner' THEN 2 
-                WHEN role = 'admin_assistant' THEN 3 
-                ELSE 4 END")
+                WHEN role = 'court_owner' THEN 1 
+                WHEN role = 'admin_assistant' THEN 2 
+                ELSE 3 END")
                 ->orderBy('id', 'desc');
         }
 
         $users = $query->paginate(15)->withQueryString();
 
-        // Counts for tabs & summary
+        // Counts for tabs & summary (excluding hidden system admin accounts)
         $counts = [
-            'all' => User::count(),
+            'all' => User::where('role', '!=', 'admin')->count(),
             'client' => User::where('role', 'client')->count(),
             'admin_assistant' => User::where('role', 'admin_assistant')->count(),
             'court_owner' => User::where('role', 'court_owner')->count(),
-            'admin' => User::where('role', 'admin')->count(),
-            'active' => User::where('is_active', true)->count(),
-            'inactive' => User::where('is_active', false)->count(),
-            'has_held' => User::whereHas('bookings', function ($q) {
+            'active' => User::where('role', '!=', 'admin')->where('is_active', true)->count(),
+            'inactive' => User::where('role', '!=', 'admin')->where('is_active', false)->count(),
+            'has_held' => User::where('role', '!=', 'admin')->whereHas('bookings', function ($q) {
                 $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
             })->count(),
             'total_held_slots' => (int) Booking::whereNotNull('user_id')
+                ->whereHas('user', function ($q) {
+                    $q->where('role', '!=', 'admin');
+                })
                 ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
                 ->sum('total_hours'),
         ];
@@ -1036,19 +1039,20 @@ class OwnerController extends Controller
         $currentUser = Auth::user();
         $targetUser = User::findOrFail($id);
 
-        // Security restrictions based on role hierarchy
+        // Security restrictions: system admins cannot be modified here
+        if ($targetUser->isAdmin()) {
+            abort(403, 'System administrator accounts cannot be modified here.');
+        }
+
         if ($currentUser->isAdminAssistant()) {
-            if ($targetUser->isAdmin() || $targetUser->isOwner()) {
-                abort(403, 'You do not have permission to edit administrators or court owners.');
+            if ($targetUser->isOwner()) {
+                abort(403, 'You do not have permission to edit court owners.');
             }
             $allowedRoles = ['client', 'admin_assistant'];
         } elseif ($currentUser->isOwner()) {
-            if ($targetUser->isAdmin()) {
-                abort(403, 'You do not have permission to edit system administrators.');
-            }
             $allowedRoles = ['client', 'admin_assistant', 'court_owner'];
         } else {
-            $allowedRoles = ['client', 'admin_assistant', 'court_owner', 'admin'];
+            $allowedRoles = ['client', 'admin_assistant', 'court_owner'];
         }
 
         $request->validate([
@@ -1239,6 +1243,10 @@ class OwnerController extends Controller
     public function userHeldSlots(int $id)
     {
         $user = User::findOrFail($id);
+
+        if ($user->isAdmin()) {
+            abort(404, 'User not found.');
+        }
 
         $heldBookings = $user->bookings()
             ->whereIn('booking_status', ['held', 'expired', 'cancelled'])

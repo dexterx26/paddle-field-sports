@@ -286,4 +286,24 @@ class UserManagementTest extends TestCase
         $response->assertSee('Reason for Deactivation');
         $response->assertSee('handleStatusClick');
     }
+
+    public function test_system_admin_accounts_are_hidden_in_user_management(): void
+    {
+        // When court owner views user management
+        $ownerResp = $this->actingAs($this->owner)->get(route('owner.users.index'));
+        $ownerResp->assertOk();
+        $ownerResp->assertDontSee($this->admin->email);
+        $ownerResp->assertDontSee('System Admins');
+
+        // Even with explicit role=admin filter
+        $filterResp = $this->actingAs($this->owner)->get(route('owner.users.index', ['role' => 'admin']));
+        $filterResp->assertOk();
+        $filterResp->assertDontSee($this->admin->email);
+
+        // When system admin views user management, system admin accounts are still hidden from the list
+        $adminResp = $this->actingAs($this->admin)->get(route('owner.users.index'));
+        $adminResp->assertOk();
+        $adminResp->assertDontSee($this->admin->email);
+    }
 }
+

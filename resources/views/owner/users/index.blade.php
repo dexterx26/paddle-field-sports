@@ -11,7 +11,7 @@
                     {{ ucwords(str_replace('_', ' ', $roleFilter ?: 'All Roles')) }}
                 </span>
             </div>
-            <p class="text-xs text-theme-muted mt-1">Manage system administrators, court owners, staff assistants, and registered player accounts.</p>
+            <p class="text-xs text-theme-muted mt-1">Manage court owners, staff assistants, and registered player accounts.</p>
         </div>
         <div class="flex items-center gap-3">
             <button type="button" onclick="openAddUserModal()"
@@ -55,11 +55,11 @@
 
         <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
             <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
-                <i class="fa-solid fa-shield-halved"></i>
+                <i class="fa-solid fa-crown"></i>
             </div>
             <div>
-                <p class="text-xs text-theme-muted font-medium">Owners & Admins</p>
-                <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['court_owner'] + $counts['admin'] }}</h3>
+                <p class="text-xs text-theme-muted font-medium">Court Owners</p>
+                <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['court_owner'] }}</h3>
             </div>
         </div>
 
@@ -109,12 +109,6 @@
                 class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $roleFilter === 'court_owner' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
                 <span>Court Owners</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'court_owner' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['court_owner'] }}</span>
-            </a>
-
-            <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'admin'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $roleFilter === 'admin' ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
-                <span>System Admins</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'admin' ? 'bg-slate-950 text-amber-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['admin'] }}</span>
             </a>
         </div>
 
@@ -490,9 +484,6 @@
                     @if(Auth::user()->canManageStaff())
                         <option value="court_owner">Court Owner (Full venue control & staff management)</option>
                     @endif
-                    @if(Auth::user()->isAdmin())
-                        <option value="admin">System Administrator (Root unrestricted platform access)</option>
-                    @endif
                 </select>
             </div>
 
@@ -627,9 +618,6 @@
                     <option value="admin_assistant">Admin Assistant (Staff member with assigned module access)</option>
                     @if(Auth::user()->canManageStaff())
                         <option value="court_owner">Court Owner (Full venue control & staff management)</option>
-                    @endif
-                    @if(Auth::user()->isAdmin())
-                        <option value="admin">System Administrator (Root unrestricted platform access)</option>
                     @endif
                 </select>
             </div>
