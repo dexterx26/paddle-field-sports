@@ -8,6 +8,8 @@ use App\Services\EmailNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
@@ -233,5 +235,98 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('home')->with('info', 'You have been logged out.');
+    }
+
+    /**
+     * Display forgot password request form.
+     */
+    public function showForgotPassword()
+    {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
+        $settings = VenueSetting::getSettings();
+        return view('auth.forgot-password', compact('settings'));
+    }
+
+    /**
+     * Dispatch password reset link email.
+     */
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            return back()->with('status', 'We have emailed your password reset link! Please check your inbox.');
+        }
+
+        $token = Password::broker()->createToken($user);
+        $resetUrl = route('password.reset', ['token' => $token, 'email' => $user->email]);
+
+        EmailNotificationService::sendPasswordReset($user, $resetUrl);
+
+        $response = back()->with('status', 'We have emailed your password reset link! Please check your inbox.');
+
+        if (app()->isLocal() && !EmailNotificationService::isEnabled()) {
+            $response->with('dev_reset_url', $resetUrl);
+        }
+
+        return $response;
+    }
+
+    /**
+     * Display reset password form.
+     */
+    public function showResetPassword(Request $request, $token)
+    {
+        if (Auth::check()) {
+            return redirect()->route('home');
+        }
+
+        $email = $request->query('email', old('email'));
+        $settings = VenueSetting::getSettings();
+
+        return view('auth.reset-password', compact('token', 'email', 'settings'));
+    }
+
+    /**
+     * Reset user password using token.
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::broker()->reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                    'remember_token' => Str::random(60),
+                ]);
+
+                if (!$user->hasVerifiedEmail()) {
+                    $user->markEmailAsVerified();
+                }
+
+                $user->save();
+            }
+        );
+
+        if ($status === Password::PASSWORD_RESET) {
+            return redirect()->route('login')->with('success', 'Your password has been reset successfully! You can now sign in with your new password.');
+        }
+
+        return back()
+            ->withInput($request->only('email'))
+            ->withErrors(['email' => __($status)]);
     }
 }

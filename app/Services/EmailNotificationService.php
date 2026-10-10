@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Mail\RegistrationSuccessfulMail;
+use App\Mail\ResetPasswordMail;
 use App\Models\User;
 use App\Models\VenueSetting;
 use Illuminate\Support\Facades\Log;
@@ -77,6 +78,47 @@ class EmailNotificationService
                 Log::info("Registration confirmation email safely written to storage/logs/laravel.log for {$user->email}.");
             } catch (\Throwable $logEx) {
                 Log::error("Registration confirmation email fallback logging failed: " . $logEx->getMessage());
+            }
+
+            return false;
+        }
+    }
+
+    /**
+     * Send password reset email to user.
+     * If mail is disabled, it safely bypasses without attempting SMTP connections.
+     * When enabled, uses primary mailer with automatic fallback to log mailer.
+     *
+     * @param User $user
+     * @param string $resetUrl
+     * @return bool
+     */
+    public static function sendPasswordReset(User $user, string $resetUrl): bool
+    {
+        if (!static::isEnabled()) {
+            Log::info("Email notifications are currently disabled (MAIL_ENABLED=false). Skipping password reset email for '{$user->name}' ({$user->email}). Reset URL: {$resetUrl}");
+            return false;
+        }
+
+        if (empty($user->email)) {
+            Log::info("Skipping password reset email: User ID {$user->id} has no email address.");
+            return false;
+        }
+
+        $settings = VenueSetting::getSettings();
+
+        try {
+            Mail::to($user->email)->send(new ResetPasswordMail($user, $resetUrl, $settings));
+            Log::info("Password reset email dispatched successfully to {$user->email} for user '{$user->name}' (ID: {$user->id}).");
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning("Primary mail dispatch failed for {$user->email}: " . $e->getMessage() . ". Recording to log mailer as fallback.");
+
+            try {
+                Mail::mailer('log')->to($user->email)->send(new ResetPasswordMail($user, $resetUrl, $settings));
+                Log::info("Password reset email safely written to storage/logs/laravel.log for {$user->email}.");
+            } catch (\Throwable $logEx) {
+                Log::error("Password reset email fallback logging failed: " . $logEx->getMessage());
             }
 
             return false;

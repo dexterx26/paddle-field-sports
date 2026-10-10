@@ -43,6 +43,16 @@
             </div>
         @endif
 
+        @if(session('status'))
+            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-400 text-xs font-medium flex items-start gap-2.5">
+                <i class="fa-solid fa-circle-check text-cyan-600 mt-0.5 text-sm shrink-0"></i>
+                <div class="space-y-0.5">
+                    <div class="font-bold">Notice</div>
+                    <div class="text-[11px] leading-relaxed">{{ session('status') }}</div>
+                </div>
+            </div>
+        @endif
+
         @if(request('auth_error') || session('error'))
             <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
@@ -138,6 +148,9 @@
                     <input type="checkbox" name="remember" class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
                     <span>Remember me</span>
                 </label>
+                <a href="{{ route('password.request') }}" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline transition-colors">
+                    Forgot password?
+                </a>
             </div>
 
             <button type="submit"
