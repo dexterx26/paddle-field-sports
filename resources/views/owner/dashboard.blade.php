@@ -127,9 +127,18 @@
 
                                 <td class="py-3 px-3 text-right">
                                     <div class="flex items-center justify-end gap-2">
-                                        <form method="POST" action="{{ route('owner.approve', $b->id) }}">
+                                        <!-- Approve Button Form -->
+                                        <form id="dashboard-approve-form-{{ $b->id }}" method="POST" action="{{ route('owner.approve', $b->id) }}">
                                             @csrf
-                                            <button type="submit" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold flex items-center gap-1 shadow-md shadow-cyan-500/20 cursor-pointer">
+                                            <button type="button"
+                                                data-id="{{ $b->id }}"
+                                                data-reference="{{ $b->booking_reference }}"
+                                                data-customer="{{ $b->customer_name }}"
+                                                data-court="{{ $b->court->name }}"
+                                                data-schedule="{{ $b->booking_date->format('M d, Y') }} ({{ date('g:i A', strtotime($b->start_time)) }} - {{ date('g:i A', strtotime($b->end_time)) }})"
+                                                data-amount="{{ $b->formatted_amount }}"
+                                                onclick="confirmDashboardApprove(this)"
+                                                class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold flex items-center gap-1 shadow-md shadow-cyan-500/20 cursor-pointer">
                                                 <i class="fa-solid fa-check"></i> Approve
                                             </button>
                                         </form>
@@ -516,7 +525,7 @@
             <div class="flex items-center justify-end gap-2">
                 <!-- If Pending Approval: Approve and Reject buttons -->
                 <div id="resModalPendingActions" class="flex items-center gap-2 hidden">
-                    <form id="resModalApproveForm" method="POST" action="">
+                    <form id="resModalApproveForm" method="POST" action="" onsubmit="return handleResModalApprove(event)">
                         @csrf
                         <button type="submit" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
                             <i class="fa-solid fa-check"></i> Approve Booking
@@ -766,6 +775,94 @@
                 const form = document.getElementById('dashboardCancelForm');
                 form.action = `{{ url('owner/bookings') }}/${id}/cancel`;
                 document.getElementById('dashboardCancelReason').value = result.value || 'Cancelled by Court Owner';
+                form.submit();
+            }
+        });
+    }
+
+    function confirmDashboardApprove(btn) {
+        const data = btn.dataset;
+        confirmApprovalAction(data.id, data.reference, data.customer, data.court, data.schedule, data.amount, `dashboard-approve-form-${data.id}`);
+    }
+
+    function handleResModalApprove(event) {
+        if (event) event.preventDefault();
+        if (!currentModalBooking) return false;
+        const b = currentModalBooking;
+        closeReservationModal();
+        confirmApprovalAction(b.id, b.reference, b.customer_name, b.court_name, `${b.booking_date} (${b.time_range})`, b.total_price_formatted, 'resModalApproveForm');
+        return false;
+    }
+
+    function confirmApprovalAction(bookingId, ref, customerName, courtName, schedule, amount, formId) {
+        function esc(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        Swal.fire({
+            title: 'Approve Reservation?',
+            html: `
+                <div class="text-left space-y-3 text-xs text-stone-600 dark:text-stone-300">
+                    <p>Are you sure you want to approve and confirm the reservation for <strong class="text-stone-900 dark:text-white font-bold">${esc(customerName)}</strong>?</p>
+                    <div class="p-3.5 rounded-2xl bg-stone-100 dark:bg-stone-800/80 border border-stone-200 dark:border-stone-700/80 space-y-2 font-medium">
+                        <div class="flex justify-between items-center pb-1.5 border-b border-stone-200/60 dark:border-stone-700/60">
+                            <span class="text-theme-muted">Reference:</span>
+                            <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400 text-sm">${esc(ref)}</span>
+                        </div>
+                        ${courtName ? `
+                        <div class="flex justify-between items-center">
+                            <span class="text-theme-muted">Court:</span>
+                            <span class="font-semibold text-stone-900 dark:text-white">${esc(courtName)}</span>
+                        </div>
+                        ` : ''}
+                        ${schedule ? `
+                        <div class="flex justify-between items-center">
+                            <span class="text-theme-muted">Schedule:</span>
+                            <span class="text-stone-900 dark:text-white">${esc(schedule)}</span>
+                        </div>
+                        ` : ''}
+                        ${amount ? `
+                        <div class="flex justify-between items-center pt-1.5 border-t border-stone-200/60 dark:border-stone-700/60">
+                            <span class="text-theme-muted">Amount Due:</span>
+                            <span class="font-black text-theme-heading text-sm text-cyan-600 dark:text-cyan-400">${esc(amount)}</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                    <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-start gap-2">
+                        <i class="fa-solid fa-circle-check text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0"></i>
+                        <span>This will verify the payment, confirm the booking, and notify the customer.</span>
+                    </div>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#06b6d4',
+            cancelButtonColor: '#64748b',
+            confirmButtonText: '<i class="fa-solid fa-check mr-1.5"></i> Yes, Approve Reservation',
+            cancelButtonText: 'Cancel',
+            customClass: {
+                popup: 'rounded-3xl',
+                confirmButton: 'rounded-xl font-bold text-xs px-4 py-2.5 cursor-pointer',
+                cancelButton: 'rounded-xl font-bold text-xs px-4 py-2.5 cursor-pointer'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.showLoading();
+                let form = formId ? document.getElementById(formId) : null;
+                if (!form) {
+                    form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = "{{ url('owner/approvals') }}/" + bookingId + "/approve";
+                    const csrf = document.createElement('input');
+                    csrf.type = 'hidden';
+                    csrf.name = '_token';
+                    csrf.value = "{{ csrf_token() }}";
+                    form.appendChild(csrf);
+                    document.body.appendChild(form);
+                }
                 form.submit();
             }
         });

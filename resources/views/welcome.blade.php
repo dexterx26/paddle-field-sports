@@ -354,7 +354,7 @@
                             </div>
 
                             <div>
-                                <label class="block text-[11px] font-medium text-theme-body mb-1">Email Address <span class="text-theme-muted">(Optional for receipt)</span></label>
+                                <label class="block text-[11px] font-medium text-theme-body mb-1">Email Address <span class="text-theme-muted">(Optional)</span></label>
                                 <input type="email" id="custEmail" placeholder="juan@example.com"
                                     value="{{ Auth::check() ? Auth::user()->email : '' }}"
                                     class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium">
