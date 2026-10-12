@@ -1,5 +1,160 @@
 @extends('layouts.app')
 
+@push('styles')
+<!-- Bootstrap Datepicker CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css">
+<style>
+    /* Custom Styling for Bootstrap Datepicker matching Paddle Field Sports Center aesthetics */
+    .datepicker {
+        font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+        border-radius: 1.25rem !important;
+        padding: 0.85rem !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        background: #ffffff !important;
+        border: 1px solid #e7e5e4 !important;
+        color: #1c1917 !important;
+        z-index: 1050 !important;
+    }
+    .dark .datepicker {
+        background: #1c1917 !important;
+        border-color: #292524 !important;
+        color: #f5f5f4 !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+    }
+    .datepicker.datepicker-inline {
+        width: 100% !important;
+        max-width: 340px !important;
+        margin: 0 auto !important;
+        box-shadow: none !important;
+        border: none !important;
+        background: transparent !important;
+        padding: 0.25rem !important;
+    }
+    .dark .datepicker.datepicker-inline {
+        background: transparent !important;
+        border: none !important;
+    }
+    .datepicker table {
+        width: 100% !important;
+        border-collapse: separate !important;
+        border-spacing: 3px !important;
+        margin: 0 !important;
+    }
+    .datepicker table tr th {
+        font-size: 0.75rem !important;
+        font-weight: 700 !important;
+        padding: 0.4rem 0.2rem !important;
+        color: #78716c !important;
+        text-transform: uppercase !important;
+    }
+    .dark .datepicker table tr th {
+        color: #a8a29e !important;
+    }
+    .datepicker table tr th.datepicker-switch {
+        font-size: 0.9rem !important;
+        font-weight: 800 !important;
+        color: #0c0a09 !important;
+        border-radius: 0.75rem !important;
+        cursor: pointer !important;
+        padding: 0.5rem 0.75rem !important;
+        text-transform: none !important;
+    }
+    .dark .datepicker table tr th.datepicker-switch {
+        color: #fafaf9 !important;
+    }
+    .datepicker table tr th.datepicker-switch:hover,
+    .datepicker table tr th.prev:hover,
+    .datepicker table tr th.next:hover {
+        background: #f5f5f4 !important;
+        color: #06b6d4 !important;
+    }
+    .dark .datepicker table tr th.datepicker-switch:hover,
+    .dark .datepicker table tr th.prev:hover,
+    .dark .datepicker table tr th.next:hover {
+        background: #292524 !important;
+        color: #22d3ee !important;
+    }
+    .datepicker table tr th.prev,
+    .datepicker table tr th.next {
+        border-radius: 0.75rem !important;
+        width: 2rem !important;
+        height: 2rem !important;
+        font-size: 1.1rem !important;
+        cursor: pointer !important;
+    }
+    .datepicker table tr td {
+        width: 2.35rem !important;
+        height: 2.35rem !important;
+        border-radius: 0.75rem !important;
+        font-size: 0.8125rem !important;
+        font-weight: 600 !important;
+        text-align: center !important;
+        vertical-align: middle !important;
+        cursor: pointer !important;
+        transition: all 0.15s ease !important;
+        color: #1c1917 !important;
+    }
+    .dark .datepicker table tr td {
+        color: #f5f5f4 !important;
+    }
+    .datepicker table tr td.day:hover {
+        background: rgba(6, 182, 212, 0.15) !important;
+        color: #0891b2 !important;
+        transform: scale(1.06) !important;
+    }
+    .dark .datepicker table tr td.day:hover {
+        background: rgba(6, 182, 212, 0.25) !important;
+        color: #22d3ee !important;
+    }
+    .datepicker table tr td.old,
+    .datepicker table tr td.new {
+        color: #d6d3d1 !important;
+        opacity: 0.4 !important;
+    }
+    .dark .datepicker table tr td.old,
+    .dark .datepicker table tr td.new {
+        color: #57534e !important;
+        opacity: 0.4 !important;
+    }
+    .datepicker table tr td.disabled,
+    .datepicker table tr td.disabled:hover {
+        color: #d6d3d1 !important;
+        opacity: 0.3 !important;
+        cursor: not-allowed !important;
+        background: transparent !important;
+        transform: none !important;
+    }
+    .dark .datepicker table tr td.disabled,
+    .dark .datepicker table tr td.disabled:hover {
+        color: #57534e !important;
+        opacity: 0.25 !important;
+    }
+    .datepicker table tr td.today {
+        border: 1.5px solid #06b6d4 !important;
+        color: #0891b2 !important;
+        background: transparent !important;
+        font-weight: 800 !important;
+    }
+    .dark .datepicker table tr td.today {
+        border-color: #22d3ee !important;
+        color: #22d3ee !important;
+    }
+    .datepicker table tr td.active,
+    .datepicker table tr td.active:hover {
+        background: linear-gradient(135deg, #06b6d4, #0891b2) !important;
+        color: #020617 !important;
+        font-weight: 900 !important;
+        box-shadow: 0 4px 12px rgba(6, 182, 212, 0.45) !important;
+        transform: scale(1.05) !important;
+        border: none !important;
+    }
+    .datepicker-dropdown.datepicker-orient-bottom:before,
+    .datepicker-dropdown.datepicker-orient-bottom:after {
+        display: none !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <!-- Hero Section (Tan & Cyan Athletic Club Theme) -->
 <section class="relative pt-12 pb-24 overflow-hidden">
@@ -99,32 +254,34 @@
                 </p>
             </div>
 
-            <!-- Date Selector Controls -->
+            <!-- Date Selector Controls (Powered by Bootstrap Datepicker) -->
             <div class="flex flex-wrap items-center gap-3">
-                <div class="flex items-center gap-2 bg-stone-200 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 p-1.5 rounded-2xl">
-                    <button type="button" id="prevDayBtn" class="w-9 h-9 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors">
+                <div class="flex items-center gap-2 bg-stone-200 dark:bg-stone-900 border border-stone-300 dark:border-stone-700 p-1.5 rounded-2xl relative shadow-xs">
+                    <button type="button" id="prevDayBtn" class="w-9 h-9 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Previous Day">
                         <i class="fa-solid fa-chevron-left text-xs"></i>
                     </button>
-                    <div class="px-3 text-center">
-                        <input type="date" id="selectedDateInput" value="{{ $selectedDate }}" min="{{ date('Y-m-d') }}"
-                            class="bg-transparent text-theme-heading font-bold text-sm text-center focus:outline-none cursor-pointer">
+                    <div class="px-2 text-center flex items-center gap-2 cursor-pointer group" id="datepickerWrapper" title="Click to open Bootstrap Datepicker calendar">
+                        <i class="fa-regular fa-calendar text-cyan-600 dark:text-cyan-400 text-sm group-hover:scale-110 transition-transform"></i>
+                        <input type="text" id="selectedDateInput" value="{{ $selectedDate }}" readonly
+                            class="bg-transparent text-theme-heading font-extrabold text-sm text-center focus:outline-none cursor-pointer w-28 select-none tracking-wide"
+                            placeholder="YYYY-MM-DD" autocomplete="off">
                     </div>
-                    <button type="button" id="nextDayBtn" class="w-9 h-9 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors">
+                    <button type="button" id="nextDayBtn" class="w-9 h-9 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Next Day">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
                     </button>
                 </div>
 
                 <!-- Quick Date Pills & Calendar View Option -->
                 <div class="flex items-center gap-1.5">
-                    <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d') ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700' }}" data-date="{{ date('Y-m-d') }}">
+                    <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d') ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer' }}" data-date="{{ date('Y-m-d') }}">
                         Today
                     </button>
-                    <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d', strtotime('+1 day')) ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700' }}" data-date="{{ date('Y-m-d', strtotime('+1 day')) }}">
+                    <button type="button" class="quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all {{ $selectedDate === date('Y-m-d', strtotime('+1 day')) ? 'bg-cyan-500 text-slate-950 shadow-md' : 'bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer' }}" data-date="{{ date('Y-m-d', strtotime('+1 day')) }}">
                         Tomorrow
                     </button>
                     <button type="button" id="openCalendarModalBtn"
                         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 bg-gradient-to-r from-cyan-500/15 via-blue-500/15 to-indigo-500/15 hover:from-cyan-500/25 hover:to-indigo-500/25 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:border-cyan-500 shadow-sm cursor-pointer"
-                        title="Open interactive monthly calendar">
+                        title="Open interactive Bootstrap calendar view">
                         <i class="fa-solid fa-calendar-days text-xs"></i>
                         <span>Calendar View</span>
                     </button>
@@ -735,54 +892,31 @@
     </div>
 </div>
 
-<!-- INTERACTIVE CALENDAR VIEW MODAL (Option to View Calendar on Client/Player side) -->
+<!-- INTERACTIVE CALENDAR VIEW MODAL (Powered by Bootstrap Datepicker) -->
 <div id="playerCalendarModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 sm:p-7 rounded-3xl max-w-md w-full border border-cyan-500/30 shadow-2xl relative space-y-5">
+    <div class="glass-dropdown p-6 sm:p-7 rounded-3xl max-w-sm sm:max-w-md w-full border border-cyan-500/30 shadow-2xl relative space-y-4">
         <button type="button" id="closeCalendarModalBtn" class="absolute top-4 right-4 sm:top-5 sm:right-5 z-20 text-theme-muted hover:text-theme-heading p-2 rounded-xl hover:bg-stone-200/50 dark:hover:bg-stone-800/50 transition-colors cursor-pointer" title="Close calendar">
             <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
         <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/30 shadow-sm">
+            <div class="w-11 h-11 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/30 shadow-sm shrink-0">
                 <i class="fa-solid fa-calendar-days"></i>
             </div>
             <div>
                 <h3 class="text-lg font-black text-theme-heading">Court Reservation Calendar</h3>
-                <p class="text-xs text-theme-muted">Select any date to view court timeslot availability</p>
+                <p class="text-xs text-theme-muted">Select any upcoming date using Bootstrap Datepicker</p>
             </div>
         </div>
 
-        <!-- Month Navigation Bar -->
-        <div class="flex items-center justify-between p-2 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800">
-            <button type="button" id="calPrevMonthBtn" class="w-8 h-8 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Previous Month">
-                <i class="fa-solid fa-chevron-left text-xs"></i>
-            </button>
-            <div class="font-extrabold text-sm text-theme-heading tracking-wide" id="calMonthYearLabel">
-                {{ date('F Y', strtotime($selectedDate)) }}
-            </div>
-            <button type="button" id="calNextMonthBtn" class="w-8 h-8 rounded-xl hover:bg-stone-200 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Next Month">
-                <i class="fa-solid fa-chevron-right text-xs"></i>
-            </button>
-        </div>
-
-        <!-- Calendar Days Header (Sun - Sat) -->
-        <div class="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-theme-muted uppercase tracking-wider">
-            <div>Su</div>
-            <div>Mo</div>
-            <div>Tu</div>
-            <div>We</div>
-            <div>Th</div>
-            <div>Fr</div>
-            <div>Sa</div>
-        </div>
-
-        <!-- Calendar Days Grid Container -->
-        <div id="calDaysGrid" class="grid grid-cols-7 gap-1.5 text-center text-xs">
-            <!-- Dynamically populated via JS -->
+        <!-- Bootstrap Datepicker Inline Widget Container -->
+        <div class="p-3 sm:p-4 rounded-2xl bg-stone-100/90 dark:bg-stone-900/90 border border-stone-200 dark:border-stone-800 flex justify-center">
+            <div id="bootstrapInlineCalendar"></div>
+            <div id="calDaysGrid" class="hidden" aria-hidden="true"></div>
         </div>
 
         <!-- Calendar Footer / Legend -->
-        <div class="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-[11px] text-theme-muted">
+        <div class="pt-2 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-[11px] text-theme-muted">
             <div class="flex items-center gap-3">
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500"></span> Selected</span>
                 <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full border border-cyan-500"></span> Today</span>
@@ -796,6 +930,9 @@
 @endsection
 
 @push('scripts')
+<!-- jQuery & Bootstrap Datepicker Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/js/bootstrap-datepicker.min.js"></script>
 <script>
     // State management for court booking with drag/click to select and remove
     const bookingState = {
@@ -1088,17 +1225,46 @@
         }
     };
 
-    // 1. Date Controls
+    // 1. Date Controls (Powered by Bootstrap Datepicker)
     function setupDateControls() {
         const dateInput = document.getElementById('selectedDateInput');
         const prevBtn = document.getElementById('prevDayBtn');
         const nextBtn = document.getElementById('nextDayBtn');
+        const wrapper = document.getElementById('datepickerWrapper');
 
-        dateInput.addEventListener('change', () => {
-            window.location.href = `/?date=${dateInput.value}#booking-engine`;
-        });
+        if (window.jQuery && $.fn.datepicker && dateInput) {
+            const $dp = $(dateInput).datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: 'today',
+                autoclose: true,
+                todayHighlight: true,
+                orientation: 'bottom auto',
+                container: 'body',
+                templates: {
+                    leftArrow: '<i class="fa-solid fa-chevron-left"></i>',
+                    rightArrow: '<i class="fa-solid fa-chevron-right"></i>'
+                }
+            });
 
-        prevBtn.addEventListener('click', () => {
+            $dp.on('changeDate', function(e) {
+                const formatted = e.format('yyyy-mm-dd');
+                if (formatted && formatted !== '{{ $selectedDate }}') {
+                    window.location.href = `/?date=${formatted}#booking-engine`;
+                }
+            });
+
+            if (wrapper) {
+                wrapper.addEventListener('click', () => {
+                    $(dateInput).datepicker('show');
+                });
+            }
+        } else if (dateInput) {
+            dateInput.addEventListener('change', () => {
+                window.location.href = `/?date=${dateInput.value}#booking-engine`;
+            });
+        }
+
+        prevBtn?.addEventListener('click', () => {
             const current = new Date(dateInput.value);
             current.setDate(current.getDate() - 1);
             const today = new Date();
@@ -1111,7 +1277,7 @@
             }
         });
 
-        nextBtn.addEventListener('click', () => {
+        nextBtn?.addEventListener('click', () => {
             const current = new Date(dateInput.value);
             current.setDate(current.getDate() + 1);
             const yyyy = current.getFullYear();
@@ -2057,95 +2223,50 @@
         }, 1000);
     }
 
-    // 7. Interactive Calendar View Modal (Player option to view calendar)
+    // 7. Interactive Calendar View Modal (Powered by Bootstrap Datepicker)
     function setupInteractiveCalendar() {
         const modal = document.getElementById('playerCalendarModal');
         const openBtn = document.getElementById('openCalendarModalBtn');
         const closeBtn = document.getElementById('closeCalendarModalBtn');
-        const prevBtn = document.getElementById('calPrevMonthBtn');
-        const nextBtn = document.getElementById('calNextMonthBtn');
         const jumpTodayBtn = document.getElementById('calJumpTodayBtn');
-        const labelEl = document.getElementById('calMonthYearLabel');
-        const gridEl = document.getElementById('calDaysGrid');
         const dateInput = document.getElementById('selectedDateInput');
+        const calendarContainer = document.getElementById('bootstrapInlineCalendar');
 
-        if (!modal || !openBtn || !gridEl) return;
+        if (!modal || !openBtn || !calendarContainer) return;
 
-        let curDate = dateInput?.value ? new Date(dateInput.value + 'T00:00:00') : new Date();
-        if (isNaN(curDate.getTime())) curDate = new Date();
+        let $inlineCal = null;
 
-        let calYear = curDate.getFullYear();
-        let calMonth = curDate.getMonth();
+        if (window.jQuery && $.fn.datepicker) {
+            $inlineCal = $('#bootstrapInlineCalendar').datepicker({
+                format: 'yyyy-mm-dd',
+                startDate: 'today',
+                todayHighlight: true,
+                templates: {
+                    leftArrow: '<i class="fa-solid fa-chevron-left"></i>',
+                    rightArrow: '<i class="fa-solid fa-chevron-right"></i>'
+                }
+            });
 
-        function renderCalendar() {
-            gridEl.innerHTML = '';
-
-            const monthNames = [
-                'January', 'February', 'March', 'April', 'May', 'June',
-                'July', 'August', 'September', 'October', 'November', 'December'
-            ];
-            labelEl.textContent = `${monthNames[calMonth]} ${calYear}`;
-
-            const firstDayOfWeek = new Date(calYear, calMonth, 1).getDay(); // 0 is Sunday
-            const totalDaysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-            const now = new Date();
-            const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-            const activeSelected = dateInput?.value || todayStr;
-
-            // Empty cells for padding days before the 1st
-            for (let i = 0; i < firstDayOfWeek; i++) {
-                const blank = document.createElement('div');
-                blank.className = 'p-2.5';
-                gridEl.appendChild(blank);
+            // Set current selected date
+            const curVal = dateInput?.value || '{{ $selectedDate }}';
+            if (curVal) {
+                $inlineCal.datepicker('setDate', curVal);
             }
 
-            // Days 1 through totalDaysInMonth
-            for (let day = 1; day <= totalDaysInMonth; day++) {
-                const dayStr = String(day).padStart(2, '0');
-                const monthStr = String(calMonth + 1).padStart(2, '0');
-                const dateStr = `${calYear}-${monthStr}-${dayStr}`;
-
-                const btn = document.createElement('button');
-                btn.type = 'button';
-                btn.textContent = day;
-
-                const isPast = dateStr < todayStr;
-                const isToday = dateStr === todayStr;
-                const isSelected = dateStr === activeSelected;
-
-                if (isPast) {
-                    btn.className = 'p-2.5 rounded-xl text-center font-medium text-xs text-theme-muted opacity-25 cursor-not-allowed select-none';
-                    btn.disabled = true;
-                } else if (isSelected) {
-                    btn.className = 'p-2.5 rounded-xl text-center font-black text-xs bg-gradient-to-tr from-cyan-500 to-cyan-600 text-slate-950 shadow-md shadow-cyan-500/30 cursor-pointer transition-transform hover:scale-105';
-                } else if (isToday) {
-                    btn.className = 'p-2.5 rounded-xl text-center font-bold text-xs border border-cyan-500/60 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/15 transition-all cursor-pointer';
-                } else {
-                    btn.className = 'p-2.5 rounded-xl text-center font-semibold text-xs text-theme-heading hover:bg-stone-200 dark:hover:bg-stone-800 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all cursor-pointer';
+            $inlineCal.on('changeDate', function(e) {
+                const formatted = e.format('yyyy-mm-dd');
+                if (formatted) {
+                    if (dateInput) dateInput.value = formatted;
+                    closeCalendar();
+                    window.location.href = `/?date=${formatted}#booking-engine`;
                 }
-
-                if (!isPast) {
-                    btn.addEventListener('click', () => {
-                        dateInput.value = dateStr;
-                        closeCalendar();
-                        window.location.href = `/?date=${dateStr}#booking-engine`;
-                    });
-                }
-
-                gridEl.appendChild(btn);
-            }
+            });
         }
 
         function openCalendar() {
-            if (dateInput?.value) {
-                const d = new Date(dateInput.value + 'T00:00:00');
-                if (!isNaN(d.getTime())) {
-                    calYear = d.getFullYear();
-                    calMonth = d.getMonth();
-                }
+            if ($inlineCal && dateInput?.value) {
+                $inlineCal.datepicker('setDate', dateInput.value);
             }
-            renderCalendar();
             modal.classList.remove('opacity-0', 'pointer-events-none');
             modal.classList.add('opacity-100', 'pointer-events-auto');
         }
@@ -2168,29 +2289,14 @@
             }
         });
 
-        prevBtn?.addEventListener('click', () => {
-            calMonth--;
-            if (calMonth < 0) {
-                calMonth = 11;
-                calYear--;
-            }
-            renderCalendar();
-        });
-
-        nextBtn?.addEventListener('click', () => {
-            calMonth++;
-            if (calMonth > 11) {
-                calMonth = 0;
-                calYear++;
-            }
-            renderCalendar();
-        });
-
         jumpTodayBtn?.addEventListener('click', () => {
-            const now = new Date();
-            calYear = now.getFullYear();
-            calMonth = now.getMonth();
-            renderCalendar();
+            const todayStr = '{{ date('Y-m-d') }}';
+            if ($inlineCal) {
+                $inlineCal.datepicker('setDate', todayStr);
+            }
+            if (dateInput) dateInput.value = todayStr;
+            closeCalendar();
+            window.location.href = `/?date=${todayStr}#booking-engine`;
         });
     }
 </script>
