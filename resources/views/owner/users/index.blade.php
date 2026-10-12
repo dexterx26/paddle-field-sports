@@ -85,35 +85,35 @@
     <!-- Filters & Search Toolbar -->
     <div class="p-5 rounded-3xl glass-card border border-stone-200 dark:border-stone-800 space-y-4">
         <!-- Role Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-            <span class="text-xs font-bold text-theme-muted mr-1">Role:</span>
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full max-w-full">
+            <span class="text-xs font-bold text-theme-muted mr-1 shrink-0">Role:</span>
             <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => null])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ empty($roleFilter) ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ empty($roleFilter) ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
                 <span>All Users</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ empty($roleFilter) ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['all'] }}</span>
             </a>
 
             <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'client'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $roleFilter === 'client' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'client' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
                 <span>Players / Clients</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'client' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['client'] }}</span>
             </a>
 
             <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'admin_assistant'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $roleFilter === 'admin_assistant' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'admin_assistant' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
                 <span>Admin Assistants</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'admin_assistant' ? 'bg-slate-950 text-emerald-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['admin_assistant'] }}</span>
             </a>
 
             <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'court_owner'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 {{ $roleFilter === 'court_owner' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'court_owner' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
                 <span>Court Owners</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'court_owner' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['court_owner'] }}</span>
             </a>
         </div>
 
         <!-- Search & Status Row -->
-        <form method="GET" action="{{ route('owner.users.index') }}" class="flex flex-col md:flex-row items-center gap-3 text-xs">
+        <form method="GET" action="{{ route('owner.users.index') }}" class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 text-xs">
             @if($roleFilter)
                 <input type="hidden" name="role" value="{{ $roleFilter }}">
             @endif
@@ -124,32 +124,34 @@
                     class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:border-cyan-500 focus:outline-none">
             </div>
 
-            <div class="flex items-center gap-2 w-full md:w-auto">
+            <div class="grid grid-cols-2 sm:flex sm:flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
                 <select name="sort" onchange="this.form.submit()"
-                    class="px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none">
+                    class="w-full sm:w-auto px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate">
                     <option value="" {{ empty($sort) ? 'selected' : '' }}>Role Order</option>
                     <option value="held_desc" {{ ($sort ?? '') === 'held_desc' ? 'selected' : '' }}>Most Held Timeslots</option>
                 </select>
 
                 <select name="status" onchange="this.form.submit()"
-                    class="px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none">
+                    class="w-full sm:w-auto px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate">
                     <option value="" {{ empty($statusFilter) ? 'selected' : '' }}>All Statuses</option>
                     <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>Active Only ({{ $counts['active'] }})</option>
                     <option value="inactive" {{ $statusFilter === 'inactive' ? 'selected' : '' }}>Deactivated Only ({{ $counts['inactive'] }})</option>
                     <option value="has_held" {{ $statusFilter === 'has_held' ? 'selected' : '' }}>⚠️ With Held Slots ({{ $counts['has_held'] }})</option>
                 </select>
 
-                <button type="submit"
-                    class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all cursor-pointer shrink-0">
-                    Filter
-                </button>
+                <div class="col-span-2 sm:col-span-auto flex items-center gap-2">
+                    <button type="submit"
+                        class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all cursor-pointer shrink-0 text-center">
+                        Filter
+                    </button>
 
-                @if($search || $statusFilter || $roleFilter || !empty($sort))
-                    <a href="{{ route('owner.users.index') }}"
-                        class="px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-theme-muted hover:text-theme-heading transition-all whitespace-nowrap text-center">
-                        Clear
-                    </a>
-                @endif
+                    @if($search || $statusFilter || $roleFilter || !empty($sort))
+                        <a href="{{ route('owner.users.index') }}"
+                            class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-theme-muted hover:text-theme-heading transition-all whitespace-nowrap text-center">
+                            Clear
+                        </a>
+                    @endif
+                </div>
             </div>
         </form>
     </div>
@@ -180,7 +182,7 @@
                 </button>
             </div>
         @else
-            <!-- Desktop Table View -->
+            <!-- Desktop Table View (Hidden on mobile) -->
             <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left text-xs text-theme-body">
                     <thead class="bg-stone-100 dark:bg-stone-900/50 text-theme-muted uppercase tracking-wider text-[11px] border-b border-stone-200 dark:border-stone-800">
@@ -423,7 +425,7 @@
             </div>
 
             <!-- Mobile Cards View (Shown on screens < md, eliminates horizontal scrolling) -->
-            <div class="block md:hidden p-3.5 space-y-3">
+            <div class="block md:hidden p-3.5 sm:p-4 space-y-3">
                 @foreach($users as $user)
                     @php
                         $roleBadge = match($user->role) {
@@ -447,29 +449,34 @@
                         }
                     @endphp
                     <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
-                        <!-- Top Row: Avatar, Name, Email, Role, Status -->
-                        <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                        <!-- Top Bar: Avatar, Name, Email, Role, Joined, Status -->
+                        <div class="flex items-start justify-between gap-2 pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
                             <div class="flex items-center gap-3 min-w-0">
                                 <div class="w-10 h-10 rounded-2xl {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }} border {{ $roleBadge['border'] }} flex items-center justify-center font-bold text-sm shrink-0">
                                     {{ strtoupper(substr($user->name, 0, 1)) }}
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="font-bold text-theme-heading flex items-center gap-1.5 truncate">
+                                    <div class="font-bold text-theme-heading text-sm flex items-center gap-1.5 truncate">
                                         <span class="truncate">{{ $user->name }}</span>
                                         @if($user->id === Auth::id())
                                             <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500 text-slate-950 uppercase shrink-0">You</span>
                                         @endif
                                     </div>
-                                    <div class="text-[11px] text-theme-muted font-mono truncate">{{ $user->email }}</div>
-                                    <div class="mt-1">
+                                    <div class="text-xs text-theme-muted font-mono truncate">{{ $user->email }}</div>
+                                    <div class="flex flex-wrap items-center gap-1.5 mt-1">
                                         <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }} border {{ $roleBadge['border'] }}">
                                             <i class="fa-solid {{ $roleBadge['icon'] }} text-[9px]"></i>
                                             {{ $roleBadge['label'] }}
+                                        </span>
+                                        <span class="text-[10px] text-theme-muted flex items-center gap-1">
+                                            <i class="fa-regular fa-calendar text-[9px]"></i>
+                                            <span>Joined {{ $user->created_at->format('M d, Y') }}</span>
                                         </span>
                                     </div>
                                 </div>
                             </div>
 
+                            <!-- Status Pill (Top Right, matching approvals top-right placement) -->
                             <div class="shrink-0 text-right" id="user-status-cell-mobile-{{ $user->id }}">
                                 @if($user->id === Auth::id() || (Auth::user()->isAdminAssistant() && ($user->isAdmin() || $user->isOwner())) || (Auth::user()->isOwner() && $user->isAdmin()))
                                     @if($user->is_active)
@@ -507,10 +514,12 @@
                             </div>
                         </div>
 
-                        <!-- Details: Phone, Held slots, Activity -->
+                        <!-- Middle Content: Details -->
                         <div class="space-y-2 text-xs">
                             <div class="flex items-center justify-between">
-                                <span class="text-theme-muted">Phone:</span>
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-solid fa-phone text-[10px] text-cyan-600 dark:text-cyan-400"></i> Phone
+                                </span>
                                 @if($user->phone)
                                     <a href="tel:{{ $user->phone }}" class="font-mono text-cyan-600 dark:text-cyan-400 hover:underline">{{ $user->phone }}</a>
                                 @else
@@ -519,7 +528,9 @@
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <span class="text-theme-muted">Held Timeslots:</span>
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock text-[10px] text-cyan-600 dark:text-cyan-400"></i> Held Timeslots
+                                </span>
                                 @if($heldCount > 0)
                                     <button type="button"
                                         onclick="openHeldSlotsModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ $heldCount }}, {{ $activeHeldCount }})"
@@ -552,26 +563,38 @@
                                     @endif
                                 </div>
                             @elseif($user->role === 'client')
-                                <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 flex items-center justify-between text-[11px]">
-                                    <span class="text-theme-muted">Bookings:</span>
-                                    <span class="font-bold text-theme-heading">{{ $user->bookings_count }} total</span>
+                                <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 space-y-1 text-[11px]">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-theme-muted">Bookings:</span>
+                                        <span class="font-bold text-theme-heading">{{ $user->bookings_count }} total</span>
+                                    </div>
+                                    @if($heldCount > 0)
+                                        <div class="flex items-center gap-1.5 {{ $heldCount >= 3 ? 'text-rose-600 dark:text-rose-400 font-bold' : 'text-amber-600 dark:text-amber-400 font-medium' }}">
+                                            <i class="fa-solid fa-triangle-exclamation text-[10px]"></i>
+                                            <span>{{ $heldCount }} held {{ Str::plural('slot', $heldCount) }} without payment</span>
+                                        </div>
+                                    @endif
                                 </div>
                             @endif
                         </div>
 
-                        <!-- Actions -->
+                        <!-- Actions Buttons (50/50 Grid for Easy Tapping) -->
                         @if($canEdit)
-                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
-                                <button type="button"
-                                    onclick="confirmResetPassword({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}')"
-                                    class="flex-1 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/10 hover:text-amber-500 text-theme-body font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
-                                    title="Reset Password">
-                                    <i class="fa-solid fa-key text-[10px]"></i> Reset Password
-                                </button>
+                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                                <form method="POST" action="{{ route('owner.users.reset_password', $user->id) }}"
+                                    id="reset-password-form-mobile-{{ $user->id }}" class="w-full">
+                                    @csrf
+                                    <button type="button"
+                                        onclick="confirmResetPassword({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}')"
+                                        class="w-full py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/20 text-stone-700 dark:text-stone-300 hover:text-amber-500 font-bold text-xs border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                        title="Reset Password to PaddleField2026!">
+                                        <i class="fa-solid fa-key text-[10px]"></i> Reset Key
+                                    </button>
+                                </form>
 
                                 <button type="button"
                                     onclick='openEditUserModal(@json($user), @json($perms))'
-                                    class="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    class="w-full py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                                     <i class="fa-solid fa-pen-to-square"></i> Edit User
                                 </button>
                             </div>
@@ -593,7 +616,7 @@
 <!-- ========================================== -->
 <!-- ADD USER MODAL                             -->
 <!-- ========================================== -->
-<div id="addUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+<div id="addUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
     <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative">
         <button type="button" onclick="closeAddUserModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer">
             <i class="fa-solid fa-xmark"></i>
@@ -727,7 +750,7 @@
 <!-- ========================================== -->
 <!-- EDIT USER MODAL                            -->
 <!-- ========================================== -->
-<div id="editUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+<div id="editUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
     <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative">
         <button type="button" onclick="closeEditUserModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer">
             <i class="fa-solid fa-xmark"></i>
@@ -879,7 +902,7 @@
 <!-- ========================================== -->
 <!-- HELD TIMESLOTS DETAILS MODAL               -->
 <!-- ========================================== -->
-<div id="heldSlotsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+<div id="heldSlotsModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
     <div class="w-full max-w-2xl max-h-[90vh] flex flex-col rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 shadow-2xl relative overflow-hidden bg-white/95 dark:bg-stone-900/95">
         <!-- Header -->
         <div class="p-6 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between shrink-0">
@@ -969,7 +992,7 @@
 <!-- ========================================== -->
 <!-- DEACTIVATE USER MODAL                      -->
 <!-- ========================================== -->
-<div id="deactivateUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all">
+<div id="deactivateUserModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
     <div class="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative">
         <button type="button" onclick="closeDeactivateModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
             <i class="fa-solid fa-xmark"></i>
