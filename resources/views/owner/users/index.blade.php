@@ -1,7 +1,7 @@
 @extends('layouts.owner')
 
 @section('content')
-<div class="space-y-6">
+<div class="space-y-6 w-full max-w-full min-w-0">
     <!-- Top Action Header -->
     <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800 gap-4">
         <div>
@@ -13,9 +13,9 @@
             </div>
             <p class="text-xs text-theme-muted mt-1">Manage court owners, staff assistants, and registered player accounts.</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 w-full sm:w-auto">
             <button type="button" onclick="openAddUserModal()"
-                class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center gap-2 transition-all cursor-pointer">
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
                 <i class="fa-solid fa-user-plus"></i> Add New User
             </button>
         </div>
@@ -83,63 +83,65 @@
     </div>
 
     <!-- Filters & Search Toolbar -->
-    <div class="p-5 rounded-3xl glass-card border border-stone-200 dark:border-stone-800 space-y-4">
-        <!-- Role Pills -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none w-full max-w-full">
-            <span class="text-xs font-bold text-theme-muted mr-1 shrink-0">Role:</span>
-            <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => null])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ empty($roleFilter) ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
-                <span>All Users</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ empty($roleFilter) ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['all'] }}</span>
-            </a>
+    <div class="p-4 sm:p-5 rounded-3xl glass-card border border-stone-200 dark:border-stone-800 space-y-4 w-full max-w-full overflow-hidden">
+        <!-- Role Pills (Horizontally scrollable without stretching parent) -->
+        <div class="overflow-x-auto pb-1 scrollbar-none w-full max-w-full -mx-1 px-1">
+            <div class="flex items-center gap-2 min-w-max">
+                <span class="text-xs font-bold text-theme-muted mr-1 shrink-0">Role:</span>
+                <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => null])) }}"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ empty($roleFilter) ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                    <span>All Users</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ empty($roleFilter) ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['all'] }}</span>
+                </a>
 
-            <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'client'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'client' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
-                <span>Players / Clients</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'client' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['client'] }}</span>
-            </a>
+                <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'client'])) }}"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'client' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                    <span>Players / Clients</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'client' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['client'] }}</span>
+                </a>
 
-            <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'admin_assistant'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'admin_assistant' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
-                <span>Admin Assistants</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'admin_assistant' ? 'bg-slate-950 text-emerald-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['admin_assistant'] }}</span>
-            </a>
+                <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'admin_assistant'])) }}"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'admin_assistant' ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                    <span>Admin Assistants</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'admin_assistant' ? 'bg-slate-950 text-emerald-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['admin_assistant'] }}</span>
+                </a>
 
-            <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'court_owner'])) }}"
-                class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'court_owner' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
-                <span>Court Owners</span>
-                <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'court_owner' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['court_owner'] }}</span>
-            </a>
+                <a href="{{ route('owner.users.index', array_merge(request()->except('role', 'page'), ['role' => 'court_owner'])) }}"
+                    class="px-3.5 py-1.5 rounded-full text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 {{ $roleFilter === 'court_owner' ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20' : 'bg-stone-200 dark:bg-stone-800 text-theme-body hover:bg-stone-300 dark:hover:bg-stone-700' }}">
+                    <span>Court Owners</span>
+                    <span class="px-1.5 py-0.2 rounded-full text-[10px] {{ $roleFilter === 'court_owner' ? 'bg-slate-950 text-cyan-400' : 'bg-stone-300 dark:bg-stone-700 text-theme-muted' }}">{{ $counts['court_owner'] }}</span>
+                </a>
+            </div>
         </div>
 
         <!-- Search & Status Row -->
-        <form method="GET" action="{{ route('owner.users.index') }}" class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 text-xs">
+        <form method="GET" action="{{ route('owner.users.index') }}" class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3 text-xs w-full max-w-full">
             @if($roleFilter)
                 <input type="hidden" name="role" value="{{ $roleFilter }}">
             @endif
 
-            <div class="flex-1 w-full relative">
+            <div class="flex-1 w-full relative min-w-0">
                 <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400 text-xs"></i>
-                <input type="text" name="search" value="{{ $search }}" placeholder="Search by user name, email, or phone number..."
-                    class="w-full pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:border-cyan-500 focus:outline-none">
+                <input type="text" name="search" value="{{ $search }}" placeholder="Search name, email, or phone..."
+                    class="w-full min-w-0 pl-9 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:border-cyan-500 focus:outline-none text-xs">
             </div>
 
-            <div class="grid grid-cols-2 sm:flex sm:flex-wrap lg:flex-nowrap items-center gap-2 w-full lg:w-auto">
+            <div class="flex flex-col sm:flex-row sm:flex-wrap lg:flex-nowrap items-stretch sm:items-center gap-2 w-full lg:w-auto min-w-0">
                 <select name="sort" onchange="this.form.submit()"
-                    class="w-full sm:w-auto px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate">
+                    class="w-full sm:w-auto min-w-0 px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate text-xs">
                     <option value="" {{ empty($sort) ? 'selected' : '' }}>Role Order</option>
                     <option value="held_desc" {{ ($sort ?? '') === 'held_desc' ? 'selected' : '' }}>Most Held Timeslots</option>
                 </select>
 
                 <select name="status" onchange="this.form.submit()"
-                    class="w-full sm:w-auto px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate">
+                    class="w-full sm:w-auto min-w-0 px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-medium focus:border-cyan-500 focus:outline-none truncate text-xs">
                     <option value="" {{ empty($statusFilter) ? 'selected' : '' }}>All Statuses</option>
                     <option value="active" {{ $statusFilter === 'active' ? 'selected' : '' }}>Active Only ({{ $counts['active'] }})</option>
                     <option value="inactive" {{ $statusFilter === 'inactive' ? 'selected' : '' }}>Deactivated Only ({{ $counts['inactive'] }})</option>
                     <option value="has_held" {{ $statusFilter === 'has_held' ? 'selected' : '' }}>⚠️ With Held Slots ({{ $counts['has_held'] }})</option>
                 </select>
 
-                <div class="col-span-2 sm:col-span-auto flex items-center gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto shrink-0">
                     <button type="submit"
                         class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold transition-all cursor-pointer shrink-0 text-center">
                         Filter
@@ -157,11 +159,11 @@
     </div>
 
     <!-- Users Table -->
-    <div class="glass-panel border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden shadow-xl">
-        <div class="p-5 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between">
-            <div class="flex items-center gap-2">
-                <h3 class="font-bold text-sm text-theme-heading">Registered Accounts</h3>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+    <div class="glass-panel border border-stone-200 dark:border-stone-800 rounded-3xl overflow-hidden shadow-xl w-full max-w-full">
+        <div class="p-4 sm:p-5 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0">
+                <h3 class="font-bold text-sm text-theme-heading truncate">Registered Accounts</h3>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-stone-200 dark:bg-stone-800 text-theme-muted shrink-0">
                     {{ $users->total() }} total users
                 </span>
             </div>
@@ -183,7 +185,7 @@
             </div>
         @else
             <!-- Desktop Table View (Hidden on mobile) -->
-            <div class="hidden md:block overflow-x-auto">
+            <div class="hidden md:block overflow-x-auto w-full max-w-full">
                 <table class="w-full text-left text-xs text-theme-body">
                     <thead class="bg-stone-100 dark:bg-stone-900/50 text-theme-muted uppercase tracking-wider text-[11px] border-b border-stone-200 dark:border-stone-800">
                         <tr>
@@ -425,7 +427,7 @@
             </div>
 
             <!-- Mobile Cards View (Shown on screens < md, eliminates horizontal scrolling) -->
-            <div class="block md:hidden p-3.5 sm:p-4 space-y-3">
+            <div class="block md:hidden p-3 sm:p-4 space-y-3 w-full max-w-full">
                 @foreach($users as $user)
                     @php
                         $roleBadge = match($user->role) {
@@ -448,7 +450,7 @@
                             $canEdit = false;
                         }
                     @endphp
-                    <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                    <div class="p-3.5 sm:p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3 w-full max-w-full overflow-hidden">
                         <!-- Top Bar: Avatar, Name, Email, Role, Joined, Status -->
                         <div class="flex items-start justify-between gap-2 pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
                             <div class="flex items-center gap-3 min-w-0">
@@ -605,7 +607,7 @@
 
             <!-- Pagination -->
             @if($users->hasPages())
-                <div class="p-5 border-t border-stone-200 dark:border-stone-800">
+                <div class="p-4 sm:p-5 border-t border-stone-200 dark:border-stone-800 overflow-x-auto w-full max-w-full">
                     {{ $users->links() }}
                 </div>
             @endif

@@ -30,7 +30,7 @@
 
     @stack('styles')
 </head>
-<body class="min-h-screen flex selection:bg-cyan-400 selection:text-slate-950 antialiased transition-colors duration-200">
+<body class="min-h-screen flex selection:bg-cyan-400 selection:text-slate-950 antialiased transition-colors duration-200 overflow-x-hidden w-full max-w-full">
     <!-- Mobile Sidebar Backdrop Overlay -->
     <div id="sidebarBackdrop" onclick="toggleOwnerSidebar(false)" class="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 transition-opacity duration-300 opacity-0 pointer-events-none md:hidden"></div>
 
@@ -190,9 +190,9 @@
     </aside>
 
     <!-- Main Container -->
-    <div id="ownerMainContent" class="flex-1 ml-0 md:ml-64 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
+    <div id="ownerMainContent" class="flex-1 min-w-0 w-full max-w-full ml-0 md:ml-64 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden">
         <!-- Topbar -->
-        <header class="h-20 border-b border-stone-200 glass-panel px-4 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30">
+        <header class="h-20 border-b border-stone-200 glass-panel px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 min-w-0 w-full max-w-full">
             <div class="flex items-center gap-3 min-w-0">
                 <!-- Sidebar Toggle Button (Click to Minimize / Expand Sidebar) -->
                 <button type="button" id="ownerSidebarToggle" onclick="toggleOwnerSidebar()" class="p-2 sm:p-2.5 rounded-xl bg-stone-200 hover:bg-stone-300 text-theme-heading flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0" title="Toggle Sidebar Menu">
@@ -259,7 +259,7 @@
         </header>
 
         <!-- Flash messages -->
-        <div class="px-4 sm:px-6 md:px-8 pt-4 sm:pt-6">
+        <div class="px-3.5 sm:px-6 md:px-8 pt-4 sm:pt-6 min-w-0 w-full max-w-full">
             @if(session('success'))
                 <div class="p-4 mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-900 text-sm flex items-center justify-between">
                     <div class="flex items-center gap-3">
@@ -309,7 +309,7 @@
         </div>
 
         <!-- Main Body -->
-        <main class="flex-1 px-4 sm:px-6 md:px-8 py-4 sm:py-6">
+        <main class="flex-1 min-w-0 w-full max-w-full px-3.5 sm:px-6 md:px-8 py-4 sm:py-6 overflow-x-hidden">
             @yield('content')
         </main>
     </div>
