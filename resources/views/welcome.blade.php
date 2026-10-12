@@ -1,25 +1,29 @@
 @extends('layouts.app')
 
 @push('styles')
-<!-- Bootstrap Datepicker CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.min.css">
+<!-- Bootstrap Datepicker CSS (Standalone) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.10.0/css/bootstrap-datepicker.standalone.min.css">
 <style>
     /* Custom Styling for Bootstrap Datepicker matching Paddle Field Sports Center aesthetics */
     .datepicker {
         font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
         border-radius: 1.25rem !important;
         padding: 0.85rem !important;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
         background: #ffffff !important;
         border: 1px solid #e7e5e4 !important;
         color: #1c1917 !important;
-        z-index: 1050 !important;
+        z-index: 99999 !important;
+    }
+    .datepicker.dropdown-menu {
+        z-index: 99999 !important;
+        margin-top: 8px !important;
     }
     .dark .datepicker {
         background: #1c1917 !important;
         border-color: #292524 !important;
         color: #f5f5f4 !important;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5) !important;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6) !important;
     }
     .datepicker.datepicker-inline {
         width: 100% !important;
@@ -262,9 +266,11 @@
                     </button>
                     <div class="px-2 text-center flex items-center gap-2 cursor-pointer group" id="datepickerWrapper" title="Click to open Bootstrap Datepicker calendar">
                         <i class="fa-regular fa-calendar text-cyan-600 dark:text-cyan-400 text-sm group-hover:scale-110 transition-transform"></i>
-                        <input type="text" id="selectedDateInput" value="{{ $selectedDate }}" readonly
-                            class="bg-transparent text-theme-heading font-extrabold text-sm text-center focus:outline-none cursor-pointer w-28 select-none tracking-wide"
-                            placeholder="YYYY-MM-DD" autocomplete="off">
+                        <input type="text" id="selectedDateInput" name="date" value="{{ $selectedDate }}" readonly
+                            class="form-control datepicker bg-transparent text-theme-heading font-extrabold text-sm text-center focus:outline-none cursor-pointer w-28 select-none tracking-wide"
+                            placeholder="YYYY-MM-DD" autocomplete="off"
+                            data-provide="datepicker" data-date-format="yyyy-mm-dd" data-date-start-date="0d">
+                        <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors"></i>
                     </div>
                     <button type="button" id="nextDayBtn" class="w-9 h-9 rounded-xl hover:bg-stone-300 dark:hover:bg-stone-800 text-theme-heading flex items-center justify-center transition-colors cursor-pointer" title="Next Day">
                         <i class="fa-solid fa-chevron-right text-xs"></i>
@@ -1225,7 +1231,7 @@
         }
     };
 
-    // 1. Date Controls (Powered by Bootstrap Datepicker)
+    // 1. Date Controls (Powered by Bootstrap Datepicker on #selectedDateInput)
     function setupDateControls() {
         const dateInput = document.getElementById('selectedDateInput');
         const prevBtn = document.getElementById('prevDayBtn');
@@ -1233,18 +1239,27 @@
         const wrapper = document.getElementById('datepickerWrapper');
 
         if (window.jQuery && $.fn.datepicker && dateInput) {
+            try { $(dateInput).datepicker('destroy'); } catch(e) {}
+
             const $dp = $(dateInput).datepicker({
                 format: 'yyyy-mm-dd',
                 startDate: 'today',
                 autoclose: true,
                 todayHighlight: true,
                 orientation: 'bottom auto',
-                container: 'body',
+                showOnFocus: true,
+                enableOnReadonly: true,
                 templates: {
                     leftArrow: '<i class="fa-solid fa-chevron-left"></i>',
                     rightArrow: '<i class="fa-solid fa-chevron-right"></i>'
                 }
             });
+
+            // Sync with current date
+            const curVal = dateInput.value || '{{ $selectedDate }}';
+            if (curVal) {
+                $(dateInput).datepicker('setDate', curVal);
+            }
 
             $dp.on('changeDate', function(e) {
                 const formatted = e.format('yyyy-mm-dd');
@@ -1254,10 +1269,16 @@
             });
 
             if (wrapper) {
-                wrapper.addEventListener('click', () => {
+                wrapper.addEventListener('click', (e) => {
+                    e.stopPropagation();
                     $(dateInput).datepicker('show');
                 });
             }
+
+            dateInput.addEventListener('click', (e) => {
+                e.stopPropagation();
+                $(dateInput).datepicker('show');
+            });
         } else if (dateInput) {
             dateInput.addEventListener('change', () => {
                 window.location.href = `/?date=${dateInput.value}#booking-engine`;
