@@ -14,28 +14,28 @@
     <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
         @if(!app()->isProduction())
             <!-- 1-Click Fast Demo Login Switcher -->
-            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2.5">
+            <div class="p-4 rounded-2xl bg-stone-100 border border-stone-200 space-y-2.5">
                 <div class="flex items-center justify-between">
                     <span class="text-[11px] font-bold text-theme-muted uppercase tracking-wider">Fast Demo Accounts (1-Click)</span>
                     <i class="fa-solid fa-bolt text-amber-500 text-xs"></i>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
-                    <a href="{{ route('quick.login', 'owner') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
+                    <a href="{{ route('quick.login', 'owner') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 border border-stone-300 transition-all cursor-pointer">
                         Owner
                     </a>
-                    <a href="{{ route('quick.login', 'assistant') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-teal-500 hover:text-slate-950 text-center font-bold text-xs text-teal-700 dark:text-teal-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Maria Santos (Admin Assistant)">
+                    <a href="{{ route('quick.login', 'assistant') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-teal-500 hover:text-slate-950 text-center font-bold text-xs text-teal-700 border border-stone-300 transition-all cursor-pointer" title="Maria Santos (Admin Assistant)">
                         Assistant
                     </a>
-                    <a href="{{ route('quick.login', 'admin') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500 hover:text-slate-950 text-center font-bold text-xs text-amber-700 dark:text-amber-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer">
+                    <a href="{{ route('quick.login', 'admin') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-amber-500 hover:text-slate-950 text-center font-bold text-xs text-amber-700 border border-stone-300 transition-all cursor-pointer">
                         Admin
                     </a>
-                    <a href="{{ route('quick.login', 'player') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Marcus Vance">
+                    <a href="{{ route('quick.login', 'player') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-cyan-500 hover:text-slate-950 text-center font-bold text-xs text-cyan-700 border border-stone-300 transition-all cursor-pointer" title="Marcus Vance">
                         Player 1
                     </a>
-                    <a href="{{ route('quick.login', 'player2') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-emerald-500 hover:text-slate-950 text-center font-bold text-xs text-emerald-700 dark:text-emerald-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Elena Cruz">
+                    <a href="{{ route('quick.login', 'player2') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-emerald-500 hover:text-slate-950 text-center font-bold text-xs text-emerald-700 border border-stone-300 transition-all cursor-pointer" title="Elena Cruz">
                         Player 2
                     </a>
-                    <a href="{{ route('quick.login', 'paolo') }}" class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-violet-500 hover:text-slate-950 text-center font-bold text-xs text-violet-700 dark:text-violet-400 border border-stone-300 dark:border-stone-700 transition-all cursor-pointer" title="Paolo Soriano">
+                    <a href="{{ route('quick.login', 'paolo') }}" class="p-2 rounded-xl bg-stone-200 hover:bg-violet-500 hover:text-slate-950 text-center font-bold text-xs text-violet-700 border border-stone-300 transition-all cursor-pointer" title="Paolo Soriano">
                         Paolo (P3)
                     </a>
                 </div>
@@ -44,7 +44,7 @@
         @endif
 
         @if(session('status'))
-            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-check text-cyan-600 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Notice</div>
@@ -54,7 +54,7 @@
         @endif
 
         @if(request('auth_error') || session('error'))
-            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Authentication Issue</div>
@@ -69,7 +69,7 @@
         @endphp
 
         @if(session('unverified_email'))
-            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 dark:text-amber-400 text-xs space-y-2.5">
+            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs space-y-2.5">
                 <div class="flex items-start gap-2.5">
                     <i class="fa-solid fa-envelope-circle-check text-amber-600 mt-0.5 text-base shrink-0"></i>
                     <div>
@@ -82,7 +82,7 @@
                 <form action="{{ route('verification.resend') }}" method="POST" class="pt-1">
                     @csrf
                     <input type="hidden" name="email" value="{{ session('unverified_email') }}">
-                    <button type="submit" class="text-xs font-bold text-cyan-600 dark:text-cyan-400 hover:underline cursor-pointer flex items-center gap-1.5">
+                    <button type="submit" class="text-xs font-bold text-cyan-600 hover:underline cursor-pointer flex items-center gap-1.5">
                         <i class="fa-solid fa-paper-plane text-[10px]"></i> Resend confirmation email
                     </button>
                 </form>
@@ -90,7 +90,7 @@
         @endif
 
         @if(app()->isLocal() && session('dev_verification_url'))
-            <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-400 text-xs">
+            <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 text-xs">
                 <div class="font-bold flex items-center gap-1.5">
                     <i class="fa-solid fa-code text-xs"></i> Local Dev Quick Verification:
                 </div>
@@ -104,7 +104,7 @@
             <!-- 1-Click Social Sign-In Options -->
             <div class="space-y-2.5">
                 <a href="{{ route('auth.social.redirect', 'google') }}"
-                    class="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 hover:border-rose-500/50 hover:bg-stone-50 dark:hover:bg-stone-800 text-theme-heading font-bold text-xs flex items-center justify-center gap-3 shadow-sm hover:shadow transition-all group cursor-pointer">
+                    class="w-full py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:border-rose-500/50 hover:bg-stone-50 text-theme-heading font-bold text-xs flex items-center justify-center gap-3 shadow-sm hover:shadow transition-all group cursor-pointer">
                     <svg class="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -117,8 +117,8 @@
 
             <!-- Divider -->
             <div class="relative flex items-center justify-center">
-                <div class="border-t border-stone-200 dark:border-stone-800 w-full"></div>
-                <span class="bg-white dark:bg-stone-900 px-3 text-[10px] uppercase tracking-wider text-theme-muted font-bold relative">or sign in with credentials</span>
+                <div class="border-t border-stone-200 w-full"></div>
+                <span class="bg-white px-3 text-[10px] uppercase tracking-wider text-theme-muted font-bold relative">or sign in with credentials</span>
             </div>
         @endif
 
@@ -128,7 +128,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Email Address</label>
                 <input type="email" name="email" value="{{ old('email') }}" required autofocus
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('email')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -137,7 +137,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Password</label>
                 <input type="password" name="password" required
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('password')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -145,10 +145,10 @@
 
             <div class="flex items-center justify-between pt-1">
                 <label class="flex items-center gap-2 cursor-pointer text-theme-body">
-                    <input type="checkbox" name="remember" class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
+                    <input type="checkbox" name="remember" class="w-4 h-4 rounded text-cyan-500 bg-stone-100 border-stone-300">
                     <span>Remember me</span>
                 </label>
-                <a href="{{ route('password.request') }}" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 hover:underline transition-colors">
+                <a href="{{ route('password.request') }}" class="text-xs font-semibold text-cyan-600 hover:underline transition-colors">
                     Forgot password?
                 </a>
             </div>
@@ -159,8 +159,8 @@
             </button>
         </form>
 
-        <div class="text-center pt-2 border-t border-stone-200 dark:border-stone-800 space-y-2 text-xs text-theme-muted">
-            <p>Don't have an account? <a href="{{ route('register') }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Register as a Player</a></p>
+        <div class="text-center pt-2 border-t border-stone-200 space-y-2 text-xs text-theme-muted">
+            <p>Don't have an account? <a href="{{ route('register') }}" class="text-cyan-600 hover:underline font-bold">Register as a Player</a></p>
             <p class="text-[11px]">Note: Guests can book courts directly without creating an account!</p>
         </div>
     </div>

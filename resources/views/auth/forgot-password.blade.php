@@ -14,7 +14,7 @@
     <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
 
         @if(session('status'))
-            <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Reset Link Sent</div>
@@ -24,7 +24,7 @@
         @endif
 
         @if(session('error'))
-            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Error</div>
@@ -34,12 +34,12 @@
         @endif
 
         @if(app()->isLocal() && session('dev_reset_url'))
-            <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 dark:text-cyan-400 text-xs space-y-1">
+            <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-700 text-xs space-y-1">
                 <div class="font-bold flex items-center gap-1.5">
                     <i class="fa-solid fa-code text-xs"></i> Local Dev Quick Reset:
                 </div>
                 <div class="text-[11px] text-theme-muted">Email sending is disabled or simulated. Click below to reset directly:</div>
-                <a href="{{ session('dev_reset_url') }}" class="underline font-bold inline-block text-cyan-600 dark:text-cyan-400 mt-1">
+                <a href="{{ session('dev_reset_url') }}" class="underline font-bold inline-block text-cyan-600 mt-1">
                     Click here to open Reset Password page &rarr;
                 </a>
             </div>
@@ -52,7 +52,7 @@
                 <label class="block font-semibold text-theme-body mb-1">Email Address</label>
                 <input type="email" name="email" value="{{ old('email') }}" required autofocus
                     placeholder="Enter your registered email"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('email')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -64,10 +64,10 @@
             </button>
         </form>
 
-        <div class="text-center pt-2 border-t border-stone-200 dark:border-stone-800 space-y-2 text-xs text-theme-muted">
+        <div class="text-center pt-2 border-t border-stone-200 space-y-2 text-xs text-theme-muted">
             <p>
                 Remembered your password?
-                <a href="{{ route('login') }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold ml-1 inline-flex items-center gap-1">
+                <a href="{{ route('login') }}" class="text-cyan-600 hover:underline font-bold ml-1 inline-flex items-center gap-1">
                     <i class="fa-solid fa-arrow-left text-[10px]"></i> Back to Sign In
                 </a>
             </p>

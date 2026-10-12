@@ -1,5 +1,7 @@
 @import 'tailwindcss';
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 @source '../**/*.blade.php';
@@ -25,6 +27,7 @@
 
 /* Light Mode Core Tokens (Pure Light Mode, Dark Mode Removed) */
 :root {
+    color-scheme: light;
     --bg-page: #faf6f0; /* Warm Haze Light */
     --bg-card: #ffffff;
     --bg-card-alt: #f7fafc; /* Cascading White */
@@ -236,14 +239,27 @@ body {
     user-select: none !important;
 }
 
-/* Form input styling */
+/* Form input styling (Ensures iOS Safari & WebKit always render crisp light backgrounds) */
 input, select, textarea {
     color: var(--text-heading) !important;
+    background-color: #ffffff;
+    -webkit-appearance: none;
 }
 
 input::placeholder,
 textarea::placeholder {
     color: #94a3b8;
+}
+
+/* iOS Safari autofill styling fix */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: var(--text-heading) !important;
+    caret-color: var(--text-heading);
 }
 
 /* Highlight animation for scrolling from #courts-section */

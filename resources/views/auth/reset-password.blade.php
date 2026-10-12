@@ -14,7 +14,7 @@
     <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
 
         @if(session('error'))
-            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Error</div>
@@ -31,7 +31,7 @@
                 <label class="block font-semibold text-theme-body mb-1">Email Address</label>
                 <input type="email" name="email" value="{{ $email ?? old('email') }}" required autofocus
                     placeholder="Enter your email"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('email')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -41,7 +41,7 @@
                 <label class="block font-semibold text-theme-body mb-1">New Password</label>
                 <input type="password" name="password" required minlength="8"
                     placeholder="Minimum 8 characters"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('password')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -51,7 +51,7 @@
                 <label class="block font-semibold text-theme-body mb-1">Confirm New Password</label>
                 <input type="password" name="password_confirmation" required minlength="8"
                     placeholder="Repeat new password"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
             </div>
 
             <button type="submit"
@@ -60,9 +60,9 @@
             </button>
         </form>
 
-        <div class="text-center pt-2 border-t border-stone-200 dark:border-stone-800 space-y-2 text-xs text-theme-muted">
+        <div class="text-center pt-2 border-t border-stone-200 space-y-2 text-xs text-theme-muted">
             <p>
-                <a href="{{ route('login') }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold inline-flex items-center gap-1">
+                <a href="{{ route('login') }}" class="text-cyan-600 hover:underline font-bold inline-flex items-center gap-1">
                     <i class="fa-solid fa-arrow-left text-[10px]"></i> Back to Sign In
                 </a>
             </p>

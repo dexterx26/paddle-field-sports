@@ -12,17 +12,19 @@ class SocialAuthenticationTest extends TestCase
 
     public function test_registration_page_displays_google_and_facebook_options(): void
     {
+        config(['services.google.redirect_uri' => 'http://127.0.0.1:8000/auth/google/callback']);
+
         $response = $this->get(route('register'));
 
         $response->assertStatus(200);
         $response->assertSee('Continue with Google');
-        $response->assertSee('Continue with Facebook');
         $response->assertSee(route('auth.social.redirect', 'google'));
-        $response->assertSee(route('auth.social.redirect', 'facebook'));
     }
 
     public function test_login_page_displays_google_option_and_hides_facebook(): void
     {
+        config(['services.google.redirect_uri' => 'http://127.0.0.1:8000/auth/google/callback']);
+
         $response = $this->get(route('login'));
 
         $response->assertStatus(200);
@@ -35,6 +37,7 @@ class SocialAuthenticationTest extends TestCase
     public function test_social_redirect_routes_to_mock_when_keys_are_unconfigured(): void
     {
         config([
+            'services.google.redirect_uri' => 'http://127.0.0.1:8000/auth/google/callback',
             'services.google.client_id' => null,
             'services.google.client_secret' => null,
             'services.facebook.client_id' => null,

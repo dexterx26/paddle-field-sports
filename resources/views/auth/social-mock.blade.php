@@ -30,11 +30,11 @@
                     @csrf
                     <input type="hidden" name="name" value="Marcus Player (Google Test)">
                     <input type="hidden" name="email" value="marcus.google@example.com">
-                    <button type="submit" class="w-full p-3 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 hover:border-cyan-500 text-left transition-all group cursor-pointer">
+                    <button type="submit" class="w-full p-3 rounded-2xl bg-stone-100 border border-stone-200 hover:border-cyan-500 text-left transition-all group cursor-pointer">
                         <div class="flex items-center gap-3">
                             <img src="https://ui-avatars.com/api/?name=Marcus+Player&background=0284c7&color=fff" class="w-9 h-9 rounded-xl">
                             <div>
-                                <div class="text-xs font-bold text-theme-heading group-hover:text-cyan-400">Marcus Player</div>
+                                <div class="text-xs font-bold text-theme-heading group-hover:text-cyan-600">Marcus Player</div>
                                 <div class="text-[10px] text-theme-muted">marcus.google@example.com</div>
                             </div>
                         </div>
@@ -45,11 +45,11 @@
                     @csrf
                     <input type="hidden" name="name" value="Elena Santos (New Player)">
                     <input type="hidden" name="email" value="elena.santos@gmail.com">
-                    <button type="submit" class="w-full p-3 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 hover:border-cyan-500 text-left transition-all group cursor-pointer">
+                    <button type="submit" class="w-full p-3 rounded-2xl bg-stone-100 border border-stone-200 hover:border-cyan-500 text-left transition-all group cursor-pointer">
                         <div class="flex items-center gap-3">
                             <img src="https://ui-avatars.com/api/?name=Elena+Santos&background=ec4899&color=fff" class="w-9 h-9 rounded-xl">
                             <div>
-                                <div class="text-xs font-bold text-theme-heading group-hover:text-cyan-400">Elena Santos</div>
+                                <div class="text-xs font-bold text-theme-heading group-hover:text-cyan-600">Elena Santos</div>
                                 <div class="text-[10px] text-theme-muted">elena.santos@gmail.com</div>
                             </div>
                         </div>
@@ -69,12 +69,12 @@
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Simulated Full Name</label>
                     <input type="text" name="name" value="Alex Rivera" required
-                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 </div>
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Simulated Email</label>
                     <input type="email" name="email" value="alex.rivera@example.com" required
-                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 </div>
                 <button type="submit"
                     class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 transition-all cursor-pointer">
@@ -84,22 +84,22 @@
         </div>
 
         <!-- Setup Instructions Card -->
-        <div class="p-5 rounded-3xl bg-stone-100/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 space-y-3 text-xs">
+        <div class="p-5 rounded-3xl bg-stone-100/80 border border-stone-200 space-y-3 text-xs">
             <div class="flex items-center gap-2 font-bold text-theme-heading">
-                <i class="fa-solid fa-key text-cyan-400"></i>
+                <i class="fa-solid fa-key text-cyan-600"></i>
                 <span>How to switch from Simulation to Real {{ $providerName }} Keys</span>
             </div>
             <p class="text-theme-muted text-[11px] leading-relaxed">
-                To connect real {{ $providerName }} accounts, add your developer credentials in <code class="px-1.5 py-0.5 rounded bg-stone-200 dark:bg-stone-800 font-mono text-[10px]">.env</code>:
+                To connect real {{ $providerName }} accounts, add your developer credentials in <code class="px-1.5 py-0.5 rounded bg-stone-200 font-mono text-[10px]">.env</code>:
             </p>
             @if($provider === 'google')
-                <div class="p-3 rounded-xl bg-stone-950 font-mono text-[11px] text-cyan-400 overflow-x-auto select-all">
+                <div class="p-3 rounded-xl bg-stone-900 font-mono text-[11px] text-cyan-400 overflow-x-auto select-all">
                     GOOGLE_CLIENT_ID=your_google_client_id_here<br>
                     GOOGLE_CLIENT_SECRET=your_google_client_secret_here<br>
                     GOOGLE_REDIRECT_URI="{{ rtrim($appUrl, '/') }}/auth/google/callback"
                 </div>
             @else
-                <div class="p-3 rounded-xl bg-stone-950 font-mono text-[11px] text-cyan-400 overflow-x-auto select-all">
+                <div class="p-3 rounded-xl bg-stone-900 font-mono text-[11px] text-cyan-400 overflow-x-auto select-all">
                     FACEBOOK_CLIENT_ID=your_facebook_app_id_here<br>
                     FACEBOOK_CLIENT_SECRET=your_facebook_app_secret_here<br>
                     FACEBOOK_REDIRECT_URI="{{ rtrim($appUrl, '/') }}/auth/facebook/callback"
@@ -112,7 +112,7 @@
         </div>
 
         <div class="text-center text-xs">
-            <a href="{{ route('login') }}" class="text-cyan-600 dark:text-cyan-400 hover:underline">
+            <a href="{{ route('login') }}" class="text-cyan-600 hover:underline">
                 <i class="fa-solid fa-arrow-left"></i> Return to Sign In
             </a>
         </div>

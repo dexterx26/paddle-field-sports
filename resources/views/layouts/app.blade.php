@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="color-scheme" content="light">
 
     <title>{{ $title ?? 'Paddle Field Sports Center' }} - Pickleball Court Reservation</title>
     <meta name="description" content="Premier indoor and outdoor pickleball court reservation for Paddle Field Sports Center. Real-time availability, instant slot holding, and seamless booking.">
@@ -35,7 +36,7 @@
     <div class="bg-lead text-cascading-white py-1.5 px-4 text-xs font-semibold text-center tracking-wide flex items-center justify-center gap-3 border-b border-stone-800">
         <span>⚡ Open Daily 6:00 AM – 12:00 AM Midnight • Fast Real-Time Court Reservations</span>
         <span class="hidden md:inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-        <span class="hidden md:inline text-amber-300">Instant 2-Minute Slot Hold with Paymongo or Manual GCash Receipt</span>
+        <span class="hidden md:inline text-amber-300">Instant Slot Hold with Paymongo or Manual GCash Receipt</span>
     </div>
 
     <!-- Main Navigation Header -->
@@ -84,35 +85,35 @@
                     <!-- Quick Switcher Demo Dropdown -->
                     @if(!app()->isProduction())
                         <div class="relative group">
-                            <button type="button" class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-1.5 transition-all cursor-pointer">
+                            <button type="button" class="px-2.5 py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-theme-heading border border-stone-300 flex items-center gap-1.5 transition-all cursor-pointer">
                                 <i class="fa-solid fa-bolt text-amber-500"></i>
                                 <span class="hidden sm:inline">Role Switcher</span>
                                 <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted"></i>
                             </button>
                             <div class="absolute right-0 mt-2 w-56 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
                                 <div class="px-3 py-1 text-[11px] font-bold text-theme-muted uppercase tracking-wider">Quick Switch Demo</div>
-                                <a href="{{ route('quick.login', 'owner') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                <a href="{{ route('quick.login', 'owner') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors">
                                     <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
                                     <div>
                                         <div class="font-bold">Court Owner</div>
                                         <div class="text-[10px] text-theme-muted">Manage courts, prices, approvals</div>
                                     </div>
                                 </a>
-                                <a href="{{ route('quick.login', 'assistant') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-teal-500/10 hover:text-teal-600 dark:hover:text-teal-400 transition-colors">
+                                <a href="{{ route('quick.login', 'assistant') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-teal-500/10 hover:text-teal-600 transition-colors">
                                     <span class="w-2 h-2 rounded-full bg-teal-500"></span>
                                     <div>
                                         <div class="font-bold">Admin Assistant</div>
                                         <div class="text-[10px] text-theme-muted">Schedule & reservation approvals</div>
                                     </div>
                                 </a>
-                                <a href="{{ route('quick.login', 'admin') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-400 transition-colors">
+                                <a href="{{ route('quick.login', 'admin') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 transition-colors">
                                     <span class="w-2 h-2 rounded-full bg-amber-500"></span>
                                     <div>
                                         <div class="font-bold">System Admin</div>
                                         <div class="text-[10px] text-theme-muted">Full platform management</div>
                                     </div>
                                 </a>
-                                <a href="{{ route('quick.login', 'player') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                <a href="{{ route('quick.login', 'player') }}" class="flex items-center gap-2.5 px-3 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors">
                                     <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
                                     <div>
                                         <div class="font-bold">Registered Player</div>
@@ -134,46 +135,46 @@
 
                             <!-- User Profile & Account Dropdown -->
                             <div class="relative group">
-                                <button type="button" class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-stone-200/80 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-heading transition-all cursor-pointer">
+                                <button type="button" class="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-stone-100 hover:bg-stone-200 border border-stone-300 text-xs font-semibold text-theme-heading transition-all cursor-pointer">
                                     <img src="{{ Auth::user()->avatar_url }}" alt="{{ Auth::user()->name }}" class="w-6 h-6 rounded-full object-cover border border-cyan-500/40">
                                     <span class="max-w-[110px] truncate hidden sm:inline">{{ Auth::user()->name }}</span>
                                     <i class="fa-solid fa-chevron-down text-[10px] text-theme-muted transition-transform group-hover:rotate-180"></i>
                                 </button>
                                 
                                 <div class="absolute right-0 mt-2 w-56 py-2 glass-dropdown rounded-2xl shadow-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50">
-                                    <div class="px-3.5 py-2 border-b border-stone-200 dark:border-stone-800">
+                                    <div class="px-3.5 py-2 border-b border-stone-200">
                                         <div class="font-bold text-xs text-theme-heading truncate">{{ Auth::user()->name }}</div>
                                         <div class="text-[10px] text-theme-muted truncate">{{ Auth::user()->email }}</div>
-                                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30">
+                                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 border border-cyan-500/30">
                                             {{ str_replace('_', ' ', Auth::user()->role) }}
                                         </span>
                                     </div>
 
                                     <div class="py-1">
-                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
-                                            <i class="fa-solid fa-user-pen w-4 text-center text-cyan-600 dark:text-cyan-400"></i>
+                                        <a href="{{ route('profile.edit') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors">
+                                            <i class="fa-solid fa-user-pen w-4 text-center text-cyan-600"></i>
                                             <span>My Profile & Password</span>
                                         </a>
 
                                         @if(Auth::user()->isClient())
-                                            <button type="button" onclick="openLookupModal()" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors cursor-pointer">
+                                            <button type="button" onclick="openLookupModal()" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors cursor-pointer">
                                                 <i class="fa-solid fa-ticket w-4 text-center text-amber-500"></i>
                                                 <span>Check My Bookings</span>
                                             </button>
                                         @endif
 
                                         @if(Auth::user()->isStaffOrAdmin())
-                                            <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                                            <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors">
                                                 <i class="fa-solid fa-gauge-high w-4 text-center text-teal-500"></i>
                                                 <span>Admin Portal</span>
                                             </a>
                                         @endif
                                     </div>
 
-                                    <div class="pt-1 border-t border-stone-200 dark:border-stone-800">
+                                    <div class="pt-1 border-t border-stone-200">
                                         <form method="POST" action="{{ route('logout') }}">
                                             @csrf
-                                            <button type="submit" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer">
+                                            <button type="submit" class="w-full text-left flex items-center gap-2.5 px-3.5 py-2 text-xs text-rose-600 hover:bg-rose-500/10 transition-colors cursor-pointer">
                                                 <i class="fa-solid fa-arrow-right-from-bracket w-4 text-center"></i>
                                                 <span>Sign Out</span>
                                             </button>
@@ -183,7 +184,7 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="px-3.5 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors">
+                        <a href="{{ route('login') }}" class="px-3.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-xs font-semibold text-theme-heading border border-stone-300 transition-colors">
                             Sign In
                         </a>
                         <a href="{{ route('home') }}#booking-engine" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-cyan-500/25 transition-transform hover:scale-105">

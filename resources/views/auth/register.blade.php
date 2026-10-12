@@ -12,7 +12,7 @@
 
     <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-2xl space-y-5">
         @if(request('auth_error') || session('error'))
-            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 dark:text-rose-400 text-xs font-medium flex items-start gap-2.5">
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-600 text-xs font-medium flex items-start gap-2.5">
                 <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5 text-sm shrink-0"></i>
                 <div class="space-y-0.5">
                     <div class="font-bold">Authentication Issue</div>
@@ -30,7 +30,7 @@
             <!-- 1-Click Social Sign-Up Options -->
             <div class="space-y-2.5">
                 <a href="{{ route('auth.social.redirect', 'google') }}"
-                    class="w-full py-2.5 px-4 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 hover:border-rose-500/50 hover:bg-stone-50 dark:hover:bg-stone-800 text-theme-heading font-bold text-xs flex items-center justify-center gap-3 shadow-sm hover:shadow transition-all group cursor-pointer">
+                    class="w-full py-2.5 px-4 rounded-xl bg-white border border-stone-200 hover:border-rose-500/50 hover:bg-stone-50 text-theme-heading font-bold text-xs flex items-center justify-center gap-3 shadow-sm hover:shadow transition-all group cursor-pointer">
                     <svg class="w-4 h-4" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -39,18 +39,12 @@
                     </svg>
                     <span>Continue with Google</span>
                 </a>
-
-                <!-- <a href="{{ route('auth.social.redirect', 'facebook') }}"
-                    class="w-full py-2.5 px-4 rounded-xl bg-[#1877F2] hover:bg-[#166fe5] text-white font-bold text-xs flex items-center justify-center gap-3 shadow-md shadow-blue-600/20 transition-all cursor-pointer">
-                    <i class="fa-brands fa-facebook text-base"></i>
-                    <span>Continue with Facebook</span>
-                </a> -->
             </div>
 
             <!-- Divider -->
             <div class="relative flex items-center justify-center">
-                <div class="border-t border-stone-200 dark:border-stone-800 w-full"></div>
-                <span class="bg-white dark:bg-stone-900 px-3 text-[10px] uppercase tracking-wider text-theme-muted font-bold relative">or register with email</span>
+                <div class="border-t border-stone-200 w-full"></div>
+                <span class="bg-white px-3 text-[10px] uppercase tracking-wider text-theme-muted font-bold relative">or register with email</span>
             </div>
         @endif
 
@@ -60,7 +54,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Full Name <span class="text-rose-500">*</span></label>
                 <input type="text" name="name" value="{{ old('name') }}" required autofocus placeholder="e.g. Maria Santos"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('name')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -69,7 +63,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Mobile Phone Number <span class="text-rose-500">*</span></label>
                 <input type="tel" name="phone" value="{{ old('phone') }}" required placeholder="e.g. 0917-123-4567"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('phone')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -78,7 +72,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Email Address <span class="text-rose-500">*</span></label>
                 <input type="email" name="email" value="{{ old('email') }}" required placeholder="maria@example.com"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('email')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -87,7 +81,7 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Password <span class="text-rose-500">*</span></label>
                 <input type="password" name="password" required placeholder="Minimum 8 characters"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
                 @error('password')
                     <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
                 @enderror
@@ -96,14 +90,14 @@
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Confirm Password <span class="text-rose-500">*</span></label>
                 <input type="password" name="password_confirmation" required placeholder="Repeat password"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500">
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
             </div>
 
             <p class="text-[11px] text-theme-muted text-center pt-1">
                 By clicking Complete Registration, you agree to our 
-                <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold">Terms of Service</a> 
+                <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 hover:underline font-semibold">Terms of Service</a> 
                 and 
-                <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold">Privacy Policy</a>.
+                <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 hover:underline font-semibold">Privacy Policy</a>.
             </p>
 
             <button type="submit"
@@ -112,8 +106,8 @@
             </button>
         </form>
 
-        <div class="text-center pt-2 border-t border-stone-200 dark:border-stone-800 space-y-1 text-xs text-theme-muted">
-            <p>Already have an account? <a href="{{ route('login') }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Sign In</a></p>
+        <div class="text-center pt-2 border-t border-stone-200 space-y-1 text-xs text-theme-muted">
+            <p>Already have an account? <a href="{{ route('login') }}" class="text-cyan-600 hover:underline font-bold">Sign In</a></p>
             <p class="text-[11px]">Remember: Guest booking is always available without an account.</p>
         </div>
     </div>
