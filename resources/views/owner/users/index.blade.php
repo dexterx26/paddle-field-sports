@@ -180,7 +180,8 @@
                 </button>
             </div>
         @else
-            <div class="overflow-x-auto">
+            <!-- Desktop Table View -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left text-xs text-theme-body">
                     <thead class="bg-stone-100 dark:bg-stone-900/50 text-theme-muted uppercase tracking-wider text-[11px] border-b border-stone-200 dark:border-stone-800">
                         <tr>
@@ -419,6 +420,164 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Cards View (Shown on screens < md, eliminates horizontal scrolling) -->
+            <div class="block md:hidden p-3.5 space-y-3">
+                @foreach($users as $user)
+                    @php
+                        $roleBadge = match($user->role) {
+                            'admin' => ['label' => 'System Admin', 'bg' => 'bg-amber-500/15', 'text' => 'text-amber-800 dark:text-amber-300', 'border' => 'border-amber-500/30', 'icon' => 'fa-shield-halved'],
+                            'court_owner' => ['label' => 'Court Owner', 'bg' => 'bg-cyan-500/15', 'text' => 'text-cyan-700 dark:text-cyan-300', 'border' => 'border-cyan-500/30', 'icon' => 'fa-crown'],
+                            'admin_assistant' => ['label' => 'Admin Assistant', 'bg' => 'bg-emerald-500/15', 'text' => 'text-emerald-800 dark:text-emerald-300', 'border' => 'border-emerald-500/30', 'icon' => 'fa-user-tie'],
+                            default => ['label' => 'Player / Client', 'bg' => 'bg-stone-200 dark:bg-stone-800', 'text' => 'text-theme-body', 'border' => 'border-stone-300 dark:border-stone-700', 'icon' => 'fa-user'],
+                        };
+                        $perms = $user->permissions ?? [];
+                        if (!is_array($perms)) {
+                            $perms = json_decode($perms, true) ?? [];
+                        }
+                        $heldCount = (int) ($user->held_timeslots_count ?? 0);
+                        $activeHeldCount = (int) ($user->active_held_slots_count ?? 0);
+                        $canEdit = true;
+                        if (Auth::user()->isAdminAssistant() && ($user->isAdmin() || $user->isOwner())) {
+                            $canEdit = false;
+                        }
+                        if (Auth::user()->isOwner() && $user->isAdmin()) {
+                            $canEdit = false;
+                        }
+                    @endphp
+                    <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                        <!-- Top Row: Avatar, Name, Email, Role, Status -->
+                        <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-2xl {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }} border {{ $roleBadge['border'] }} flex items-center justify-center font-bold text-sm shrink-0">
+                                    {{ strtoupper(substr($user->name, 0, 1)) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-theme-heading flex items-center gap-1.5 truncate">
+                                        <span class="truncate">{{ $user->name }}</span>
+                                        @if($user->id === Auth::id())
+                                            <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500 text-slate-950 uppercase shrink-0">You</span>
+                                        @endif
+                                    </div>
+                                    <div class="text-[11px] text-theme-muted font-mono truncate">{{ $user->email }}</div>
+                                    <div class="mt-1">
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold {{ $roleBadge['bg'] }} {{ $roleBadge['text'] }} border {{ $roleBadge['border'] }}">
+                                            <i class="fa-solid {{ $roleBadge['icon'] }} text-[9px]"></i>
+                                            {{ $roleBadge['label'] }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="shrink-0 text-right" id="user-status-cell-mobile-{{ $user->id }}">
+                                @if($user->id === Auth::id() || (Auth::user()->isAdminAssistant() && ($user->isAdmin() || $user->isOwner())) || (Auth::user()->isOwner() && $user->isAdmin()))
+                                    @if($user->is_active)
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 opacity-70 cursor-not-allowed">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                            Active
+                                        </span>
+                                    @else
+                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 opacity-70 cursor-not-allowed">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                            Deactivated
+                                        </span>
+                                    @endif
+                                @else
+                                    <button type="button"
+                                        id="status-btn-mobile-{{ $user->id }}"
+                                        onclick="handleStatusClick({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ $user->role }}', {{ $user->is_active ? 1 : 0 }}, '{{ addslashes($user->deactivation_reason ?? '') }}')"
+                                        title="Click to edit status"
+                                        class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                                        @if($user->is_active)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 shadow-sm transition-all">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                <span>Active</span>
+                                                <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 shadow-sm transition-all">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                <span>Deactivated</span>
+                                                <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                                            </span>
+                                        @endif
+                                    </button>
+                                @endif
+                            </div>
+                        </div>
+
+                        <!-- Details: Phone, Held slots, Activity -->
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted">Phone:</span>
+                                @if($user->phone)
+                                    <a href="tel:{{ $user->phone }}" class="font-mono text-cyan-600 dark:text-cyan-400 hover:underline">{{ $user->phone }}</a>
+                                @else
+                                    <span class="text-theme-muted">—</span>
+                                @endif
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted">Held Timeslots:</span>
+                                @if($heldCount > 0)
+                                    <button type="button"
+                                        onclick="openHeldSlotsModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ $heldCount }}, {{ $activeHeldCount }})"
+                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-sm
+                                            {{ $heldCount >= 3 ? 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' }}">
+                                        <i class="fa-solid fa-clock-rotate-left text-[9px]"></i>
+                                        <span>{{ $heldCount }} held {{ Str::plural('slot', $heldCount) }}</span>
+                                        @if($activeHeldCount > 0)
+                                            <span class="px-1 py-0.2 rounded-full text-[8px] font-extrabold bg-cyan-500 text-slate-950 uppercase animate-pulse">live</span>
+                                        @endif
+                                    </button>
+                                @else
+                                    <span class="text-[11px] text-theme-muted">0 held</span>
+                                @endif
+                            </div>
+
+                            @if($user->role === 'admin_assistant')
+                                <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 space-y-1">
+                                    <span class="text-[10px] text-theme-muted block font-semibold">Assigned Modules:</span>
+                                    <div class="flex flex-wrap gap-1">
+                                        @if(in_array('schedule', $perms))<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">Schedule</span>@endif
+                                        @if(in_array('approvals', $perms))<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">Approvals</span>@endif
+                                        @if(in_array('courts', $perms))<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30">Courts</span>@endif
+                                        @if(in_array('photos', $perms))<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">Photos</span>@endif
+                                        @if(in_array('users', $perms))<span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">Users</span>@endif
+                                        @if(empty($perms))<span class="text-[9px] text-theme-muted">None</span>@endif
+                                    </div>
+                                    @if($user->courtOwner)
+                                        <div class="text-[10px] text-theme-muted mt-1">Supervisor: <strong class="text-theme-heading">{{ $user->courtOwner->name }}</strong></div>
+                                    @endif
+                                </div>
+                            @elseif($user->role === 'client')
+                                <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 flex items-center justify-between text-[11px]">
+                                    <span class="text-theme-muted">Bookings:</span>
+                                    <span class="font-bold text-theme-heading">{{ $user->bookings_count }} total</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Actions -->
+                        @if($canEdit)
+                            <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                                <button type="button"
+                                    onclick="confirmResetPassword({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}')"
+                                    class="flex-1 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/10 hover:text-amber-500 text-theme-body font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                                    title="Reset Password">
+                                    <i class="fa-solid fa-key text-[10px]"></i> Reset Password
+                                </button>
+
+                                <button type="button"
+                                    onclick='openEditUserModal(@json($user), @json($perms))'
+                                    class="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-pen-to-square"></i> Edit User
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
             </div>
 
             <!-- Pagination -->
@@ -1268,8 +1427,9 @@
     }
 
     function updateUserStatusCell(userId, isActive, reason, userName, userEmail, userRole) {
-        const cell = document.getElementById(`user-status-cell-${userId}`);
-        if (!cell) return;
+        const desktopCell = document.getElementById(`user-status-cell-${userId}`);
+        const mobileCell = document.getElementById(`user-status-cell-mobile-${userId}`);
+        if (!desktopCell && !mobileCell) return;
 
         const safeName = escapeHtml(userName);
         const safeEmail = escapeHtml(userEmail);
@@ -1280,42 +1440,47 @@
         const jsRole = escapeJsString(userRole);
         const jsReason = reason ? escapeJsString(reason) : '';
 
-        if (isActive) {
-            cell.innerHTML = `
-                <button type="button"
-                    id="status-btn-${userId}"
-                    onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 1, '')"
-                    title="Click to edit status / deactivate account"
-                    class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 shadow-sm transition-all">
-                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        <span>Active</span>
-                        <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+        const renderHtml = (btnId) => {
+            if (isActive) {
+                return `
+                    <button type="button"
+                        id="${btnId}"
+                        onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 1, '')"
+                        title="Click to edit status / deactivate account"
+                        class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 group-hover:border-emerald-500/50 shadow-sm transition-all">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            <span>Active</span>
+                            <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                        </span>
+                    </button>
+                `;
+            } else {
+                const reasonHtml = safeReason ? `
+                    <span class="text-[9px] text-theme-muted max-w-[140px] truncate block opacity-75 group-hover:opacity-100 transition-opacity" title="Reason: ${safeReason}">
+                        <i class="fa-solid fa-circle-info text-[8px] mr-0.5 text-rose-400"></i>${safeReason}
                     </span>
-                </button>
-            `;
-        } else {
-            const reasonHtml = safeReason ? `
-                <span class="text-[9px] text-theme-muted max-w-[140px] truncate block opacity-75 group-hover:opacity-100 transition-opacity" title="Reason: ${safeReason}">
-                    <i class="fa-solid fa-circle-info text-[8px] mr-0.5 text-rose-400"></i>${safeReason}
-                </span>
-            ` : '';
+                ` : '';
 
-            cell.innerHTML = `
-                <button type="button"
-                    id="status-btn-${userId}"
-                    onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 0, '${jsReason}')"
-                    title="Click to edit status / reactivate account"
-                    class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 group-hover:border-rose-500/50 shadow-sm transition-all">
-                        <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
-                        <span>Deactivated</span>
-                        <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
-                    </span>
-                    ${reasonHtml}
-                </button>
-            `;
-        }
+                return `
+                    <button type="button"
+                        id="${btnId}"
+                        onclick="handleStatusClick(${userId}, '${jsName}', '${jsEmail}', '${jsRole}', 0, '${jsReason}')"
+                        title="Click to edit status / reactivate account"
+                        class="inline-flex flex-col items-center gap-1 cursor-pointer group focus:outline-none transition-transform active:scale-95">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 group-hover:border-rose-500/50 shadow-sm transition-all">
+                            <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                            <span>Deactivated</span>
+                            <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity"></i>
+                        </span>
+                        ${reasonHtml}
+                    </button>
+                `;
+            }
+        };
+
+        if (desktopCell) desktopCell.innerHTML = renderHtml(`status-btn-${userId}`);
+        if (mobileCell) mobileCell.innerHTML = renderHtml(`status-btn-mobile-${userId}`);
     }
 
     function confirmResetPassword(id, name, email) {

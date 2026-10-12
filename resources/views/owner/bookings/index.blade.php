@@ -137,7 +137,8 @@
 
     <!-- Bookings Table -->
     <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View (Hidden on mobile) -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="bg-stone-100 dark:bg-stone-900/80 text-theme-muted border-b border-stone-200 dark:border-stone-800 uppercase text-[10px] tracking-wider">
@@ -229,6 +230,107 @@
                     @endforelse
                 </tbody>
             </table>
+        </div>
+
+        <!-- Mobile Card View (Shown on screens < md, eliminates horizontal scrolling) -->
+        <div class="block md:hidden p-3.5 space-y-3">
+            @forelse($bookings as $booking)
+                <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                    <!-- Header: Ref, Status, Amount -->
+                    <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <a href="{{ route('booking.track', $booking->booking_reference) }}" target="_blank" class="font-mono font-bold text-cyan-600 dark:text-cyan-400 text-sm hover:underline">
+                                    {{ $booking->booking_reference }}
+                                </a>
+                            </div>
+                            <div class="mt-1">
+                                @if($booking->booking_status === 'confirmed')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">Confirmed</span>
+                                @elseif($booking->booking_status === 'pending_approval')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-800 dark:text-amber-300 border border-amber-500/30 uppercase">Pending Approval</span>
+                                @elseif($booking->booking_status === 'held')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">Held</span>
+                                @elseif($booking->booking_status === 'cancelled')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 uppercase" title="{{ $booking->rejection_reason ?? 'Cancelled by Court Owner' }}">Cancelled</span>
+                                @elseif($booking->booking_status === 'rejected')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-500/20 text-rose-700 dark:text-rose-300 border border-rose-500/30 uppercase">Rejected</span>
+                                @elseif($booking->booking_status === 'expired')
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted uppercase">Expired</span>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-black text-theme-heading text-base text-cyan-600 dark:text-cyan-400">{{ $booking->formatted_amount }}</div>
+                            <div class="text-[10px] text-theme-muted">₱{{ number_format($booking->rate_per_hour, 2) }}/hr</div>
+                        </div>
+                    </div>
+
+                    <!-- Body: Customer, Court, Date & Time -->
+                    <div class="space-y-2 text-xs">
+                        <div>
+                            <div class="font-bold text-theme-heading text-sm">{{ $booking->customer_name }}</div>
+                            <div class="flex items-center gap-1.5 text-xs text-theme-muted mt-0.5">
+                                <i class="fa-solid fa-phone text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                <a href="tel:{{ $booking->customer_phone }}" class="font-mono hover:underline hover:text-cyan-600 dark:hover:text-cyan-400">{{ $booking->customer_phone }}</a>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-solid fa-location-dot text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                    Court:
+                                </span>
+                                <span class="font-semibold text-theme-heading">{{ $booking->court->name }} <span class="text-[10px] text-theme-muted font-normal">({{ ucfirst($booking->court->type) }})</span></span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar text-[10px]"></i>
+                                    Date:
+                                </span>
+                                <span class="font-medium text-theme-heading">{{ $booking->booking_date->format('M d, Y') }}</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock text-[10px]"></i>
+                                    Time:
+                                </span>
+                                <span class="font-bold text-cyan-600 dark:text-cyan-400">
+                                    {{ date('g:i A', strtotime($booking->start_time)) }} - {{ date('g:i A', strtotime($booking->end_time)) }} ({{ $booking->total_hours }}h)
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                        <a href="{{ route('booking.track', $booking->booking_reference) }}" target="_blank"
+                            class="flex-1 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-body font-semibold text-xs text-center transition-colors">
+                            Pass &rarr;
+                        </a>
+
+                        @if(!in_array($booking->booking_status, ['cancelled', 'rejected', 'expired']))
+                            <button type="button"
+                                onclick="openCancelBookingModal({{ $booking->id }}, '{{ addslashes($booking->booking_reference) }}', '{{ addslashes($booking->customer_name) }}', '{{ addslashes($booking->court->name) }}')"
+                                class="flex-1 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-ban text-[10px]"></i> Cancel
+                            </button>
+                        @endif
+                    </div>
+                </div>
+            @empty
+                <div class="py-12 text-center text-theme-muted">
+                    <div>No reservations match your filter criteria.</div>
+                    @if($status === 'confirmed')
+                        <div class="mt-2 text-xs">
+                            <a href="{{ route('owner.bookings.index', array_merge(request()->except('status', 'page'), ['status' => 'all'])) }}" class="text-cyan-600 dark:text-cyan-400 hover:underline font-semibold inline-flex items-center gap-1">
+                                <i class="fa-solid fa-list-check"></i> Switch to All Statuses to see other bookings
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            @endforelse
         </div>
 
         @if($bookings->hasPages())

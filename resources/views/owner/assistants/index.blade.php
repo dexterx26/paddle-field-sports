@@ -86,7 +86,8 @@
                 </button>
             </div>
         @else
-            <div class="overflow-x-auto">
+            <!-- Desktop Table View (Hidden on mobile) -->
+            <div class="hidden md:block overflow-x-auto">
                 <table class="w-full text-left text-xs text-theme-body">
                     <thead class="bg-stone-100 dark:bg-stone-900/50 text-theme-muted uppercase tracking-wider text-[11px] border-b border-stone-200 dark:border-stone-800">
                         <tr>
@@ -226,6 +227,120 @@
                         @endforeach
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card View (Shown on screens < md, eliminates horizontal scrolling) -->
+            <div class="block md:hidden p-3.5 space-y-3">
+                @foreach($assistants as $assistant)
+                    @php
+                        $perms = $assistant->permissions ?? [];
+                        if (!is_array($perms)) {
+                            $perms = json_decode($perms, true) ?? [];
+                        }
+                    @endphp
+                    <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                        <!-- Header: Avatar, Name, Email & Status -->
+                        <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <div class="w-10 h-10 rounded-xl bg-cyan-500/20 border border-cyan-500/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center font-bold text-sm shrink-0">
+                                    {{ strtoupper(substr($assistant->name, 0, 1)) }}
+                                </div>
+                                <div class="min-w-0">
+                                    <div class="font-bold text-theme-heading text-sm truncate">{{ $assistant->name }}</div>
+                                    <div class="text-[11px] text-theme-muted flex items-center gap-1.5 mt-0.5 truncate">
+                                        <i class="fa-regular fa-envelope text-[10px]"></i>
+                                        <span class="truncate">{{ $assistant->email }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="shrink-0">
+                                <form method="POST" action="{{ route('owner.assistants.toggle', $assistant->id) }}">
+                                    @csrf
+                                    <button type="submit" title="Click to toggle status" class="cursor-pointer group">
+                                        @if($assistant->is_active)
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 group-hover:bg-emerald-500/20 transition-all">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                                                Active
+                                            </span>
+                                        @else
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30 group-hover:bg-rose-500/20 transition-all">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                                                Deactivated
+                                            </span>
+                                        @endif
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Phone & Modules -->
+                        <div class="space-y-2 text-xs">
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted">Phone:</span>
+                                @if($assistant->phone)
+                                    <a href="tel:{{ $assistant->phone }}" class="font-mono text-cyan-600 dark:text-cyan-400 hover:underline">{{ $assistant->phone }}</a>
+                                @else
+                                    <span class="text-theme-muted">None</span>
+                                @endif
+                            </div>
+
+                            <div class="pt-2 border-t border-stone-200/50 dark:border-stone-800/50 space-y-1.5">
+                                <span class="text-[11px] font-semibold text-theme-muted block">Assigned Module Access:</span>
+                                <div class="flex flex-wrap gap-1.5">
+                                    @if(in_array('schedule', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                                            <i class="fa-solid fa-calendar-days text-[9px]"></i> Schedule
+                                        </span>
+                                    @endif
+                                    @if(in_array('approvals', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                            <i class="fa-solid fa-file-invoice-dollar text-[9px]"></i> Approvals
+                                        </span>
+                                    @endif
+                                    @if(in_array('courts', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-indigo-500/10 text-indigo-700 dark:text-indigo-300 border border-indigo-500/30">
+                                            <i class="fa-solid fa-table-tennis-paddle-ball text-[9px]"></i> Courts
+                                        </span>
+                                    @endif
+                                    @if(in_array('photos', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/30">
+                                            <i class="fa-solid fa-images text-[9px]"></i> Photos
+                                        </span>
+                                    @endif
+                                    @if(in_array('users', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-cyan-500/10 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                                            <i class="fa-solid fa-users text-[9px]"></i> Users
+                                        </span>
+                                    @endif
+                                    @if(in_array('settings', $perms))
+                                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                                            <i class="fa-solid fa-sliders text-[9px]"></i> Settings
+                                        </span>
+                                    @endif
+                                    @if(empty($perms))
+                                        <span class="px-2 py-0.5 rounded text-[10px] bg-stone-200 dark:bg-stone-800 text-stone-500">
+                                            No modules assigned
+                                        </span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex items-center justify-end gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                            <button type="button"
+                                onclick='openEditAssistantModal(@json($assistant), @json($perms))'
+                                class="flex-1 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 text-theme-body font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
+                                <i class="fa-solid fa-pen-to-square"></i> Edit Permissions
+                            </button>
+
+                            <button type="button" onclick="confirmDeleteAssistant({{ $assistant->id }}, '{{ addslashes($assistant->name) }}')"
+                                class="px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1">
+                                <i class="fa-regular fa-trash-can"></i> Delete
+                            </button>
+                        </div>
+                    </div>
+                @endforeach
             </div>
         @endif
     </div>
