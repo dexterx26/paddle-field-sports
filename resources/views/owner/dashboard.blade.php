@@ -56,8 +56,8 @@
     </div>
 
     <!-- PENDING MANUAL RECEIPT APPROVALS QUEUE -->
-    <div class="rounded-3xl glass-panel p-6 sm:p-7 shadow-xl">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-stone-200 dark:border-stone-800 gap-3">
+    <div class="rounded-3xl glass-panel p-4 sm:p-7 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 sm:pb-5 border-b border-stone-200 dark:border-stone-800 gap-3">
             <div>
                 <div class="flex items-center gap-2">
                     <h3 class="text-base font-bold text-theme-heading">Manual Payment Receipts Awaiting Approval</h3>
@@ -74,8 +74,9 @@
             </a>
         </div>
 
-        <div class="mt-4 overflow-x-auto">
-            @if($pendingApprovals->count() > 0)
+        @if($pendingApprovals->count() > 0)
+            <!-- Desktop Table View (Hidden on mobile) -->
+            <div class="hidden md:block mt-4 overflow-x-auto">
                 <table class="w-full text-left text-xs">
                     <thead>
                         <tr class="text-theme-muted border-b border-stone-200 dark:border-stone-800 uppercase text-[10px] tracking-wider">
@@ -153,20 +154,113 @@
                         @endforeach
                     </tbody>
                 </table>
-            @else
-                <div class="py-8 text-center text-theme-muted space-y-1">
-                    <i class="fa-solid fa-circle-check text-cyan-500 text-2xl mb-1"></i>
-                    <p class="text-xs font-semibold text-theme-heading">All caught up!</p>
-                    <p class="text-[11px]">No pending manual payment receipts awaiting owner verification.</p>
-                </div>
-            @endif
-        </div>
+            </div>
+
+            <!-- Mobile Card View (Shown on screens < md, eliminates horizontal scrolling) -->
+            <div class="block md:hidden mt-3 space-y-3">
+                @foreach($pendingApprovals->take(5) as $b)
+                    <div class="p-3.5 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                        <!-- Top Bar: Reference, Pending Badge & Amount -->
+                        <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-stone-200/70 dark:border-stone-800/70">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400 text-sm">{{ $b->booking_reference }}</span>
+                                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-400 border border-amber-500/30">
+                                        Pending
+                                    </span>
+                                </div>
+                                <div class="text-[10px] text-theme-muted mt-0.5 flex items-center gap-1">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span>{{ $b->created_at->diffForHumans() }}</span>
+                                </div>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <div class="font-black text-theme-heading text-base text-cyan-600 dark:text-cyan-400">{{ $b->formatted_amount }}</div>
+                                <div class="text-[10px] text-theme-muted">₱{{ number_format($b->rate_per_hour, 2) }}/hr</div>
+                            </div>
+                        </div>
+
+                        <!-- Middle Content: Receipt Thumbnail & Info -->
+                        <div class="flex gap-3 items-start">
+                            <div class="shrink-0">
+                                @if($b->receipt_url)
+                                    <button type="button" onclick="previewReceiptModal('{{ $b->receipt_url }}', '{{ $b->booking_reference }}', '{{ $b->customer_name }}', '{{ $b->formatted_amount }}')"
+                                        class="block w-16 h-20 rounded-xl overflow-hidden border border-stone-300 dark:border-stone-700 hover:border-cyan-500 group relative shadow-sm cursor-pointer bg-stone-950/20">
+                                        <img src="{{ $b->receipt_url }}" alt="Receipt" class="w-full h-full object-cover">
+                                        <div class="absolute inset-0 bg-slate-950/40 flex flex-col items-center justify-center text-white text-[9px] font-medium opacity-90 group-hover:opacity-100 transition-opacity">
+                                            <i class="fa-solid fa-magnifying-glass text-xs mb-0.5"></i>
+                                            <span>Proof</span>
+                                        </div>
+                                    </button>
+                                @else
+                                    <div class="w-16 h-20 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 flex flex-col items-center justify-center text-theme-muted text-[10px] text-center p-1 bg-stone-100/50 dark:bg-stone-800/30">
+                                        <i class="fa-regular fa-image text-sm mb-1"></i>
+                                        <span>No receipt</span>
+                                    </div>
+                                @endif
+                            </div>
+
+                            <div class="min-w-0 flex-1 space-y-1">
+                                <div class="font-bold text-theme-heading text-sm truncate">{{ $b->customer_name }}</div>
+                                <div class="flex items-center gap-1.5 text-xs text-theme-muted">
+                                    <i class="fa-solid fa-phone text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                    <a href="tel:{{ $b->customer_phone }}" class="font-mono hover:underline hover:text-cyan-600 dark:hover:text-cyan-400">{{ $b->customer_phone }}</a>
+                                </div>
+                                <div class="pt-1 border-t border-stone-200/50 dark:border-stone-800/50 space-y-0.5">
+                                    <div class="text-xs font-semibold text-theme-heading flex items-center gap-1.5">
+                                        <i class="fa-solid fa-location-dot text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                        <span class="truncate">{{ $b->court->name }}</span>
+                                    </div>
+                                    <div class="text-xs text-theme-muted flex items-center gap-1.5">
+                                        <i class="fa-regular fa-calendar text-[10px]"></i>
+                                        <span>{{ $b->booking_date->format('M d, Y') }}</span>
+                                    </div>
+                                    <div class="text-xs font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+                                        <i class="fa-regular fa-clock text-[10px]"></i>
+                                        <span>{{ date('g:i A', strtotime($b->start_time)) }} - {{ date('g:i A', strtotime($b->end_time)) }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Actions Grid: Reject & Approve -->
+                        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/60 dark:border-stone-800/60">
+                            <button type="button" onclick="openRejectModal('{{ $b->id }}', '{{ $b->booking_reference }}')"
+                                class="w-full py-2 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-rose-500/20 text-stone-700 dark:text-stone-300 hover:text-rose-500 font-bold text-xs border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                                <i class="fa-solid fa-xmark"></i> Reject
+                            </button>
+
+                            <form id="dashboard-approve-form-mobile-{{ $b->id }}" method="POST" action="{{ route('owner.approve', $b->id) }}">
+                                @csrf
+                                <button type="button"
+                                    data-id="{{ $b->id }}"
+                                    data-reference="{{ $b->booking_reference }}"
+                                    data-customer="{{ $b->customer_name }}"
+                                    data-court="{{ $b->court->name }}"
+                                    data-schedule="{{ $b->booking_date->format('M d, Y') }} ({{ date('g:i A', strtotime($b->start_time)) }} - {{ date('g:i A', strtotime($b->end_time)) }})"
+                                    data-amount="{{ $b->formatted_amount }}"
+                                    onclick="confirmDashboardApprove(this)"
+                                    class="w-full py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-check"></i> Approve
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <div class="py-8 text-center text-theme-muted space-y-1">
+                <i class="fa-solid fa-circle-check text-cyan-500 text-2xl mb-1"></i>
+                <p class="text-xs font-semibold text-theme-heading">All caught up!</p>
+                <p class="text-[11px]">No pending manual payment receipts awaiting owner verification.</p>
+            </div>
+        @endif
     </div>
 
     <!-- Two-column row: Today's Bookings & Recent Activity -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <!-- Today's Schedule -->
-        <div class="rounded-3xl glass-panel p-6 shadow-xl space-y-4">
+        <div class="rounded-3xl glass-panel p-4 sm:p-6 shadow-xl space-y-4">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-calendar-day text-cyan-600 dark:text-cyan-400"></i>
@@ -227,77 +321,81 @@
                         </div>
                     @endif
 
-                    <div class="today-booking-card p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 {{ $tb->is_past ? 'bg-stone-100/60 dark:bg-stone-900/40 border-stone-200/60 dark:border-stone-800/60 opacity-75 hover:opacity-100' : 'bg-stone-100 dark:bg-stone-900 border-stone-200 dark:border-stone-800 shadow-sm' }} {{ (!empty($selectedCourtId) && $selectedCourtId !== 'all' && $tb->court_id != $selectedCourtId) ? 'hidden' : '' }}"
+                    <div class="today-booking-card p-3 sm:p-3.5 rounded-2xl border transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 {{ $tb->is_past ? 'bg-stone-100/60 dark:bg-stone-900/40 border-stone-200/60 dark:border-stone-800/60 opacity-75 hover:opacity-100' : 'bg-stone-100 dark:bg-stone-900 border-stone-200 dark:border-stone-800 shadow-sm' }} {{ (!empty($selectedCourtId) && $selectedCourtId !== 'all' && $tb->court_id != $selectedCourtId) ? 'hidden' : '' }}"
                         data-court-id="{{ $tb->court_id }}"
                         data-is-past="{{ $tb->is_past ? '1' : '0' }}">
                         <div class="flex items-center gap-3 min-w-0">
                             <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-bold text-xs border {{ $tb->is_past ? 'bg-stone-200 dark:bg-stone-800 text-theme-muted border-stone-300 dark:border-stone-700' : 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/30' }}">
                                 C{{ $tb->court->court_number }}
                             </div>
-                            <div class="truncate">
+                            <div class="min-w-0 flex-1 truncate">
                                 <div class="flex items-center gap-2 truncate">
                                     <h4 class="text-xs font-bold text-theme-heading truncate">{{ $tb->court->name }}</h4>
                                     @if($tb->is_past)
                                         <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted uppercase">Past</span>
                                     @endif
                                 </div>
-                                <p class="text-[11px] text-theme-muted truncate">
+                                <p class="text-[11px] text-theme-muted truncate mt-0.5">
                                     <span class="font-semibold text-theme-heading font-mono">{{ date('g:i A', strtotime($tb->start_time)) }} - {{ date('g:i A', strtotime($tb->end_time)) }}</span>
                                     • {{ $tb->customer_name }}
                                 </p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 flex-shrink-0">
-                            @if($tb->booking_status === 'confirmed')
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30 uppercase">Confirmed</span>
-                            @elseif($tb->booking_status === 'pending_approval')
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 uppercase">In Review</span>
-                            @elseif($tb->booking_status === 'held')
-                                <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30 uppercase">Held</span>
-                            @endif
+                        <div class="flex items-center justify-between sm:justify-end gap-2 pt-2 sm:pt-0 border-t sm:border-t-0 border-stone-200/60 dark:border-stone-800/60 flex-shrink-0">
+                            <div>
+                                @if($tb->booking_status === 'confirmed')
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30 uppercase">Confirmed</span>
+                                @elseif($tb->booking_status === 'pending_approval')
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 uppercase">In Review</span>
+                                @elseif($tb->booking_status === 'held')
+                                    <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border border-cyan-500/30 uppercase">Held</span>
+                                @endif
+                            </div>
 
-                            <button type="button"
-                                onclick="openReservationModal({{ json_encode([
-                                    'id' => $tb->id,
-                                    'reference' => $tb->booking_reference,
-                                    'court_name' => $tb->court->name,
-                                    'court_number' => $tb->court->court_number,
-                                    'court_type' => ucfirst($tb->court->type) . ' (' . ($tb->court->surface_type ?? 'Tournament Grade') . ')',
-                                    'customer_name' => $tb->customer_name,
-                                    'customer_phone' => $tb->customer_phone,
-                                    'customer_email' => $tb->customer_email ?: 'None provided',
-                                    'players_count' => $tb->players_count ?? 4,
-                                    'booking_date' => $tb->booking_date->format('l, F j, Y'),
-                                    'time_range' => date('g:i A', strtotime($tb->start_time)) . ' – ' . date('g:i A', strtotime($tb->end_time)),
-                                    'total_hours' => $tb->total_hours,
-                                    'rate_per_hour' => '₱' . number_format($tb->rate_per_hour, 2) . ' / hr',
-                                    'formatted_amount' => $tb->formatted_amount,
-                                    'payment_method' => ucwords(str_replace('_', ' ', $tb->payment_method)),
-                                    'payment_status' => ucfirst($tb->payment_status),
-                                    'booking_status' => $tb->booking_status,
-                                    'is_past' => $tb->is_past,
-                                    'receipt_url' => $tb->receipt_url,
-                                    'receipt_time' => $tb->receipt_uploaded_at?->diffForHumans(),
-                                    'approver' => $tb->approver?->name,
-                                    'approved_at' => $tb->approved_at?->format('M d, Y g:i A'),
-                                    'slots' => $tb->slots->map(fn($s) => date('g:i A', strtotime($s->slot_time)))->values()->all(),
-                                    'track_url' => route('booking.track', $tb->booking_reference),
-                                    'created_at' => $tb->created_at->format('M d, Y g:i A') . ' (' . $tb->created_at->diffForHumans() . ')',
-                                ]) }})"
-                                class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-body text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
-                                title="View Reservation Details">
-                                <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400"></i>
-                                <span>Details</span>
-                            </button>
-
-                            @if(!in_array($tb->booking_status, ['cancelled', 'rejected', 'expired']))
+                            <div class="flex items-center gap-1.5">
                                 <button type="button"
-                                    onclick="openDashboardCancelModal({{ $tb->id }}, '{{ addslashes($tb->booking_reference) }}', '{{ addslashes($tb->customer_name) }}', '{{ addslashes($tb->court->name) }}')"
-                                    class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 text-xs transition-colors cursor-pointer"
-                                    title="Cancel Reservation of this user">
-                                    <i class="fa-solid fa-ban text-[11px]"></i>
+                                    onclick="openReservationModal({{ json_encode([
+                                        'id' => $tb->id,
+                                        'reference' => $tb->booking_reference,
+                                        'court_name' => $tb->court->name,
+                                        'court_number' => $tb->court->court_number,
+                                        'court_type' => ucfirst($tb->court->type) . ' (' . ($tb->court->surface_type ?? 'Tournament Grade') . ')',
+                                        'customer_name' => $tb->customer_name,
+                                        'customer_phone' => $tb->customer_phone,
+                                        'customer_email' => $tb->customer_email ?: 'None provided',
+                                        'players_count' => $tb->players_count ?? 4,
+                                        'booking_date' => $tb->booking_date->format('l, F j, Y'),
+                                        'time_range' => date('g:i A', strtotime($tb->start_time)) . ' – ' . date('g:i A', strtotime($tb->end_time)),
+                                        'total_hours' => $tb->total_hours,
+                                        'rate_per_hour' => '₱' . number_format($tb->rate_per_hour, 2) . ' / hr',
+                                        'formatted_amount' => $tb->formatted_amount,
+                                        'payment_method' => ucwords(str_replace('_', ' ', $tb->payment_method)),
+                                        'payment_status' => ucfirst($tb->payment_status),
+                                        'booking_status' => $tb->booking_status,
+                                        'is_past' => $tb->is_past,
+                                        'receipt_url' => $tb->receipt_url,
+                                        'receipt_time' => $tb->receipt_uploaded_at?->diffForHumans(),
+                                        'approver' => $tb->approver?->name,
+                                        'approved_at' => $tb->approved_at?->format('M d, Y g:i A'),
+                                        'slots' => $tb->slots->map(fn($s) => date('g:i A', strtotime($s->slot_time)))->values()->all(),
+                                        'track_url' => route('booking.track', $tb->booking_reference),
+                                        'created_at' => $tb->created_at->format('M d, Y g:i A') . ' (' . $tb->created_at->diffForHumans() . ')',
+                                    ]) }})"
+                                    class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-body text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                                    title="View Reservation Details">
+                                    <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400"></i>
+                                    <span>Details</span>
                                 </button>
-                            @endif
+
+                                @if(!in_array($tb->booking_status, ['cancelled', 'rejected', 'expired']))
+                                    <button type="button"
+                                        onclick="openDashboardCancelModal({{ $tb->id }}, '{{ addslashes($tb->booking_reference) }}', '{{ addslashes($tb->customer_name) }}', '{{ addslashes($tb->court->name) }}')"
+                                        class="p-2 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-500 hover:text-white border border-rose-500/20 text-xs transition-colors cursor-pointer"
+                                        title="Cancel Reservation of this user">
+                                        <i class="fa-solid fa-ban text-[11px]"></i>
+                                    </button>
+                                @endif
+                            </div>
                         </div>
                     </div>
                 @empty
@@ -313,7 +411,7 @@
         </div>
 
         <!-- Recent Reservations Activity -->
-        <div class="rounded-3xl glass-panel p-6 shadow-xl space-y-4">
+        <div class="rounded-3xl glass-panel p-4 sm:p-6 shadow-xl space-y-4">
             <div class="flex items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800">
                 <div class="flex items-center gap-2">
                     <i class="fa-solid fa-clock-rotate-left text-amber-600 dark:text-amber-400"></i>
@@ -381,8 +479,8 @@
 </div>
 
 <!-- Comprehensive Reservation Details Modal -->
-<div id="reservationDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto">
-    <div class="glass-panel p-6 sm:p-8 rounded-3xl max-w-2xl w-full border border-stone-200 dark:border-stone-800 shadow-2xl relative space-y-6 my-auto max-h-[92vh] overflow-y-auto">
+<div id="reservationDetailsModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 overflow-y-auto">
+    <div class="glass-panel p-4 sm:p-8 rounded-3xl max-w-2xl w-full border border-stone-200 dark:border-stone-800 shadow-2xl relative space-y-5 sm:space-y-6 my-auto max-h-[92vh] overflow-y-auto">
         <!-- Modal Header -->
         <div class="flex items-start justify-between pb-4 border-b border-stone-200 dark:border-stone-800 gap-4">
             <div class="min-w-0 flex-1">
@@ -518,32 +616,32 @@
         <!-- Modal Footer Actions -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-stone-200 dark:border-stone-800 gap-3">
             <a id="resModalTrackLink" href="" target="_blank"
-                class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-bold text-theme-heading flex items-center justify-center gap-2 transition-colors">
+                class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-bold text-theme-heading flex items-center justify-center gap-2 transition-colors">
                 <i class="fa-solid fa-arrow-up-right-from-square text-cyan-600 dark:text-cyan-400"></i> Open Live Tracker Pass
             </a>
 
-            <div class="flex items-center justify-end gap-2">
+            <div class="flex flex-wrap items-center justify-end gap-2 w-full sm:w-auto">
                 <!-- If Pending Approval: Approve and Reject buttons -->
-                <div id="resModalPendingActions" class="flex items-center gap-2 hidden">
-                    <form id="resModalApproveForm" method="POST" action="" onsubmit="return handleResModalApprove(event)">
+                <div id="resModalPendingActions" class="flex items-center gap-2 hidden w-full sm:w-auto">
+                    <form id="resModalApproveForm" method="POST" action="" onsubmit="return handleResModalApprove(event)" class="flex-1 sm:flex-initial">
                         @csrf
-                        <button type="submit" class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
+                        <button type="submit" class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
                             <i class="fa-solid fa-check"></i> Approve Booking
                         </button>
                     </form>
-                    <button type="button" id="resModalRejectBtn" onclick="" class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-xs border border-rose-500/30 flex items-center gap-1.5 transition-colors cursor-pointer">
+                    <button type="button" id="resModalRejectBtn" onclick="" class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 font-bold text-xs border border-rose-500/30 flex items-center justify-center gap-1.5 transition-colors cursor-pointer">
                         <i class="fa-solid fa-xmark"></i> Reject
                     </button>
                 </div>
 
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 w-full sm:w-auto">
                     <button type="button" id="resModalCancelBtn" onclick="dashboardCancelCurrentModalBooking()"
-                        class="px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5"
+                        class="flex-1 sm:flex-initial px-3.5 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500 text-rose-600 hover:text-white border border-rose-500/30 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5"
                         title="Cancel reservation and release slots">
                         <i class="fa-solid fa-ban"></i> Cancel Reservation
                     </button>
 
-                    <button type="button" onclick="closeReservationModal()" class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors cursor-pointer">
+                    <button type="button" onclick="closeReservationModal()" class="flex-1 sm:flex-initial px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading transition-colors cursor-pointer text-center">
                         Close
                     </button>
                 </div>
@@ -559,9 +657,9 @@
 </form>
 
 <!-- High-Resolution Receipt Preview Modal -->
-<div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4">
-        <div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-800 pb-3 gap-3">
+<div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-dropdown p-4 sm:p-6 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-3 sm:space-y-4">
+        <div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-800 pb-3 gap-3 shrink-0">
             <div class="min-w-0 pr-2">
                 <h3 class="text-sm font-bold text-theme-heading" id="rcptModalTitle">Payment Receipt Verification</h3>
                 <p class="text-xs text-theme-muted" id="rcptModalMeta">-</p>
@@ -571,15 +669,15 @@
             </button>
         </div>
 
-        <div class="rounded-2xl overflow-hidden bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center max-h-96">
+        <div class="rounded-2xl overflow-hidden bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center max-h-72 sm:max-h-96 min-h-[160px] flex-1">
             <img id="rcptModalImg" src="" alt="Receipt Proof" class="w-full h-full object-contain">
         </div>
 
-        <div class="flex items-center justify-between pt-2">
+        <div class="flex items-center justify-between pt-2 shrink-0">
             <a id="rcptModalDownload" href="" target="_blank" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
             </a>
-            <button type="button" onclick="closeReceiptModal()" class="px-4 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs text-theme-body font-semibold cursor-pointer">
+            <button type="button" onclick="closeReceiptModal()" class="px-3.5 sm:px-4 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs text-theme-body font-semibold cursor-pointer">
                 Close
             </button>
         </div>
@@ -587,8 +685,8 @@
 </div>
 
 <!-- Reject Modal with Reason -->
-<div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 rounded-3xl max-w-md w-full border border-rose-500/30 shadow-2xl relative space-y-4">
+<div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-dropdown p-5 sm:p-6 rounded-3xl max-w-md w-full border border-rose-500/30 shadow-2xl relative space-y-4">
         <div class="flex items-start justify-between gap-3">
             <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl shrink-0">
                 <i class="fa-solid fa-ban"></i>
@@ -782,7 +880,8 @@
 
     function confirmDashboardApprove(btn) {
         const data = btn.dataset;
-        confirmApprovalAction(data.id, data.reference, data.customer, data.court, data.schedule, data.amount, `dashboard-approve-form-${data.id}`);
+        const formId = document.getElementById(`dashboard-approve-form-${data.id}`) ? `dashboard-approve-form-${data.id}` : `dashboard-approve-form-mobile-${data.id}`;
+        confirmApprovalAction(data.id, data.reference, data.customer, data.court, data.schedule, data.amount, formId);
     }
 
     function handleResModalApprove(event) {
@@ -852,6 +951,9 @@
             if (result.isConfirmed) {
                 Swal.showLoading();
                 let form = formId ? document.getElementById(formId) : null;
+                if (!form) {
+                    form = document.getElementById('dashboard-approve-form-' + bookingId) || document.getElementById('dashboard-approve-form-mobile-' + bookingId);
+                }
                 if (!form) {
                     form = document.createElement('form');
                     form.method = 'POST';

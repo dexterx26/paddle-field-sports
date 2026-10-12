@@ -16,7 +16,8 @@
 
     <!-- Approvals Table Card -->
     <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 overflow-hidden shadow-xl">
-        <div class="overflow-x-auto">
+        <!-- Desktop Table View (Hidden on mobile) -->
+        <div class="hidden md:block overflow-x-auto">
             <table class="w-full text-left text-xs">
                 <thead>
                     <tr class="bg-stone-100 dark:bg-stone-900/80 text-theme-muted border-b border-stone-200 dark:border-stone-800 uppercase text-[10px] tracking-wider">
@@ -127,6 +128,123 @@
             </table>
         </div>
 
+        <!-- Mobile Card View (Shown on screens < md, eliminates horizontal scrolling) -->
+        <div class="block md:hidden p-3.5 sm:p-4 space-y-3">
+            @forelse($pendingBookings as $booking)
+                <div class="p-4 rounded-2xl bg-white/80 dark:bg-stone-900/80 border border-stone-200 dark:border-stone-800 shadow-sm space-y-3">
+                    <!-- Top Bar: Reference, Pending Badge & Amount -->
+                    <div class="flex items-start justify-between gap-2 pb-3 border-b border-stone-200/70 dark:border-stone-800/70">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400 text-sm tracking-wide">{{ $booking->booking_reference }}</span>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-800 dark:text-amber-400 border border-amber-500/30">
+                                    Pending
+                                </span>
+                            </div>
+                            <div class="text-[10px] text-theme-muted mt-0.5 flex items-center gap-1">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>{{ $booking->created_at->diffForHumans() }}</span>
+                            </div>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <div class="font-black text-theme-heading text-base text-cyan-600 dark:text-cyan-400">{{ $booking->formatted_amount }}</div>
+                            <div class="text-[10px] text-theme-muted">₱{{ number_format($booking->rate_per_hour, 2) }}/hr</div>
+                        </div>
+                    </div>
+
+                    <!-- Middle Content: Receipt Thumbnail & Info -->
+                    <div class="flex gap-3 items-start">
+                        <!-- Receipt Thumbnail Trigger -->
+                        <div class="shrink-0">
+                            @if($booking->receipt_url)
+                                <button type="button"
+                                    data-url="{{ $booking->receipt_url }}"
+                                    data-id="{{ $booking->id }}"
+                                    data-reference="{{ $booking->booking_reference }}"
+                                    data-customer="{{ $booking->customer_name }}"
+                                    data-court="{{ $booking->court->name }}"
+                                    data-schedule="{{ $booking->booking_date->format('M d, Y') }} ({{ date('g:i A', strtotime($booking->start_time)) }} - {{ date('g:i A', strtotime($booking->end_time)) }})"
+                                    data-amount="{{ $booking->formatted_amount }}"
+                                    onclick="handleReceiptPreviewClick(this)"
+                                    class="block w-20 h-24 rounded-xl overflow-hidden border border-stone-300 dark:border-stone-700 hover:border-cyan-500 group relative shadow-sm cursor-pointer bg-stone-950/20">
+                                    <img src="{{ $booking->receipt_url }}" alt="Receipt" class="w-full h-full object-cover">
+                                    <div class="absolute inset-0 bg-slate-950/40 flex flex-col items-center justify-center text-white text-[10px] font-medium opacity-90 group-hover:opacity-100 transition-opacity">
+                                        <i class="fa-solid fa-magnifying-glass-plus text-sm mb-0.5"></i>
+                                        <span>View Proof</span>
+                                    </div>
+                                </button>
+                            @else
+                                <div class="w-20 h-24 rounded-xl border border-dashed border-stone-300 dark:border-stone-700 flex flex-col items-center justify-center text-theme-muted text-[10px] text-center p-1 bg-stone-100/50 dark:bg-stone-800/30">
+                                    <i class="fa-regular fa-image text-lg mb-1"></i>
+                                    <span>No receipt</span>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Customer & Reservation Details -->
+                        <div class="min-w-0 flex-1 space-y-1.5">
+                            <div>
+                                <div class="font-bold text-theme-heading text-sm truncate">{{ $booking->customer_name }}</div>
+                                <div class="flex items-center gap-1.5 text-xs text-theme-muted mt-0.5">
+                                    <i class="fa-solid fa-phone text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                    <a href="tel:{{ $booking->customer_phone }}" class="font-mono hover:underline hover:text-cyan-600 dark:hover:text-cyan-400">{{ $booking->customer_phone }}</a>
+                                </div>
+                                @if($booking->customer_email)
+                                    <div class="text-[11px] text-theme-muted truncate">{{ $booking->customer_email }}</div>
+                                @endif
+                            </div>
+
+                            <div class="pt-1 border-t border-stone-200/50 dark:border-stone-800/50 space-y-0.5">
+                                <div class="text-xs font-semibold text-theme-heading flex items-center gap-1.5">
+                                    <i class="fa-solid fa-location-dot text-[10px] text-cyan-600 dark:text-cyan-400"></i>
+                                    <span class="truncate">{{ $booking->court->name }}</span>
+                                    <span class="text-[10px] text-theme-muted font-normal">({{ ucfirst($booking->court->type) }})</span>
+                                </div>
+                                <div class="text-xs text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-regular fa-calendar text-[10px]"></i>
+                                    <span>{{ $booking->booking_date->format('M d, Y') }}</span>
+                                </div>
+                                <div class="text-xs font-bold text-cyan-600 dark:text-cyan-400 flex items-center gap-1.5">
+                                    <i class="fa-regular fa-clock text-[10px]"></i>
+                                    <span>{{ date('g:i A', strtotime($booking->start_time)) }} - {{ date('g:i A', strtotime($booking->end_time)) }}</span>
+                                    <span class="text-[10px] text-theme-muted font-normal">({{ $booking->total_hours }}h)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions Buttons (50/50 Grid for Easy Tapping) -->
+                    <div class="grid grid-cols-2 gap-2 pt-1 border-t border-stone-200/60 dark:border-stone-800/60">
+                        <button type="button" onclick="openRejectModal('{{ $booking->id }}', '{{ $booking->booking_reference }}')"
+                            class="w-full py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-rose-500/20 text-stone-700 dark:text-stone-300 hover:text-rose-500 font-bold text-xs border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer">
+                            <i class="fa-solid fa-xmark"></i> Reject
+                        </button>
+
+                        <form id="approve-form-mobile-{{ $booking->id }}" method="POST" action="{{ route('owner.approve', $booking->id) }}">
+                            @csrf
+                            <button type="button"
+                                data-id="{{ $booking->id }}"
+                                data-reference="{{ $booking->booking_reference }}"
+                                data-customer="{{ $booking->customer_name }}"
+                                data-court="{{ $booking->court->name }}"
+                                data-schedule="{{ $booking->booking_date->format('M d, Y') }} ({{ date('g:i A', strtotime($booking->start_time)) }} - {{ date('g:i A', strtotime($booking->end_time)) }})"
+                                data-amount="{{ $booking->formatted_amount }}"
+                                onclick="handleApproveClick(this)"
+                                class="w-full py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                                <i class="fa-solid fa-check"></i> Approve
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            @empty
+                <div class="py-12 px-4 text-center text-theme-muted">
+                    <i class="fa-solid fa-circle-check text-cyan-500 text-3xl mb-2"></i>
+                    <h4 class="text-sm font-bold text-theme-heading">No Pending Approvals</h4>
+                    <p class="text-xs text-theme-muted mt-1">There are no client payment receipts waiting for verification.</p>
+                </div>
+            @endforelse
+        </div>
+
         @if($pendingBookings->hasPages())
             <div class="p-4 border-t border-stone-200 dark:border-stone-800">
                 {{ $pendingBookings->links() }}
@@ -136,9 +254,9 @@
 </div>
 
 <!-- Receipt Modal Component -->
-<div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 rounded-3xl max-w-lg w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-4">
-        <div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-800 pb-3 gap-3">
+<div id="receiptModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-dropdown p-4 sm:p-6 rounded-3xl max-w-lg w-full max-h-[92vh] flex flex-col border border-stone-300 dark:border-stone-700 shadow-2xl relative space-y-3 sm:space-y-4">
+        <div class="flex items-start justify-between border-b border-stone-200 dark:border-stone-800 pb-3 gap-3 shrink-0">
             <div class="min-w-0 pr-2">
                 <h3 class="text-sm font-bold text-theme-heading" id="rcptModalTitle">Payment Receipt Verification</h3>
                 <p class="text-xs text-theme-muted" id="rcptModalMeta">-</p>
@@ -148,16 +266,16 @@
             </button>
         </div>
 
-        <div class="rounded-2xl overflow-hidden bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center max-h-96">
+        <div class="rounded-2xl overflow-hidden bg-stone-900 border border-stone-300 dark:border-stone-700 flex items-center justify-center max-h-72 sm:max-h-96 min-h-[160px] flex-1">
             <img id="rcptModalImg" src="" alt="Receipt Proof" class="w-full h-full object-contain">
         </div>
 
-        <div class="flex items-center justify-between pt-2">
+        <div class="flex items-center justify-between pt-2 shrink-0">
             <a id="rcptModalDownload" href="" target="_blank" class="text-xs text-cyan-600 dark:text-cyan-400 hover:underline flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in New Tab
             </a>
             <div class="flex items-center gap-2">
-                <button type="button" onclick="closeReceiptModal()" class="px-4 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs text-theme-body font-semibold cursor-pointer">
+                <button type="button" onclick="closeReceiptModal()" class="px-3.5 sm:px-4 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 text-xs text-theme-body font-semibold cursor-pointer">
                     Close
                 </button>
                 <button type="button" onclick="approveFromReceiptModal()" class="px-3.5 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all cursor-pointer">
@@ -169,8 +287,8 @@
 </div>
 
 <!-- Reject Modal Component -->
-<div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
-    <div class="glass-dropdown p-6 rounded-3xl max-w-md w-full border border-rose-500/30 shadow-2xl relative space-y-4">
+<div id="rejectModal" class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/85 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div class="glass-dropdown p-5 sm:p-6 rounded-3xl max-w-md w-full border border-rose-500/30 shadow-2xl relative space-y-4">
         <div class="flex items-start justify-between gap-3">
             <div class="w-12 h-12 rounded-2xl bg-rose-500/20 text-rose-500 flex items-center justify-center text-xl shrink-0">
                 <i class="fa-solid fa-ban"></i>
@@ -324,7 +442,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 Swal.showLoading();
-                let form = document.getElementById('approve-form-' + bookingId);
+                let form = document.getElementById('approve-form-' + bookingId) || document.getElementById('approve-form-mobile-' + bookingId);
                 if (!form) {
                     form = document.createElement('form');
                     form.method = 'POST';
