@@ -189,12 +189,12 @@
     </aside>
 
     <!-- Main Container -->
-    <div id="ownerMainContent" class="flex-1 min-w-0 w-full max-w-full ml-0 md:ml-64 flex flex-col min-h-screen transition-all duration-300 ease-in-out overflow-x-hidden">
+    <div id="ownerMainContent" class="flex-1 min-w-0 ml-0 md:ml-64 flex flex-col min-h-screen transition-all duration-300 ease-in-out">
         <!-- Topbar -->
         <header class="h-20 border-b border-stone-200 glass-panel px-3.5 sm:px-6 md:px-8 flex items-center justify-between sticky top-0 z-30 min-w-0 w-full max-w-full">
             <div class="flex items-center gap-3 min-w-0">
-                <!-- Sidebar Toggle Button (Click to Minimize / Expand Sidebar) -->
-                <button type="button" id="ownerSidebarToggle" onclick="toggleOwnerSidebar()" class="p-2 sm:p-2.5 rounded-xl bg-stone-200 hover:bg-stone-300 text-theme-heading flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0" title="Toggle Sidebar Menu">
+                <!-- Sidebar Toggle Button (Mobile Drawer) -->
+                <button type="button" id="ownerSidebarToggle" onclick="toggleOwnerSidebar()" class="p-2 sm:p-2.5 rounded-xl bg-stone-200 hover:bg-stone-300 text-theme-heading flex items-center justify-center transition-all cursor-pointer shadow-xs shrink-0 md:hidden" title="Toggle Sidebar Menu">
                     <i class="fa-solid fa-bars-staggered text-sm"></i>
                 </button>
                 <div class="min-w-0">
@@ -399,42 +399,49 @@
                     document.body.classList.remove('overflow-hidden');
                 }
             } else {
-                // On desktop, toggleOwnerSidebar(false) is ignored (close action is mobile only)
+                // Desktop behavior: Sidebar is persistent. If explicitly toggled, minimize / expand cleanly without overlap.
                 if (forceState === false) {
                     return;
                 }
 
-                // Desktop behavior: Minimize / expand sidebar
                 const isMinimized = sidebar.classList.contains('md:-translate-x-full');
                 const shouldMinimize = forceState !== undefined ? !forceState : !isMinimized;
 
                 if (shouldMinimize) {
+                    sidebar.classList.remove('md:translate-x-0');
                     sidebar.classList.add('md:-translate-x-full');
                     if (mainContent) {
                         mainContent.classList.remove('md:ml-64');
                         mainContent.classList.add('md:ml-0');
                     }
-                    localStorage.setItem('owner_sidebar_minimized', 'true');
                 } else {
                     sidebar.classList.remove('md:-translate-x-full');
+                    sidebar.classList.add('md:translate-x-0');
                     if (mainContent) {
-                        mainContent.classList.add('md:ml-64');
                         mainContent.classList.remove('md:ml-0');
+                        mainContent.classList.add('md:ml-64');
                     }
-                    localStorage.removeItem('owner_sidebar_minimized');
                 }
             }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Restore saved desktop minimized state
-            if (window.innerWidth >= 768 && localStorage.getItem('owner_sidebar_minimized') === 'true') {
+            // Remove any obsolete localStorage item that was causing desktop overlap
+            try {
+                localStorage.removeItem('owner_sidebar_minimized');
+            } catch (e) {}
+
+            // Ensure desktop sidebar is properly positioned and never overlapping
+            if (window.innerWidth >= 768) {
                 const sidebar = document.getElementById('ownerSidebar');
                 const mainContent = document.getElementById('ownerMainContent');
-                if (sidebar) sidebar.classList.add('md:-translate-x-full');
+                if (sidebar) {
+                    sidebar.classList.remove('md:-translate-x-full', 'translate-x-0');
+                    sidebar.classList.add('md:translate-x-0');
+                }
                 if (mainContent) {
-                    mainContent.classList.remove('md:ml-64');
-                    mainContent.classList.add('md:ml-0');
+                    mainContent.classList.remove('md:ml-0');
+                    mainContent.classList.add('md:ml-64');
                 }
             }
 
@@ -455,7 +462,7 @@
                 }
             });
 
-            // Ensure mobile backdrop and overflow are cleaned up if window resizes to desktop
+            // Ensure mobile backdrop, drawer and overflow are cleaned up if window resizes to desktop
             window.addEventListener('resize', () => {
                 if (window.innerWidth >= 768) {
                     const backdrop = document.getElementById('sidebarBackdrop');
@@ -464,6 +471,17 @@
                         backdrop.classList.remove('opacity-100', 'pointer-events-auto');
                     }
                     document.body.classList.remove('overflow-hidden');
+
+                    const sidebar = document.getElementById('ownerSidebar');
+                    const mainContent = document.getElementById('ownerMainContent');
+                    if (sidebar) {
+                        sidebar.classList.remove('translate-x-0', 'md:-translate-x-full');
+                        sidebar.classList.add('md:translate-x-0');
+                    }
+                    if (mainContent) {
+                        mainContent.classList.remove('md:ml-0');
+                        mainContent.classList.add('md:ml-64');
+                    }
                 }
             });
         });
