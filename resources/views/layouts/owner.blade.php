@@ -48,10 +48,9 @@
                 </div>
             </div>
 
-            <!-- Minimize / Close Button (Both Mobile & Desktop) -->
-            <button type="button" onclick="toggleOwnerSidebar(false)" class="p-2 rounded-xl text-theme-muted hover:text-theme-heading hover:bg-stone-200 transition-colors cursor-pointer shrink-0" title="Minimize / Hide Sidebar">
-                <i class="fa-solid fa-angles-left text-sm hidden md:block"></i>
-                <i class="fa-solid fa-xmark text-base md:hidden"></i>
+            <!-- Close Button (Mobile Only) -->
+            <button type="button" onclick="toggleOwnerSidebar(false)" class="p-2 rounded-xl text-theme-muted hover:text-theme-heading hover:bg-stone-200 transition-colors cursor-pointer shrink-0 md:hidden" title="Close Sidebar">
+                <i class="fa-solid fa-xmark text-base"></i>
             </button>
         </div>
 
@@ -400,6 +399,11 @@
                     document.body.classList.remove('overflow-hidden');
                 }
             } else {
+                // On desktop, toggleOwnerSidebar(false) is ignored (close action is mobile only)
+                if (forceState === false) {
+                    return;
+                }
+
                 // Desktop behavior: Minimize / expand sidebar
                 const isMinimized = sidebar.classList.contains('md:-translate-x-full');
                 const shouldMinimize = forceState !== undefined ? !forceState : !isMinimized;
@@ -448,6 +452,18 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && window.innerWidth < 768) {
                     toggleOwnerSidebar(false);
+                }
+            });
+
+            // Ensure mobile backdrop and overflow are cleaned up if window resizes to desktop
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) {
+                    const backdrop = document.getElementById('sidebarBackdrop');
+                    if (backdrop) {
+                        backdrop.classList.add('opacity-0', 'pointer-events-none');
+                        backdrop.classList.remove('opacity-100', 'pointer-events-auto');
+                    }
+                    document.body.classList.remove('overflow-hidden');
                 }
             });
         });
