@@ -267,6 +267,10 @@ class BookingService
             $startTime, $endTime, $totalHours, $ratePerHour, $totalAmount,
             $slots, $heldUntil, $holdingSeconds
         ) {
+            if (!$this->areSlotsAvailable($court->id, $date, $slots)) {
+                throw new \Exception('One or more selected timeslots have just been held or reserved by another customer. Please choose alternative slots.');
+            }
+
             $booking = Booking::create([
                 'booking_reference' => $reference,
                 'user_id' => $userId,
@@ -363,6 +367,10 @@ class BookingService
             $startTime, $endTime, $totalHours, $ratePerHour, $totalAmount,
             $slots, $receiptPath
         ) {
+            if (!$this->areSlotsAvailable($court->id, $date, $slots)) {
+                throw new \Exception('One or more selected slots are no longer available. Please select different slots.');
+            }
+
             $booking = Booking::create([
                 'booking_reference' => $reference,
                 'user_id' => $userId,
@@ -639,7 +647,7 @@ class BookingService
                     $court->id,
                     $slots,
                     'confirmed',
-                    $reference,
+                    null,
                     "Court {$court->name} reserved by Court Owner."
                 ));
             } catch (\Throwable $e) {

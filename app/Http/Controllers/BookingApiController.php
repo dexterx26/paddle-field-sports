@@ -434,9 +434,8 @@ class BookingApiController extends Controller
         }
 
         if ($status === 'EXPIRED') {
-            $booking->update(['booking_status' => 'expired']);
-            $booking->slots()->update(['status' => 'released']);
-            return response()->json(['message' => 'Booking marked expired']);
+            $this->bookingService->cancelHeldBooking($booking->booking_reference);
+            return response()->json(['message' => 'Booking marked expired and slots released']);
         }
 
         return response()->json(['message' => 'Webhook received and processed']);
