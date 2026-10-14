@@ -511,32 +511,32 @@
 
                             <div>
                                 <label class="block text-[11px] font-medium text-theme-body mb-1">Your Full Name <span class="text-rose-500">*</span></label>
-                                <input type="text" id="custName" required placeholder="e.g. Juan dela Cruz"
-                                    value="{{ Auth::check() ? Auth::user()->name : '' }}"
+                                <input type="text" id="custName" name="customer_name" form="manualReceiptForm" required placeholder="e.g. Juan dela Cruz"
+                                    value="{{ old('customer_name', Auth::check() ? Auth::user()->name : '') }}"
                                     class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium">
                             </div>
 
                             <div>
                                 <label class="block text-[11px] font-medium text-theme-body mb-1">Mobile Phone Number <span class="text-rose-500">*</span></label>
-                                <input type="tel" id="custPhone" required placeholder="e.g. 0917-123-4567"
-                                    value="{{ Auth::check() ? Auth::user()->phone : '' }}"
+                                <input type="tel" id="custPhone" name="customer_phone" form="manualReceiptForm" required placeholder="e.g. 0917-123-4567"
+                                    value="{{ old('customer_phone', Auth::check() ? Auth::user()->phone : '') }}"
                                     class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium">
                             </div>
 
                             <div>
                                 <label class="block text-[11px] font-medium text-theme-body mb-1">Email Address <span class="text-theme-muted">(Optional)</span></label>
-                                <input type="email" id="custEmail" placeholder="juan@example.com"
-                                    value="{{ Auth::check() ? Auth::user()->email : '' }}"
+                                <input type="email" id="custEmail" name="customer_email" form="manualReceiptForm" placeholder="juan@example.com"
+                                    value="{{ old('customer_email', Auth::check() ? Auth::user()->email : '') }}"
                                     class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium">
                             </div>
 
                             <div class="grid grid-cols-2 gap-3">
                                 <div>
                                     <label class="block text-[11px] font-medium text-theme-body mb-1">Player Count</label>
-                                    <select id="custPlayersCount" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500 font-medium">
-                                        <option value="2">2 Players (Singles)</option>
-                                        <option value="4" selected>4 Players (Doubles)</option>
-                                        <option value="6">6 Players (Group)</option>
+                                    <select id="custPlayersCount" name="players_count" form="manualReceiptForm" class="w-full px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-cyan-500 font-medium">
+                                        <option value="2" {{ old('players_count') == '2' ? 'selected' : '' }}>2 Players (Singles)</option>
+                                        <option value="4" {{ old('players_count', '4') == '4' ? 'selected' : '' }}>4 Players (Doubles)</option>
+                                        <option value="6" {{ old('players_count') == '6' ? 'selected' : '' }}>6 Players (Group)</option>
                                     </select>
                                 </div>
                                 <div>
@@ -551,8 +551,8 @@
 
                             <div>
                                 <label class="block text-[11px] font-medium text-theme-body mb-1">Special Requests / Notes</label>
-                                <textarea id="custNotes" rows="2" placeholder="e.g. need 2 paddle rentals, coaching cones"
-                                    class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium"></textarea>
+                                <textarea id="custNotes" name="notes" form="manualReceiptForm" rows="2" placeholder="e.g. need 2 paddle rentals, coaching cones"
+                                    class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading placeholder-stone-400 text-xs focus:outline-none focus:border-cyan-500 font-medium">{{ old('notes') }}</textarea>
                             </div>
                         </div>
 
@@ -630,16 +630,11 @@
                                 </div>
 
                                 <!-- Form for Manual Receipt Submission -->
-                                <form id="manualReceiptForm" action="{{ route('booking.manual_receipt') }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                                <form id="manualReceiptForm" action="{{ route('booking.manual_receipt') }}" method="POST" enctype="multipart/form-data" novalidate class="space-y-3">
                                     @csrf
                                     <input type="hidden" name="court_id" id="mrCourtId">
-                                    <input type="hidden" name="date" id="mrDate">
+                                    <input type="hidden" name="date" id="mrDate" value="{{ $selectedDate }}">
                                     <input type="hidden" name="slots" id="mrSlots">
-                                    <input type="hidden" name="customer_name" id="mrCustName">
-                                    <input type="hidden" name="customer_phone" id="mrCustPhone">
-                                    <input type="hidden" name="customer_email" id="mrCustEmail">
-                                    <input type="hidden" name="players_count" id="mrPlayersCount">
-                                    <input type="hidden" name="notes" id="mrNotes">
 
                                     <div>
                                         <label class="block text-[11px] font-bold text-theme-heading mb-1">
@@ -964,6 +959,9 @@
         holdRemainingSeconds: {{ (int) ($settings->holding_duration_seconds ?: 120) }},
     };
 
+    let currentActiveDate = '{{ $selectedDate }}';
+    let isProgrammaticDateUpdate = false;
+
     // Helper: Normalize slot time strings (e.g., '06:00:00' -> '06:00')
     function normalizeSlotTime(t) {
         return (t || '').toString().trim().substring(0, 5);
@@ -1205,6 +1203,9 @@
     window.openHoldCheckoutModal = openHoldCheckoutModal;
 
     document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('courtsScheduleContainer');
+        if (container) container.setAttribute('data-loaded-date', currentActiveDate);
+
         setupDateControls();
         setupInteractiveCalendar();
         setupSlotInteractivity();
@@ -1238,12 +1239,242 @@
         }
     };
 
+    // Helper: Add or subtract days from a YYYY-MM-DD date string safely without timezone bugs
+    function addDaysToDateString(dateStr, days) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-').map(Number);
+        const dt = new Date(parts[0], parts[1] - 1, parts[2]);
+        dt.setDate(dt.getDate() + days);
+        const yyyy = dt.getFullYear();
+        const mm = String(dt.getMonth() + 1).padStart(2, '0');
+        const dd = String(dt.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    // Helper: Update previous day button state based on whether date is today
+    function updatePrevDayBtnState(dateStr) {
+        const prevBtn = document.getElementById('prevDayBtn');
+        if (!prevBtn) return;
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        if (!dateStr || dateStr <= todayStr) {
+            prevBtn.disabled = true;
+            prevBtn.classList.add('opacity-40', 'cursor-not-allowed');
+            prevBtn.classList.remove('hover:bg-stone-300', 'dark:hover:bg-stone-800');
+        } else {
+            prevBtn.disabled = false;
+            prevBtn.classList.remove('opacity-40', 'cursor-not-allowed');
+            prevBtn.classList.add('hover:bg-stone-300', 'dark:hover:bg-stone-800');
+        }
+    }
+
+    // Unified Court Slot Renderer & Real-time Updater
+    function applyCourtSlotUpdate(courtId, slotTime, status, remainingSeconds = {{ (int) ($settings->holding_duration_seconds ?: 120) }}) {
+        const slotBtn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${slotTime}"]`);
+        if (!slotBtn) return;
+
+        const normalizedStatus = (status === 'released') ? 'available' : status;
+        slotBtn.setAttribute('data-status', normalizedStatus);
+
+        // Check if THIS slot is currently selected by the active user in the booking engine
+        const isCurrentlySelectedByMe = (
+            bookingState.selectedCourtId === courtId &&
+            bookingState.selectedSlots.includes(slotTime)
+        );
+
+        slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold');
+
+        if (normalizedStatus === 'available') {
+            slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold');
+            slotBtn.disabled = false;
+            slotBtn.title = '';
+
+            if (isCurrentlySelectedByMe) {
+                slotBtn.classList.add('slot-selected');
+                const label = slotBtn.querySelector('.slot-status-label');
+                if (label) label.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
+            } else {
+                slotBtn.classList.add('slot-available', 'cursor-pointer');
+                const label = slotBtn.querySelector('.slot-status-label');
+                if (label) label.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+            }
+
+            if (isSlotHeldByMe(courtId, slotTime)) {
+                clearActiveHold();
+            }
+        } else if (normalizedStatus === 'held') {
+            const isMine = isSlotHeldByMe(courtId, slotTime);
+            const rem = Math.max(0, parseInt(remainingSeconds) || 0);
+            slotBtn.setAttribute('data-remaining-seconds', rem);
+
+            if (isMine) {
+                slotBtn.disabled = true;
+                slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'cursor-pointer');
+                slotBtn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
+                slotBtn.title = 'Your held reservation';
+                const m = Math.floor(rem / 60);
+                const s = rem % 60;
+                slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center gap-1"><i class="fa-solid fa-lock text-[9px]"></i> Your Hold (<span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span>)</span>`;
+            } else {
+                slotBtn.disabled = false;
+                slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold');
+                slotBtn.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
+                slotBtn.title = 'Temporarily held by another customer';
+                const m = Math.floor(rem / 60);
+                const s = rem % 60;
+                slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span></span>`;
+
+                if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
+                    bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
+                    renderSelectionUI();
+                }
+            }
+        } else if (normalizedStatus === 'pending_approval') {
+            slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
+            slotBtn.classList.add('slot-pending', 'cursor-not-allowed', 'select-none', 'opacity-80');
+            slotBtn.disabled = false;
+            slotBtn.title = 'Pending approval';
+            slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-indigo-700 dark:text-indigo-300">In Review</span>';
+
+            if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
+                bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
+                renderSelectionUI();
+            }
+        } else if (normalizedStatus === 'confirmed') {
+            slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
+            slotBtn.classList.add('slot-booked', 'cursor-not-allowed', 'select-none', 'opacity-80');
+            slotBtn.disabled = false;
+            slotBtn.title = 'Reserved';
+            slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-rose-700 dark:text-rose-400">Booked</span>';
+
+            if (isSlotHeldByMe(courtId, slotTime)) {
+                clearActiveHold();
+            }
+
+            if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
+                bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
+                renderSelectionUI();
+            }
+        }
+    }
+
+    // Switch date dynamically without refreshing the page
+    async function switchDate(targetDate, updateHistory = true) {
+        if (!targetDate) return;
+
+        // Ensure date cannot be before today
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        let finalDate = targetDate;
+        if (finalDate < todayStr) {
+            finalDate = todayStr;
+        }
+
+        const container = document.getElementById('courtsScheduleContainer');
+        if (finalDate === currentActiveDate && container && container.getAttribute('data-loaded-date') === finalDate) {
+            return;
+        }
+
+        currentActiveDate = finalDate;
+
+        const dateInput = document.getElementById('selectedDateInput');
+        if (dateInput && dateInput.value !== finalDate) {
+            dateInput.value = finalDate;
+        }
+
+        // Programmatically update datepickers without triggering loop
+        isProgrammaticDateUpdate = true;
+        if (window.jQuery && $.fn.datepicker) {
+            try {
+                if (dateInput) {
+                    $(dateInput).datepicker('update', finalDate);
+                }
+                const $inlineCal = $('#bootstrapInlineCalendar');
+                if ($inlineCal.length && $inlineCal.data('datepicker')) {
+                    $inlineCal.datepicker('update', finalDate);
+                }
+            } catch (e) {}
+        }
+        isProgrammaticDateUpdate = false;
+
+        // Update Quick Date Buttons styling
+        document.querySelectorAll('.quick-date-btn').forEach(btn => {
+            const btnDate = btn.getAttribute('data-date');
+            if (btnDate === finalDate) {
+                btn.className = 'quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-cyan-500 text-slate-950 shadow-md cursor-pointer';
+            } else {
+                btn.className = 'quick-date-btn px-3 py-2 rounded-xl text-xs font-bold transition-all bg-stone-200 dark:bg-stone-800 text-theme-heading hover:bg-stone-300 dark:hover:bg-stone-700 cursor-pointer';
+            }
+        });
+
+        // Update Previous Day button state
+        updatePrevDayBtnState(finalDate);
+
+        // Update URL query string without reloading page
+        if (updateHistory) {
+            const newUrl = `/?date=${finalDate}#booking-engine`;
+            window.history.pushState({ date: finalDate }, '', newUrl);
+        }
+
+        // Reset current selection (since slots belong to a different date)
+        resetSelection();
+
+        // Update form hidden inputs and summary text
+        const mrDate = document.getElementById('mrDate');
+        if (mrDate) mrDate.value = finalDate;
+        const summaryDate = document.getElementById('summaryDate');
+        if (summaryDate) summaryDate.textContent = finalDate;
+
+        // Subtle loading state
+        if (container) {
+            container.classList.add('opacity-40', 'pointer-events-none', 'transition-opacity', 'duration-150');
+        }
+
+        try {
+            const response = await fetch(`/api/availability?date=${encodeURIComponent(finalDate)}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!response.ok) throw new Error('Failed to fetch court availability');
+            const data = await response.json();
+
+            // Verify date hasn't changed again while request was in-flight
+            if (currentActiveDate === finalDate) {
+                if (data.success && Array.isArray(data.courts)) {
+                    data.courts.forEach(courtData => {
+                        const courtId = courtData.court?.id;
+                        const slots = courtData.slots || {};
+                        Object.values(slots).forEach(slot => {
+                            applyCourtSlotUpdate(courtId, slot.time, slot.status, slot.remaining_seconds);
+                        });
+                    });
+                }
+                if (container) {
+                    container.setAttribute('data-loaded-date', finalDate);
+                }
+                updateMyHeldSlotsInDOM();
+            }
+        } catch (err) {
+            console.error('Error switching date:', err);
+        } finally {
+            if (container) {
+                container.classList.remove('opacity-40', 'pointer-events-none');
+            }
+        }
+    }
+
     // 1. Date Controls (Powered by Bootstrap Datepicker on #selectedDateInput)
     function setupDateControls() {
         const dateInput = document.getElementById('selectedDateInput');
         const prevBtn = document.getElementById('prevDayBtn');
         const nextBtn = document.getElementById('nextDayBtn');
         const wrapper = document.getElementById('datepickerWrapper');
+
+        if (dateInput) {
+            updatePrevDayBtnState(dateInput.value);
+        }
 
         if (window.jQuery && $.fn.datepicker && dateInput) {
             try { $(dateInput).datepicker('destroy'); } catch(e) {}
@@ -1269,9 +1500,10 @@
             }
 
             $dp.on('changeDate', function(e) {
+                if (isProgrammaticDateUpdate) return;
                 const formatted = e.format('yyyy-mm-dd');
-                if (formatted && formatted !== '{{ $selectedDate }}') {
-                    window.location.href = `/?date=${formatted}#booking-engine`;
+                if (formatted && formatted !== currentActiveDate) {
+                    switchDate(formatted);
                 }
             });
 
@@ -1288,37 +1520,44 @@
             });
         } else if (dateInput) {
             dateInput.addEventListener('change', () => {
-                window.location.href = `/?date=${dateInput.value}#booking-engine`;
+                if (dateInput.value && dateInput.value !== currentActiveDate) {
+                    switchDate(dateInput.value);
+                }
             });
         }
 
         prevBtn?.addEventListener('click', () => {
-            const current = new Date(dateInput.value);
-            current.setDate(current.getDate() - 1);
+            if (!dateInput) return;
+            const prevDate = addDaysToDateString(currentActiveDate || dateInput.value, -1);
             const today = new Date();
-            today.setHours(0,0,0,0);
-            if (current >= today) {
-                const yyyy = current.getFullYear();
-                const mm = String(current.getMonth() + 1).padStart(2, '0');
-                const dd = String(current.getDate()).padStart(2, '0');
-                window.location.href = `/?date=${yyyy}-${mm}-${dd}#booking-engine`;
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            if (prevDate >= todayStr) {
+                switchDate(prevDate);
             }
         });
 
         nextBtn?.addEventListener('click', () => {
-            const current = new Date(dateInput.value);
-            current.setDate(current.getDate() + 1);
-            const yyyy = current.getFullYear();
-            const mm = String(current.getMonth() + 1).padStart(2, '0');
-            const dd = String(current.getDate()).padStart(2, '0');
-            window.location.href = `/?date=${yyyy}-${mm}-${dd}#booking-engine`;
+            if (!dateInput) return;
+            const nextDate = addDaysToDateString(currentActiveDate || dateInput.value, 1);
+            switchDate(nextDate);
         });
 
         document.querySelectorAll('.quick-date-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const targetDate = btn.getAttribute('data-date');
-                window.location.href = `/?date=${targetDate}#booking-engine`;
+                if (targetDate) {
+                    switchDate(targetDate);
+                }
             });
+        });
+
+        // Support browser back/forward buttons without refresh
+        window.addEventListener('popstate', (e) => {
+            const params = new URLSearchParams(window.location.search);
+            const dateParam = params.get('date');
+            if (dateParam && dateParam !== currentActiveDate) {
+                switchDate(dateParam, false);
+            }
         });
     }
 
@@ -1693,7 +1932,7 @@
 
         // Update Summary elements
         document.getElementById('summaryCourtName').textContent = bookingState.selectedCourtName;
-        document.getElementById('summaryDate').textContent = document.getElementById('selectedDateInput').value;
+        document.getElementById('summaryDate').textContent = currentActiveDate || document.getElementById('selectedDateInput')?.value;
         document.getElementById('summaryDuration').textContent = `${totalHours} ${totalHours > 1 ? 'Hours' : 'Hour'} (${rangeStr})`;
         document.getElementById('summarySlotsList').textContent = sorted.map(format12).join(', ');
         document.getElementById('summaryTotalAmount').textContent = `₱${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
@@ -1702,7 +1941,7 @@
         // Update hidden inputs for manual receipt form
         if (document.getElementById('mrCourtId')) {
             document.getElementById('mrCourtId').value = bookingState.selectedCourtId;
-            document.getElementById('mrDate').value = document.getElementById('selectedDateInput').value;
+            document.getElementById('mrDate').value = currentActiveDate || document.getElementById('selectedDateInput')?.value;
             document.getElementById('mrSlots').value = JSON.stringify(bookingState.selectedSlots);
         }
     }
@@ -1739,11 +1978,8 @@
 
         if (form) {
             form.addEventListener('submit', (e) => {
-                const name = document.getElementById('custName').value.trim();
-                const phone = document.getElementById('custPhone').value.trim();
-                const email = document.getElementById('custEmail').value.trim();
-                const players = document.getElementById('custPlayersCount').value;
-                const notes = document.getElementById('custNotes').value.trim();
+                const name = (document.getElementById('custName')?.value || '').trim();
+                const phone = (document.getElementById('custPhone')?.value || '').trim();
 
                 if (!name || !phone) {
                     e.preventDefault();
@@ -1753,10 +1989,10 @@
                         text: 'Please provide your Full Name and Mobile Phone Number.',
                         confirmButtonColor: '#0891b2'
                     });
-                    return;
+                    return false;
                 }
 
-                if (bookingState.selectedSlots.length === 0) {
+                if (!bookingState.selectedCourtId || bookingState.selectedSlots.length === 0) {
                     e.preventDefault();
                     Swal.fire({
                         icon: 'info',
@@ -1764,17 +2000,34 @@
                         text: 'Please select at least one timeslot on the court schedule before proceeding.',
                         confirmButtonColor: '#0891b2'
                     });
-                    return;
+                    return false;
                 }
 
-                document.getElementById('mrCourtId').value = bookingState.selectedCourtId;
-                document.getElementById('mrDate').value = document.getElementById('selectedDateInput').value;
-                document.getElementById('mrSlots').value = JSON.stringify(bookingState.selectedSlots);
-                document.getElementById('mrCustName').value = name;
-                document.getElementById('mrCustPhone').value = phone;
-                document.getElementById('mrCustEmail').value = email;
-                document.getElementById('mrPlayersCount').value = players;
-                document.getElementById('mrNotes').value = notes;
+                const file = fileInput ? fileInput.files[0] : null;
+                if (!file) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Receipt Screenshot Required',
+                        text: 'Please upload a screenshot or photo of your payment receipt before submitting.',
+                        confirmButtonColor: '#0891b2'
+                    });
+                    return false;
+                }
+
+                const courtIdInput = document.getElementById('mrCourtId');
+                const dateHiddenInput = document.getElementById('mrDate');
+                const slotsInput = document.getElementById('mrSlots');
+
+                if (courtIdInput) courtIdInput.value = bookingState.selectedCourtId;
+                if (dateHiddenInput) dateHiddenInput.value = currentActiveDate || document.getElementById('selectedDateInput')?.value;
+                if (slotsInput) slotsInput.value = JSON.stringify(bookingState.selectedSlots);
+
+                const submitBtn = document.getElementById('submitManualBookingBtn');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting Reservation...';
+                }
             });
         }
     }
@@ -1845,7 +2098,7 @@
                         },
                         body: JSON.stringify({
                             court_id: bookingState.selectedCourtId,
-                            date: document.getElementById('selectedDateInput').value,
+                            date: currentActiveDate || document.getElementById('selectedDateInput').value,
                             slots: bookingState.selectedSlots,
                             customer_name: name,
                             customer_phone: phone,
@@ -1875,7 +2128,7 @@
                         reference: data.reference,
                         court_id: bookingState.selectedCourtId,
                         court_name: bookingState.selectedCourtName,
-                        date: document.getElementById('selectedDateInput').value,
+                        date: currentActiveDate || document.getElementById('selectedDateInput').value,
                         slots: [...bookingState.selectedSlots],
                         expires_at: Date.now() + remainingSec * 1000,
                         remaining_seconds: remainingSec,
@@ -2084,101 +2337,6 @@
 
     // 5. Live Real-Time Reverb WebSocket Synchronization (No HTTP Polling)
     function listenToReverbUpdates() {
-        // Handle incoming court update payload
-        function applyCourtSlotUpdate(courtId, slotTime, status, remainingSeconds = {{ (int) ($settings->holding_duration_seconds ?: 120) }}) {
-            const slotBtn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${slotTime}"]`);
-            if (!slotBtn) return;
-
-            const normalizedStatus = (status === 'released') ? 'available' : status;
-            slotBtn.setAttribute('data-status', normalizedStatus);
-
-            // Check if THIS slot is currently selected by the active user in the booking engine
-            const isCurrentlySelectedByMe = (
-                bookingState.selectedCourtId === courtId &&
-                bookingState.selectedSlots.includes(slotTime)
-            );
-
-            slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold');
-
-            if (normalizedStatus === 'available') {
-                slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold');
-                slotBtn.disabled = false;
-                slotBtn.title = '';
-
-                if (isCurrentlySelectedByMe) {
-                    // PRESERVE SELECTION! Do not unselect user's chosen timeslots during updates
-                    slotBtn.classList.add('slot-selected');
-                    const label = slotBtn.querySelector('.slot-status-label');
-                    if (label) label.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
-                } else {
-                    slotBtn.classList.add('slot-available', 'cursor-pointer');
-                    const label = slotBtn.querySelector('.slot-status-label');
-                    if (label) label.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
-                }
-
-                // If my hold was released, clear local state
-                if (isSlotHeldByMe(courtId, slotTime)) {
-                    clearActiveHold();
-                }
-            } else if (normalizedStatus === 'held') {
-                const isMine = isSlotHeldByMe(courtId, slotTime);
-                const rem = Math.max(0, parseInt(remainingSeconds) || 0);
-                slotBtn.setAttribute('data-remaining-seconds', rem);
-
-                if (isMine) {
-                    // DISABLED FOR THE CLIENT WHO SUCCESSFULLY RESERVED IT
-                    slotBtn.disabled = true;
-                    slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'cursor-pointer');
-                    slotBtn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
-                    slotBtn.title = 'Your held reservation';
-                    const m = Math.floor(rem / 60);
-                    const s = rem % 60;
-                    slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center gap-1"><i class="fa-solid fa-lock text-[9px]"></i> Your Hold (<span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span>)</span>`;
-                } else {
-                    // CLICKABLE FOR OTHER CLIENTS
-                    slotBtn.disabled = false;
-                    slotBtn.classList.remove('slot-available', 'slot-pending', 'slot-booked', 'slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold');
-                    slotBtn.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
-                    slotBtn.title = 'Temporarily held by another customer';
-                    const m = Math.floor(rem / 60);
-                    const s = rem % 60;
-                    slotBtn.querySelector('.slot-status-label').innerHTML = `<span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1"><i class="fa-regular fa-hourglass-half text-[9px] animate-spin"></i> <span class="slot-timer" data-seconds="${rem}">${m}:${String(s).padStart(2, '0')}</span></span>`;
-
-                    // Only if ANOTHER customer held this slot while we had it selected, eject it from selection
-                    if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
-                        bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
-                        renderSelectionUI();
-                    }
-                }
-            } else if (normalizedStatus === 'pending_approval') {
-                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
-                slotBtn.classList.add('slot-pending', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = false;
-                slotBtn.title = 'Pending approval';
-                slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-indigo-700 dark:text-indigo-300">In Review</span>';
-
-                if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
-                    bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
-                    renderSelectionUI();
-                }
-            } else if (normalizedStatus === 'confirmed') {
-                slotBtn.classList.remove('cursor-pointer', 'slot-available', 'pointer-events-none', 'slot-my-hold');
-                slotBtn.classList.add('slot-booked', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                slotBtn.disabled = false;
-                slotBtn.title = 'Reserved';
-                slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-rose-700 dark:text-rose-400">Booked</span>';
-
-                if (isSlotHeldByMe(courtId, slotTime)) {
-                    clearActiveHold();
-                }
-
-                if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
-                    bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
-                    renderSelectionUI();
-                }
-            }
-        }
-
         // WebSockets Reverb listener: pure real-time push events without HTTP polling
         if (typeof window.subscribeCourtUpdates === 'function') {
             window.subscribeCourtUpdates((data) => {
@@ -2282,11 +2440,11 @@
             }
 
             $inlineCal.on('changeDate', function(e) {
+                if (isProgrammaticDateUpdate) return;
                 const formatted = e.format('yyyy-mm-dd');
                 if (formatted) {
-                    if (dateInput) dateInput.value = formatted;
                     closeCalendar();
-                    window.location.href = `/?date=${formatted}#booking-engine`;
+                    switchDate(formatted);
                 }
             });
         }
@@ -2318,13 +2476,10 @@
         });
 
         jumpTodayBtn?.addEventListener('click', () => {
-            const todayStr = '{{ date('Y-m-d') }}';
-            if ($inlineCal) {
-                $inlineCal.datepicker('setDate', todayStr);
-            }
-            if (dateInput) dateInput.value = todayStr;
+            const today = new Date();
+            const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
             closeCalendar();
-            window.location.href = `/?date=${todayStr}#booking-engine`;
+            switchDate(todayStr);
         });
     }
 </script>

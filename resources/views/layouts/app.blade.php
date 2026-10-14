@@ -365,13 +365,13 @@
     </script>
     @endif
 
-    @if(session('error') || request('auth_error'))
+    @if(session('error') || $errors->any() || request('auth_error'))
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             Swal.fire({
                 icon: 'error',
-                title: 'Authentication Notice',
-                text: @json(session('error') ?: request('auth_error')),
+                title: @json(request('auth_error') ? 'Authentication Notice' : 'Reservation Notice'),
+                text: @json(session('error') ?: ($errors->any() ? $errors->first() : request('auth_error'))),
                 confirmButtonColor: '#0891b2'
             });
         });
