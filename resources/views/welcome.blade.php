@@ -885,14 +885,14 @@
                 <i class="fa-solid fa-credit-card"></i>
                 <span id="modalPayButtonText">Proceed to Pay (GCash / Maya / Card)</span>
             </a>
-
+            @if(env('APP_DEBUG') == true)
             <!-- Quick instant simulation button for demonstration -->
             <button type="button" id="modalSimulatePayBtn"
                 class="w-full py-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-cyan-700 dark:text-cyan-300 text-xs font-bold border border-cyan-500/30 flex items-center justify-center gap-2 transition-colors cursor-pointer">
                 <i class="fa-solid fa-wand-magic-sparkles"></i>
                 <span>Simulate Instant Successful Payment (Demo Test)</span>
             </button>
-
+            @endif
             <button type="button" id="modalCancelHoldBtn" class="w-full py-2 text-xs text-theme-muted hover:text-rose-500 transition-colors cursor-pointer">
                 Cancel Hold & Release Slots
             </button>
