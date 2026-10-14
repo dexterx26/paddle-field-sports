@@ -956,6 +956,8 @@
         activeHold: null,
         activeHoldRef: null,
         holdTimerInterval: null,
+        statusPollInterval: null,
+        isCheckingStatus: false,
         holdRemainingSeconds: {{ (int) ($settings->holding_duration_seconds ?: 120) }},
     };
 
@@ -965,6 +967,94 @@
     // Helper: Normalize slot time strings (e.g., '06:00:00' -> '06:00')
     function normalizeSlotTime(t) {
         return (t || '').toString().trim().substring(0, 5);
+    }
+
+    // Helper: Stop both the countdown interval and status polling interval
+    function stopHoldTimerAndPolling() {
+        if (bookingState.holdTimerInterval) {
+            clearInterval(bookingState.holdTimerInterval);
+            bookingState.holdTimerInterval = null;
+        }
+        if (bookingState.statusPollInterval) {
+            clearInterval(bookingState.statusPollInterval);
+            bookingState.statusPollInterval = null;
+        }
+    }
+
+    // Helper: Successfully finalize an active hold checkout when payment is confirmed
+    function handleHoldBookingConfirmed(reference, message) {
+        stopHoldTimerAndPolling();
+        const modal = document.getElementById('xenditHoldModal');
+        if (modal) {
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            modal.classList.remove('opacity-100', 'pointer-events-auto');
+        }
+        clearActiveHold();
+
+        Swal.fire({
+            icon: 'success',
+            title: 'Payment Confirmed!',
+            text: message || 'Your court reservation is officially confirmed. Redirecting to your reservation details...',
+            timer: 2200,
+            showConfirmButton: false
+        }).then(() => {
+            window.location.href = `/track/${reference}`;
+        });
+    }
+
+    // Helper: Actively verify if the currently held booking has been paid or confirmed
+    async function checkActiveHoldStatus(reference) {
+        const ref = reference || bookingState.activeHoldRef || (getActiveHold()?.reference);
+        if (!ref) return null;
+        if (bookingState.isCheckingStatus) return null;
+        bookingState.isCheckingStatus = true;
+
+        try {
+            const response = await fetch(`/api/booking-status/${ref}`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (!response.ok) return null;
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.booking_status === 'confirmed' || data.payment_status === 'paid') {
+                    handleHoldBookingConfirmed(ref);
+                    return 'confirmed';
+                } else if (data.booking_status === 'cancelled' || data.is_expired) {
+                    return 'expired';
+                }
+            }
+        } catch (e) {
+            console.warn('Hold status check error:', e);
+        } finally {
+            bookingState.isCheckingStatus = false;
+        }
+        return 'held';
+    }
+
+    // Helper: Start continuous background polling while user is completing checkout
+    function startActiveHoldPolling(reference) {
+        if (bookingState.statusPollInterval) {
+            clearInterval(bookingState.statusPollInterval);
+            bookingState.statusPollInterval = null;
+        }
+        const ref = reference || bookingState.activeHoldRef;
+        if (!ref) return;
+
+        // Poll every 3 seconds while checkout or hold is active
+        bookingState.statusPollInterval = setInterval(() => {
+            const currentHold = getActiveHold();
+            const targetRef = ref || currentHold?.reference;
+            if (!targetRef) {
+                clearInterval(bookingState.statusPollInterval);
+                bookingState.statusPollInterval = null;
+                return;
+            }
+            checkActiveHoldStatus(targetRef);
+        }, 3000);
     }
 
     // Helper: Retrieve and validate active hold for current client session (In-memory or LocalStorage)
@@ -1050,6 +1140,7 @@
 
     // Helper: Clear active hold locally
     function clearActiveHold() {
+        stopHoldTimerAndPolling();
         try {
             localStorage.removeItem('paddle_active_hold');
         } catch (e) {}
@@ -1199,6 +1290,7 @@
         modal.classList.add('opacity-100', 'pointer-events-auto');
 
         startModalCountdown();
+        startActiveHoldPolling(reference);
     }
     window.openHoldCheckoutModal = openHoldCheckoutModal;
 
@@ -1217,8 +1309,41 @@
         // Restore active hold from localStorage if active and unexpired
         const activeHold = getActiveHold();
         if (activeHold) {
-            showActiveHoldBanner();
-            updateMyHeldSlotsInDOM();
+            checkActiveHoldStatus(activeHold.reference).then((status) => {
+                if (status === 'confirmed') return;
+                showActiveHoldBanner();
+                updateMyHeldSlotsInDOM();
+                startActiveHoldPolling(activeHold.reference);
+            });
+        }
+    });
+
+    // Instant synchronization when player switches tabs back from PayMongo checkout window
+    window.addEventListener('focus', () => {
+        const ref = bookingState.activeHoldRef || (getActiveHold()?.reference);
+        if (ref) {
+            checkActiveHoldStatus(ref);
+        }
+    });
+
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            const ref = bookingState.activeHoldRef || (getActiveHold()?.reference);
+            if (ref) {
+                checkActiveHoldStatus(ref);
+            }
+        }
+    });
+
+    // Detect if payment was completed or hold cleared in another browser tab
+    window.addEventListener('storage', (e) => {
+        if (e.key === 'paddle_active_hold') {
+            const ref = bookingState.activeHoldRef;
+            if (ref) {
+                checkActiveHoldStatus(ref);
+            } else if (!e.newValue) {
+                clearActiveHold();
+            }
         }
     });
 
@@ -1348,7 +1473,12 @@
             slotBtn.querySelector('.slot-status-label').innerHTML = '<span class="text-rose-700 dark:text-rose-400">Booked</span>';
 
             if (isSlotHeldByMe(courtId, slotTime)) {
-                clearActiveHold();
+                const activeRef = bookingState.activeHoldRef || (getActiveHold()?.reference);
+                if (activeRef) {
+                    handleHoldBookingConfirmed(activeRef);
+                } else {
+                    clearActiveHold();
+                }
             }
 
             if (isCurrentlySelectedByMe && !bookingState.activeHoldRef) {
@@ -2290,36 +2420,59 @@
             }
 
             if (bookingState.holdRemainingSeconds <= 0) {
-                clearInterval(bookingState.holdTimerInterval);
+                stopHoldTimerAndPolling();
                 if (timerEl) timerEl.textContent = '00:00';
                 if (bannerTimerEl) bannerTimerEl.textContent = '00:00';
 
-                const refToCancel = bookingState.activeHoldRef;
-                clearActiveHold();
+                const refToCancel = bookingState.activeHoldRef || (getActiveHold()?.reference);
 
-                // Instantly notify server to release hold so Reverb broadcasts 'released' to all players
+                // CRITICAL SAFETY CHECK: Verify with server & PayMongo API before declaring expiration!
+                // If the user already paid in PayMongo (in another tab or mobile), confirm instead of expiring!
                 if (refToCancel) {
-                    fetch(`/api/cancel-hold/${refToCancel}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-                            'Accept': 'application/json'
+                    checkActiveHoldStatus(refToCancel).then((status) => {
+                        if (status === 'confirmed') {
+                            // Successfully confirmed and handled by handleHoldBookingConfirmed
+                            return;
                         }
-                    }).catch(() => {});
-                }
 
-                const holdDurationMinutes = Math.max(1, Math.round({{ (int) ($settings->holding_duration_seconds ?: 120) }} / 60));
-                Swal.fire({
-                    icon: 'warning',
-                    title: 'Reservation Hold Expired',
-                    text: `Your ${holdDurationMinutes}-minute reservation hold has expired. Slots have been released back to the schedule.`,
-                    confirmButtonColor: '#0891b2'
-                }).then(() => {
-                    document.getElementById('xenditHoldModal').classList.add('opacity-0', 'pointer-events-none');
-                    resetSelection();
-                    location.reload();
-                });
+                        clearActiveHold();
+
+                        // Instantly notify server to release hold so Reverb broadcasts 'released' to all players
+                        fetch(`/api/cancel-hold/${refToCancel}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                                'Accept': 'application/json'
+                            }
+                        }).catch(() => {});
+
+                        const holdDurationMinutes = Math.max(1, Math.round({{ (int) ($settings->holding_duration_seconds ?: 120) }} / 60));
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Reservation Hold Expired',
+                            text: `Your ${holdDurationMinutes}-minute reservation hold has expired. Slots have been released back to the schedule.`,
+                            confirmButtonColor: '#0891b2'
+                        }).then(() => {
+                            document.getElementById('xenditHoldModal').classList.add('opacity-0', 'pointer-events-none');
+                            resetSelection();
+                            location.reload();
+                        });
+                    });
+                } else {
+                    clearActiveHold();
+                    const holdDurationMinutes = Math.max(1, Math.round({{ (int) ($settings->holding_duration_seconds ?: 120) }} / 60));
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Reservation Hold Expired',
+                        text: `Your ${holdDurationMinutes}-minute reservation hold has expired. Slots have been released back to the schedule.`,
+                        confirmButtonColor: '#0891b2'
+                    }).then(() => {
+                        document.getElementById('xenditHoldModal').classList.add('opacity-0', 'pointer-events-none');
+                        resetSelection();
+                        location.reload();
+                    });
+                }
                 return;
             }
 
@@ -2353,6 +2506,14 @@
                         applyCourtSlotUpdate(data.court_id, slotTime, data.status, remSec);
                     });
                 }
+
+                // If a confirmation event arrived for our active hold, confirm immediately
+                if (data.status === 'confirmed') {
+                    const activeRef = bookingState.activeHoldRef || (getActiveHold()?.reference);
+                    if (activeRef && (data.booking_reference === activeRef || (data.court_id && isSlotHeldByMe(data.court_id, (data.slots || [])[0])))) {
+                        handleHoldBookingConfirmed(activeRef);
+                    }
+                }
             });
         }
     }
@@ -2370,7 +2531,15 @@
                 const bannerTimer = document.getElementById('activeHoldBannerTimer');
                 if (bannerTimer) bannerTimer.textContent = timeStr;
                 if (sec <= 0) {
-                    clearActiveHold();
+                    if (hold.reference) {
+                        checkActiveHoldStatus(hold.reference).then((st) => {
+                            if (st !== 'confirmed') {
+                                clearActiveHold();
+                            }
+                        });
+                    } else {
+                        clearActiveHold();
+                    }
                 }
             }
 

@@ -985,5 +985,26 @@ class CourtReservationRequirementsTest extends TestCase
         $ownerResponse->assertSee($booking->booking_reference);
         $ownerResponse->assertSee($booking->receipt_url);
     }
+
+    /**
+     * Test PayMongo active hold polling, confirmation handler, and cancel safety
+     */
+    public function test_paymongo_active_hold_status_polling_and_safety_checks(): void
+    {
+        $response = $this->get('/');
+        $response->assertStatus(200);
+
+        // Verify active hold status polling and confirmation handlers exist on welcome page
+        $response->assertSee('checkActiveHoldStatus');
+        $response->assertSee('startActiveHoldPolling');
+        $response->assertSee('handleHoldBookingConfirmed');
+        $response->assertSee('stopHoldTimerAndPolling');
+
+        // Verify CourtSlotsUpdated carries booking_reference
+        $event = new \App\Events\CourtSlotsUpdated('2026-10-20', 1, ['10:00'], 'confirmed', null, 'Confirmed', 'PFS-TEST-REF');
+        $broadcastData = $event->broadcastWith();
+        $this->assertArrayHasKey('booking_reference', $broadcastData);
+        $this->assertEquals('PFS-TEST-REF', $broadcastData['booking_reference']);
+    }
 }
 

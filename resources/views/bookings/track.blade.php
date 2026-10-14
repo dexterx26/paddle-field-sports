@@ -278,6 +278,10 @@
         }, 1000);
     }
 
+    if (bookingStatus === 'confirmed') {
+        try { localStorage.removeItem('paddle_active_hold'); } catch (e) {}
+    }
+
     // 2. Poll for status change every 4 seconds as fallback
     if (bookingStatus === 'held' || bookingStatus === 'pending_approval') {
         setInterval(async () => {
@@ -285,6 +289,9 @@
                 const res = await fetch(`/api/booking-status/${bookingRef}`);
                 const data = await res.json();
                 if (data.success && data.booking_status !== bookingStatus) {
+                    if (data.booking_status === 'confirmed') {
+                        try { localStorage.removeItem('paddle_active_hold'); } catch (e) {}
+                    }
                     location.reload();
                 }
             } catch (e) {}
@@ -295,6 +302,9 @@
     if (typeof window.subscribeCourtUpdates === 'function') {
         window.subscribeCourtUpdates((data) => {
             if (data.status === 'confirmed' || data.status === 'released') {
+                if (data.status === 'confirmed') {
+                    try { localStorage.removeItem('paddle_active_hold'); } catch (e) {}
+                }
                 setTimeout(() => location.reload(), 800);
             }
         });

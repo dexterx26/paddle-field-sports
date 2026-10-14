@@ -18,6 +18,7 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
     public string $status; // 'held', 'confirmed', 'released', 'pending_approval'
     public ?int $heldUntilTimestamp;
     public string $message;
+    public ?string $bookingReference;
 
     /**
      * Create a new event instance.
@@ -28,7 +29,8 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
         array $slots,
         string $status,
         ?int $heldUntilTimestamp = null,
-        string $message = 'Court availability changed'
+        string $message = 'Court availability changed',
+        ?string $bookingReference = null
     ) {
         $this->date = $date;
         $this->courtId = $courtId;
@@ -36,6 +38,7 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
         $this->status = $status;
         $this->heldUntilTimestamp = $heldUntilTimestamp;
         $this->message = $message;
+        $this->bookingReference = $bookingReference;
     }
 
     /**
@@ -71,6 +74,7 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
             'held_until_timestamp' => $this->heldUntilTimestamp,
             'remaining_seconds' => $remaining,
             'message' => $this->message,
+            'booking_reference' => $this->bookingReference,
             'timestamp' => now()->timestamp,
         ];
     }

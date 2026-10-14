@@ -455,8 +455,9 @@ class BookingService
                 $slotTimes,
                 'confirmed',
                 null,
-                "Booking {$booking->booking_reference} confirmed on {$booking->court->name}!"
-            ))->toOthers();
+                "Booking {$booking->booking_reference} confirmed on {$booking->court->name}!",
+                $booking->booking_reference
+            ));
         } catch (\Exception $e) {
             Log::warning('Reverb broadcast error: ' . $e->getMessage());
         }
@@ -515,6 +516,20 @@ class BookingService
 
         if (!$booking) {
             return false;
+        }
+
+        // Safety check: if user completed payment in PayMongo while cancel was triggered, confirm instead of cancelling
+        if ($booking->payment_method === 'paymongo' && !empty($booking->paymongo_checkout_id)) {
+            try {
+                $paymongo = app(PayMongoService::class);
+                $check = $paymongo->checkCheckoutSessionStatus($booking->paymongo_checkout_id);
+                if (!empty($check['paid'])) {
+                    $this->confirmBooking($booking, null, 'paymongo');
+                    return false;
+                }
+            } catch (\Exception $e) {
+                Log::warning("PayMongo check failed during cancelHeldBooking for {$booking->booking_reference}: " . $e->getMessage());
+            }
         }
 
         $booking->update([
