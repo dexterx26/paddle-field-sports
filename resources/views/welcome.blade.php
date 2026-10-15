@@ -224,23 +224,37 @@
                 </div>
             </div>
 
+            @php
+                $heroCourt = $courts->first();
+            @endphp
             <!-- Hero Feature Image / Card -->
             <div class="lg:col-span-5 relative">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-300 dark:border-stone-700 group">
-                    <img src="{{ asset('storage/courts/court-1.jpg') }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img src="{{ $heroCourt ? $heroCourt->display_image : asset('storage/courts/court-1.jpg') }}" 
+                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" 
+                         alt="{{ $heroCourt ? $heroCourt->name : 'Paddle Field Sports Center Pickleball Court' }}" 
+                         class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
 
                     <!-- Overlay Info Card -->
                     <div class="absolute bottom-5 left-5 right-5 p-4 rounded-2xl glass-dropdown border border-stone-300 dark:border-stone-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">Championship Center</span>
-                                <h4 class="text-sm font-bold text-theme-heading mt-1">Court 1 - Tournament Grade</h4>
-                                <p class="text-xs text-theme-muted">Pro Cushion Acrylic • 4 Players Max</p>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">
+                                    {{ $heroCourt ? ucfirst($heroCourt->type) . ' Court' : 'Championship Center' }}
+                                </span>
+                                <h4 class="text-sm font-bold text-theme-heading mt-1">
+                                    {{ $heroCourt ? $heroCourt->name . ' - ' . ($heroCourt->surface_type ?: 'Tournament Grade') : 'Court 1 - Tournament Grade' }}
+                                </h4>
+                                <p class="text-xs text-theme-muted">
+                                    {{ $heroCourt ? ($heroCourt->surface_type ?: 'Pro Cushion Acrylic') . ' • ' . $heroCourt->max_players . ' Players Max' : 'Pro Cushion Acrylic • 4 Players Max' }}
+                                </p>
                             </div>
                             <div class="text-right">
                                 <span class="text-xs text-theme-muted block">From</span>
-                                <span class="text-lg font-black text-cyan-600">₱150<span class="text-xs text-theme-muted font-normal">/hr</span></span>
+                                <span class="text-lg font-black text-cyan-600">
+                                    {{ $heroCourt ? $heroCourt->formatted_price : '₱150' }}<span class="text-xs text-theme-muted font-normal">/hr</span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -343,7 +357,10 @@
                             <!-- Court Header -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200">
                                 <div class="flex items-center gap-4">
-                                    <img src="{{ $c['display_image'] }}" alt="{{ $c['name'] }}" class="w-16 h-16 rounded-2xl object-cover border border-stone-200 dark:border-stone-800 shadow-md">
+                                    <img src="{{ $c['display_image'] }}" 
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=300&q=80';" 
+                                         alt="{{ $c['name'] }}" 
+                                         class="w-16 h-16 rounded-2xl object-cover border border-stone-200 dark:border-stone-800 shadow-md">
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <h3 class="text-base sm:text-lg font-extrabold text-theme-heading">{{ $c['name'] }}</h3>
@@ -684,7 +701,10 @@
             @foreach($courts as $court)
                 <div class="glass-panel rounded-3xl overflow-hidden shadow-xl flex flex-col group hover:border-cyan-500/50 transition-all duration-300">
                     <div class="relative h-48 overflow-hidden">
-                        <img src="{{ $court->display_image }}" alt="{{ $court->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="{{ $court->display_image }}" 
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" 
+                             alt="{{ $court->name }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-cyan-500 text-slate-950 uppercase">
                             {{ ucfirst($court->type) }}
                         </div>

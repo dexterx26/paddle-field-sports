@@ -90,9 +90,17 @@ class Court extends Model
             return $this->image_path;
         }
 
-        $cleanPath = preg_replace('/^storage\//', '', ltrim($this->image_path, '/'));
+        $cleanPath = str_replace('\\', '/', $this->image_path);
+        $cleanPath = preg_replace('/^storage\//', '', ltrim($cleanPath, '/'));
+
+        $version = $this->updated_at ? '?v=' . $this->updated_at->timestamp : '';
+
         if (file_exists(public_path('storage/' . $cleanPath)) || file_exists(storage_path('app/public/' . $cleanPath))) {
-            return asset('storage/' . $cleanPath);
+            return asset('storage/' . $cleanPath) . $version;
+        }
+
+        if (file_exists(public_path($cleanPath))) {
+            return asset($cleanPath) . $version;
         }
 
         if (isset(self::DEFAULT_COURT_IMAGES[$cleanPath])) {
