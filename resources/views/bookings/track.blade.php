@@ -169,11 +169,13 @@
                     </span>
                 </div>
             </div>
-            <div class="flex items-center gap-2 no-print">
-                <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-slate-950 text-xs font-bold shadow-md flex items-center gap-2 transition-all cursor-pointer">
-                    <i class="fa-solid fa-print"></i> Print Court Pass
-                </button>
-            </div>
+            @if(!$isOwner)
+                <div class="flex items-center gap-2 no-print">
+                    <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-slate-950 text-xs font-bold shadow-md flex items-center gap-2 transition-all cursor-pointer">
+                        <i class="fa-solid fa-print"></i> Print Pass
+                    </button>
+                </div>
+            @endif
         </div>
 
         <!-- Grid of Details -->
@@ -237,12 +239,13 @@
             </div>
         </div>
 
+        @if(!$isOwner)
         <!-- Verification, Facility Reminders & QR Code -->
         <div class="p-4 sm:p-5 rounded-2xl bg-stone-100/70 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-xs print:bg-stone-50 print:border-stone-300">
             <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div class="space-y-1.5 flex-1">
                     <div class="font-bold text-theme-heading print:text-slate-900 flex items-center gap-1.5 text-xs">
-                        <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400 print:text-slate-800"></i> Facility Check-in & Rules:
+                        <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400 print:text-slate-800"></i> Facility Reminders: Check-in & Rules
                     </div>
                     <ul class="list-disc list-inside space-y-0.5 text-theme-body print:text-slate-700 text-[11px] pl-1">
                         <li>Please present this pass or reference code upon arriving at Paddle Field Sports Center.</li>
@@ -263,6 +266,7 @@
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Uploaded Receipt Preview (Proof image - hidden during pass printing) -->
         @if($booking->receipt_image_path)
@@ -342,7 +346,7 @@
         width: 100% !important;
     }
 
-    /* 3. Dedicated Print Pass Container */
+    /* 3. Dedicated Printable Container */
     #printableBookingPass {
         display: block !important;
         visibility: visible !important;
