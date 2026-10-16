@@ -196,6 +196,17 @@ class OwnerController extends Controller
                     @mkdir($publicTargetDir, 0755, true);
                 }
                 @copy(storage_path('app/public/' . $imagePath), public_path('storage/' . $imagePath));
+
+                $courtNum = $data['court_number'] ?? 1;
+                $ext = $request->file('image')->getClientOriginalExtension() ?: 'jpg';
+                $destName = "court-{$courtNum}.{$ext}";
+
+                $imagesCourtsDir = public_path('images/courts');
+                if (!file_exists($imagesCourtsDir)) {
+                    @mkdir($imagesCourtsDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $imagePath), public_path('images/courts/' . $destName));
+                @copy(storage_path('app/public/' . $imagePath), storage_path('app/public/courts/' . $destName));
             } catch (\Throwable $e) {}
         } elseif ($request->filled('image_url')) {
             $imagePath = trim($request->input('image_url'));
@@ -275,26 +286,39 @@ class OwnerController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            // Delete old court image from storage if it was a local file
+            // Delete old court image from storage if it was a custom uploaded file (preserve base templates)
             if ($court->image_path && !str_starts_with($court->image_path, 'http')) {
-                if (Storage::disk('public')->exists($court->image_path)) {
-                    Storage::disk('public')->delete($court->image_path);
-                }
-                if (file_exists(public_path('storage/' . $court->image_path))) {
-                    @unlink(public_path('storage/' . $court->image_path));
+                if (!preg_match('/court-[1-9]\.(jpg|jpeg|png|webp|avif)$/i', $court->image_path)) {
+                    if (Storage::disk('public')->exists($court->image_path)) {
+                        Storage::disk('public')->delete($court->image_path);
+                    }
+                    if (file_exists(public_path('storage/' . $court->image_path))) {
+                        @unlink(public_path('storage/' . $court->image_path));
+                    }
                 }
             }
 
             $path = $request->file('image')->store('courts', 'public');
             $updateData['image_path'] = $path;
 
-            // Dual storage: Also copy to public/storage if directory exists
+            // Dual storage: Also copy to public/storage and permanent public/images
             try {
                 $publicTargetDir = public_path('storage/courts');
                 if (!file_exists($publicTargetDir)) {
                     @mkdir($publicTargetDir, 0755, true);
                 }
                 @copy(storage_path('app/public/' . $path), public_path('storage/' . $path));
+
+                $courtNum = $data['court_number'] ?? $court->court_number ?? $court->id;
+                $ext = $request->file('image')->getClientOriginalExtension() ?: 'jpg';
+                $destName = "court-{$courtNum}.{$ext}";
+
+                $imagesCourtsDir = public_path('images/courts');
+                if (!file_exists($imagesCourtsDir)) {
+                    @mkdir($imagesCourtsDir, 0755, true);
+                }
+                @copy(storage_path('app/public/' . $path), public_path('images/courts/' . $destName));
+                @copy(storage_path('app/public/' . $path), storage_path('app/public/courts/' . $destName));
             } catch (\Throwable $e) {}
         } elseif ($request->filled('image_url')) {
             $updateData['image_path'] = trim($request->input('image_url'));

@@ -45,6 +45,21 @@ echo [*] Repository: %~dp0
 echo [*] Current branch: !BRANCH!
 echo.
 
+:: 3b. Sync court and gallery assets between storage/app/public and public/images
+echo [*] Syncing court and gallery images for deployment...
+if exist "storage\app\public\courts" (
+    if not exist "public\images\courts" mkdir "public\images\courts" 2>nul
+    xcopy /Y /Q /D "storage\app\public\courts\*.jpg" "public\images\courts\" >nul 2>&1
+    xcopy /Y /Q /D "storage\app\public\courts\*.png" "public\images\courts\" >nul 2>&1
+    xcopy /Y /Q /D "storage\app\public\courts\*.webp" "public\images\courts\" >nul 2>&1
+)
+if exist "storage\app\public\gallery" (
+    if not exist "public\images\gallery" mkdir "public\images\gallery" 2>nul
+    xcopy /Y /Q /D "storage\app\public\gallery\*.jpg" "public\images\gallery\" >nul 2>&1
+    xcopy /Y /Q /D "storage\app\public\gallery\*.png" "public\images\gallery\" >nul 2>&1
+    xcopy /Y /Q /D "storage\app\public\gallery\*.webp" "public\images\gallery\" >nul 2>&1
+)
+
 :: 4. Check status
 echo [*] Checking working directory status...
 git status -s > "%TEMP%\git_status.tmp" 2>nul

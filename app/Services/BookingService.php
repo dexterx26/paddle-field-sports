@@ -143,6 +143,10 @@ class BookingService
                 $endLabel = ($nextHour === 24) ? '12:00 AM' : Carbon::createFromFormat('H:i', sprintf('%02d:00', $nextHour))->format('g:i A');
                 $displayRange = $displayTime . ' - ' . $endLabel;
 
+                $startShort = Carbon::createFromFormat('H:i', $timeKey)->format('ga');
+                $endShort = ($nextHour === 24) ? '12am' : Carbon::createFromFormat('H:i', sprintf('%02d:00', $nextHour))->format('ga');
+                $shortRange = $startShort . ' - ' . $endShort;
+
                 if ($slot) {
                     $isHeld = ($slot->status === 'held' && $slot->held_until && now()->lt($slot->held_until));
                     $isExpired = ($slot->status === 'held' && (!$slot->held_until || now()->gte($slot->held_until)));
@@ -159,6 +163,7 @@ class BookingService
                         'time' => $timeKey,
                         'display_time' => $displayTime,
                         'display_range' => $displayRange,
+                        'short_range' => $shortRange,
                         'status' => $status,
                         'remaining_seconds' => $remainingSeconds,
                         'held_until' => $slot->held_until ? $slot->held_until->toISOString() : null,
@@ -169,6 +174,7 @@ class BookingService
                         'time' => $timeKey,
                         'display_time' => $displayTime,
                         'display_range' => $displayRange,
+                        'short_range' => $shortRange,
                         'status' => 'available',
                         'remaining_seconds' => 0,
                         'held_until' => null,

@@ -76,29 +76,52 @@ class Court extends Model
     }
 
     public const DEFAULT_COURT_IMAGES = [
-        'courts/court-1.jpg' => 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80',
-        'courts/court-2.jpg' => 'https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?auto=format&fit=crop&w=1000&q=80',
+        'courts/court-1.jpg' => '/images/courts/court-1.jpg',
+        'courts/court-2.jpg' => '/images/courts/court-2.jpg',
+        'courts/court-3.jpg' => '/images/courts/court-3.jpg',
     ];
 
     public function getDisplayImageAttribute(): string
     {
-        if (empty($this->image_path)) {
-            return self::DEFAULT_COURT_IMAGES['courts/court-1.jpg'];
-        }
-
-        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://')) {
+        if (str_starts_with($this->image_path ?? '', 'http://') || str_starts_with($this->image_path ?? '', 'https://')) {
             return $this->image_path;
         }
 
-        $cleanPath = preg_replace('/^storage\//', '', ltrim($this->image_path, '/'));
-        if (file_exists(public_path('storage/' . $cleanPath)) || file_exists(storage_path('app/public/' . $cleanPath))) {
+        $cleanPath = !empty($this->image_path) ? preg_replace('/^storage\//', '', ltrim($this->image_path, '/')) : '';
+
+        // 1. Check if file exists in public/storage
+        if (!empty($cleanPath) && file_exists(public_path('storage/' . $cleanPath))) {
             return asset('storage/' . $cleanPath);
         }
 
-        if (isset(self::DEFAULT_COURT_IMAGES[$cleanPath])) {
-            return self::DEFAULT_COURT_IMAGES[$cleanPath];
+        // 2. Check if file exists in storage/app/public
+        if (!empty($cleanPath) && file_exists(storage_path('app/public/' . $cleanPath))) {
+            return asset('storage/' . $cleanPath);
         }
 
-        return self::DEFAULT_COURT_IMAGES['courts/court-1.jpg'];
+        // 3. Check direct public path (e.g. public/images/courts/...)
+        if (!empty($cleanPath) && file_exists(public_path('images/' . $cleanPath))) {
+            return asset('images/' . $cleanPath);
+        }
+        if (!empty($cleanPath) && file_exists(public_path($cleanPath))) {
+            return asset($cleanPath);
+        }
+
+        // 4. Check court number specific committed image in public/images/courts/
+        $num = $this->court_number ?? $this->id ?? 1;
+        if (file_exists(public_path("images/courts/court-{$num}.jpg"))) {
+            return asset("images/courts/court-{$num}.jpg");
+        }
+        if (file_exists(storage_path("app/public/courts/court-{$num}.jpg"))) {
+            return asset("storage/courts/court-{$num}.jpg");
+        }
+
+        // 5. Fallback to court-1.jpg if available
+        if (file_exists(public_path('images/courts/court-1.jpg'))) {
+            return asset('images/courts/court-1.jpg');
+        }
+
+        // 6. Final safety fallback
+        return 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';
     }
 }

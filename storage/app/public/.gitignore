@@ -1,2 +1,12 @@
-*
+# Ignore payment receipts and temporary customer uploads
+/receipts/*
+!/receipts/.gitignore
+
+# Track court photos, gallery photos, and avatars so they persist across git deployments
+!/courts/
+!/courts/**
+!/gallery/
+!/gallery/**
+!/avatars/
+!/avatars/**
 !.gitignore

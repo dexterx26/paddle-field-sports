@@ -20,35 +20,38 @@ class FacilityPhoto extends Model
      * Default fallback photos for seeded items or missing files
      */
     public const DEFAULTS = [
-        'gallery/court-action.jpg' => 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80',
-        'gallery/club-lounge.jpg' => 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1200&q=80',
-        'gallery/outdoor-sunset.jpg' => 'https://images.unsplash.com/photo-1563299796-17596ed6b017?auto=format&fit=crop&w=1200&q=80',
+        'gallery/court-action.jpg' => '/images/gallery/court-action.jpg',
+        'gallery/club-lounge.jpg' => '/images/gallery/club-lounge.jpg',
+        'gallery/entrance-sign.jpg' => '/images/gallery/entrance-sign.jpg',
+        'gallery/outdoor-sunset.jpg' => '/images/gallery/court-action.jpg',
     ];
 
     public function getUrlAttribute(): string
     {
-        if (empty($this->image_path)) {
-            return self::DEFAULTS['gallery/court-action.jpg'];
-        }
-
-        if (str_starts_with($this->image_path, 'http://') || str_starts_with($this->image_path, 'https://')) {
+        if (str_starts_with($this->image_path ?? '', 'http://') || str_starts_with($this->image_path ?? '', 'https://')) {
             return $this->image_path;
         }
 
-        $cleanPath = preg_replace('/^storage\//', '', ltrim($this->image_path, '/'));
+        $cleanPath = !empty($this->image_path) ? preg_replace('/^storage\//', '', ltrim($this->image_path, '/')) : '';
 
         // Check if the file exists locally in public/storage or storage/app/public
-        $existsLocally = file_exists(public_path('storage/' . $cleanPath)) || 
-                         file_exists(storage_path('app/public/' . $cleanPath));
-
-        if (!$existsLocally && isset(self::DEFAULTS[$cleanPath])) {
-            return self::DEFAULTS[$cleanPath];
+        if (!empty($cleanPath) && (file_exists(public_path('storage/' . $cleanPath)) || file_exists(storage_path('app/public/' . $cleanPath)))) {
+            return asset('storage/' . $cleanPath);
         }
 
-        if (str_starts_with($cleanPath, 'storage/')) {
-            return asset($cleanPath);
+        // Check public/images
+        if (!empty($cleanPath) && file_exists(public_path('images/' . $cleanPath))) {
+            return asset('images/' . $cleanPath);
         }
 
-        return asset('storage/' . $cleanPath);
+        if (isset(self::DEFAULTS[$cleanPath]) && file_exists(public_path(ltrim(self::DEFAULTS[$cleanPath], '/')))) {
+            return asset(ltrim(self::DEFAULTS[$cleanPath], '/'));
+        }
+
+        if (file_exists(public_path('images/gallery/court-action.jpg'))) {
+            return asset('images/gallery/court-action.jpg');
+        }
+
+        return 'https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1200&q=80';
     }
 }

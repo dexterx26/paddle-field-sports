@@ -227,7 +227,7 @@
             <!-- Hero Feature Image / Card -->
             <div class="lg:col-span-5 relative">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-300 dark:border-stone-700 group">
-                    <img src="{{ asset('storage/courts/court-1.jpg') }}" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img src="{{ $courts->first() ? $courts->first()->display_image : asset('images/courts/court-1.jpg') }}" onerror="this.onerror=null; this.src='{{ asset('images/courts/court-1.jpg') }}';" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
 
                     <!-- Overlay Info Card -->
@@ -366,13 +366,18 @@
                             <div class="mt-4">
                                 <div class="text-xs font-semibold text-theme-muted mb-2.5 flex items-center justify-between">
                                     <span>Available 1-Hour Time Slots (Click or Drag to Add/Remove):</span>
-                                    <span class="text-[11px] text-theme-muted font-bold text-amber-700">6:00 AM to 12:00 AM Midnight</span>
+                                    <span class="text-[11px] text-theme-muted font-bold text-cyan-700 dark:text-cyan-400">{{ $c['operating_hours'] ?? '6:00 AM - 12:00 AM' }}</span>
                                 </div>
                                 <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 court-slots-grid" data-court-id="{{ $c['id'] }}" data-court-name="{{ $c['name'] }}" data-rate="{{ $c['price_per_hour'] }}" data-max-players="{{ $c['max_players'] }}">
                                     @foreach($courtData['slots'] as $slotKey => $slot)
                                         @php
                                             $status = $slot['status'];
                                             $isAvailable = $status === 'available';
+                                            $hNum = (int) substr($slot['time'], 0, 2);
+                                            $nextH = $hNum + 1;
+                                            $startShort = \Carbon\Carbon::createFromFormat('H:i', $slot['time'])->format('ga');
+                                            $endShort = ($nextH === 24) ? '12am' : \Carbon\Carbon::createFromFormat('H:i', sprintf('%02d:00', $nextH))->format('ga');
+                                            $slotRange = $slot['short_range'] ?? "{$startShort} - {$endShort}";
                                         @endphp
                                         <button type="button"
                                             class="court-slot p-2.5 rounded-xl text-center text-xs font-semibold transition-all relative
@@ -384,9 +389,11 @@
                                             data-slot-time="{{ $slot['time'] }}"
                                             data-display-time="{{ $slot['display_time'] }}"
                                             data-display-range="{{ $slot['display_range'] }}"
+                                            data-short-range="{{ $slotRange }}"
                                             data-status="{{ $status }}"
-                                            data-remaining-seconds="{{ $slot['remaining_seconds'] }}">
-                                            <div class="font-bold text-xs">{{ $slot['display_time'] }}</div>
+                                            data-remaining-seconds="{{ $slot['remaining_seconds'] }}"
+                                            title="{{ $slot['display_range'] }}">
+                                            <div class="font-bold text-xs whitespace-nowrap">{{ $slotRange }}</div>
                                             <div class="text-[10px] opacity-85 mt-0.5 slot-status-label">
                                                 @if($status === 'available')
                                                     <span class="text-cyan-600 dark:text-cyan-400">Open</span>
@@ -756,7 +763,7 @@
                 <div class="glass-panel rounded-3xl overflow-hidden group shadow-xl">
                     <div class="relative h-64 overflow-hidden">
                         <img src="{{ $photo->url }}" alt="{{ $photo->title }}"
-                            onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=800&q=80';"
+                            onerror="this.onerror=null; this.src='{{ asset('images/gallery/court-action.jpg') }}';"
                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
                         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-bold bg-stone-900/80 backdrop-blur-md text-cyan-400 border border-white/10 uppercase">
@@ -967,6 +974,57 @@
     // Helper: Normalize slot time strings (e.g., '06:00:00' -> '06:00')
     function normalizeSlotTime(t) {
         return (t || '').toString().trim().substring(0, 5);
+    }
+
+    // Helper: Format a 1-hour slot time into clean range (e.g. '06:00' -> '6am - 7am')
+    function formatSlotRange(t) {
+        if (!t) return '';
+        const clean = normalizeSlotTime(t);
+        const hour = parseInt(clean.split(':')[0], 10);
+        if (isNaN(hour)) return t;
+        const next = hour + 1;
+        const toShort = (hr) => {
+            if (hr === 24 || hr === 0) return '12am';
+            const ampm = (hr >= 12 && hr < 24) ? 'pm' : 'am';
+            const h12 = hr % 12 || 12;
+            return `${h12}${ampm}`;
+        };
+        return `${toShort(hour)} - ${toShort(next)}`;
+    }
+
+    // Helper: Group consecutive hourly slots into overall range (e.g. ['06:00', '07:00', '08:00', '09:00'] -> '6am to 10am')
+    function formatMergedSlotRanges(slots) {
+        if (!slots || slots.length === 0) return '-';
+        const hours = [...slots]
+            .map(s => parseInt(normalizeSlotTime(s).split(':')[0], 10))
+            .filter(h => !isNaN(h))
+            .sort((a, b) => a - b);
+
+        if (hours.length === 0) return '-';
+
+        const toShort = (hr) => {
+            if (hr === 24 || hr === 0) return '12am';
+            const ampm = (hr >= 12 && hr < 24) ? 'pm' : 'am';
+            const h12 = hr % 12 || 12;
+            return `${h12}${ampm}`;
+        };
+
+        const blocks = [];
+        let blockStart = hours[0];
+        let prevHour = hours[0];
+
+        for (let i = 1; i < hours.length; i++) {
+            if (hours[i] === prevHour + 1) {
+                prevHour = hours[i];
+            } else {
+                blocks.push({ start: blockStart, end: prevHour + 1 });
+                blockStart = hours[i];
+                prevHour = hours[i];
+            }
+        }
+        blocks.push({ start: blockStart, end: prevHour + 1 });
+
+        return blocks.map(b => `${toShort(b.start)} to ${toShort(b.end)}`).join(', ');
     }
 
     // Helper: Stop both the countdown interval and status polling interval
@@ -1243,7 +1301,8 @@
         if (refCodeEl) refCodeEl.textContent = reference;
         if (courtTimeEl) {
             const slotsCount = slots.length;
-            courtTimeEl.textContent = `${courtName} (${slotsCount} ${slotsCount > 1 ? 'hrs' : 'hr'}: ${slots.join(', ')})`;
+            const slotsText = formatMergedSlotRanges(slots);
+            courtTimeEl.textContent = `${courtName} (${slotsCount} ${slotsCount > 1 ? 'hrs' : 'hr'}: ${slotsText})`;
         }
         if (totalDueEl) totalDueEl.textContent = formattedAmount;
         if (payLinkEl) payLinkEl.href = invoiceUrl;
@@ -2064,7 +2123,7 @@
         document.getElementById('summaryCourtName').textContent = bookingState.selectedCourtName;
         document.getElementById('summaryDate').textContent = currentActiveDate || document.getElementById('selectedDateInput')?.value;
         document.getElementById('summaryDuration').textContent = `${totalHours} ${totalHours > 1 ? 'Hours' : 'Hour'} (${rangeStr})`;
-        document.getElementById('summarySlotsList').textContent = sorted.map(format12).join(', ');
+        document.getElementById('summarySlotsList').textContent = formatMergedSlotRanges(sorted);
         document.getElementById('summaryTotalAmount').textContent = `₱${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
         document.getElementById('summaryRateSnapshot').textContent = `₱${bookingState.selectedRate.toFixed(2)}`;
 
