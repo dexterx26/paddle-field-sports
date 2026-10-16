@@ -15,6 +15,8 @@ class VenueSetting extends Model
         'xendit_simulation_mode' => 'boolean',
         'paymongo_simulation_mode' => 'boolean',
         'holding_duration_seconds' => 'integer',
+        'credit_conversion_rate' => 'decimal:2',
+        'credits_enabled' => 'boolean',
     ];
 
     /**
@@ -34,6 +36,8 @@ class VenueSetting extends Model
             'currency' => 'PHP',
             'currency_symbol' => '₱',
             'payment_mode' => 'manual_receipt',
+            'credit_conversion_rate' => 150.00,
+            'credits_enabled' => true,
             'xendit_simulation_mode' => true,
             'paymongo_simulation_mode' => true,
             'manual_bank_name' => 'GCash / Maya / BDO Bank',

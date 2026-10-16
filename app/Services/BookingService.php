@@ -6,6 +6,8 @@ use App\Events\CourtSlotsUpdated;
 use App\Models\Booking;
 use App\Models\BookingSlot;
 use App\Models\Court;
+use App\Models\CreditTransaction;
+use App\Models\User;
 use App\Models\VenueSetting;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -192,6 +194,8 @@ class BookingService
                     'surface_type' => $court->surface_type,
                     'price_per_hour' => (float) $court->price_per_hour,
                     'formatted_price' => $court->formatted_price,
+                    'credits_per_hour' => (float) ($court->credits_per_hour ?: 1.0),
+                    'formatted_credits_price' => (!empty($settings->credits_enabled)) ? $court->formatted_credits_price : null,
                     'max_players' => $court->max_players,
                     'display_image' => $court->display_image,
                     'opening_time' => $court->effective_opening_time,
@@ -419,6 +423,125 @@ class BookingService
                     'pending_approval',
                     null,
                     "Reservation pending owner approval on {$court->name}."
+                ))->toOthers();
+            } catch (\Exception $e) {
+                Log::warning('Reverb broadcast error: ' . $e->getMessage());
+            }
+
+            return $booking;
+        });
+    }
+
+    /**
+     * Instant booking using User's prepaid Court Credits
+     */
+    public function createCreditsBooking(
+        int $courtId,
+        string $date,
+        array $slots,
+        array $customerData,
+        User $user
+    ): Booking {
+        $this->releaseExpiredHolds();
+
+        $settings = VenueSetting::getSettings();
+        if (empty($settings->credits_enabled)) {
+            throw new \Exception('Paying with Court Credits is currently disabled by venue administration. Please choose an alternative payment option.');
+        }
+
+        if (!$this->areSlotsAvailable($courtId, $date, $slots)) {
+            throw new \Exception('One or more selected slots are no longer available. Please select different slots.');
+        }
+
+        $court = Court::findOrFail($courtId);
+        $creditsRate = (float) ($court->credits_per_hour ?: 1.0);
+        $totalHours = count($slots);
+        $creditsNeeded = $creditsRate * $totalHours;
+
+        if (!$user->hasEnoughCredits($creditsNeeded)) {
+            $userCredits = (float) ($user->credits ?? 0);
+            throw new \Exception("Insufficient credits. You need {$creditsNeeded} credits for this booking, but your balance is {$userCredits} credits. Please top up your wallet.");
+        }
+
+        sort($slots);
+        $startTime = reset($slots);
+        $lastSlot = end($slots);
+        $endHour = (int) substr($lastSlot, 0, 2) + 1;
+        $endTime = sprintf('%02d:00', $endHour);
+
+        $ratePerHour = $court->price_per_hour;
+        $totalAmount = $ratePerHour * $totalHours;
+        $reference = 'PF-CR-' . date('Ymd') . '-' . strtoupper(Str::random(5));
+
+        return DB::transaction(function () use (
+            $reference, $user, $customerData, $court, $date,
+            $startTime, $endTime, $totalHours, $ratePerHour, $totalAmount,
+            $slots, $creditsNeeded
+        ) {
+            if (!$this->areSlotsAvailable($court->id, $date, $slots)) {
+                throw new \Exception('One or more selected slots are no longer available. Please select different slots.');
+            }
+
+            // Deduct credits from user wallet
+            $user->decrement('credits', $creditsNeeded);
+            $newBalance = (float) $user->fresh()->credits;
+
+            $booking = Booking::create([
+                'booking_reference' => $reference,
+                'user_id' => $user->id,
+                'customer_name' => $customerData['name'] ?? $user->name,
+                'customer_phone' => $customerData['phone'] ?? $user->phone ?? 'N/A',
+                'customer_email' => $customerData['email'] ?? $user->email,
+                'court_id' => $court->id,
+                'booking_date' => $date,
+                'start_time' => $startTime,
+                'end_time' => $endTime,
+                'total_hours' => $totalHours,
+                'rate_per_hour' => $ratePerHour,
+                'total_amount' => $totalAmount,
+                'credits_used' => $creditsNeeded,
+                'players_count' => $customerData['players_count'] ?? $court->max_players,
+                'notes' => trim(($customerData['notes'] ?? '') . " [Paid with {$creditsNeeded} Court Credits]"),
+                'payment_method' => 'credits',
+                'payment_status' => 'paid',
+                'booking_status' => 'confirmed',
+                'approved_by' => null,
+                'approved_at' => now(),
+            ]);
+
+            // Record transaction in ledger
+            CreditTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'booking_payment',
+                'amount_credits' => -$creditsNeeded,
+                'balance_after' => $newBalance,
+                'reference_id' => $booking->id,
+                'reference_type' => Booking::class,
+                'description' => "Court reservation ({$booking->booking_reference}) for {$court->name} ({$totalHours} hrs)",
+            ]);
+
+            foreach ($slots as $time) {
+                BookingSlot::create([
+                    'booking_id' => $booking->id,
+                    'court_id' => $court->id,
+                    'date' => $date,
+                    'slot_time' => $time,
+                    'rate_per_hour' => $ratePerHour,
+                    'status' => 'confirmed',
+                    'held_until' => null,
+                ]);
+            }
+
+            // Real-time broadcast
+            try {
+                broadcast(new CourtSlotsUpdated(
+                    $date,
+                    $court->id,
+                    $slots,
+                    'confirmed',
+                    null,
+                    "Court {$court->name} reserved instantly using credits by {$booking->customer_name}.",
+                    $booking->booking_reference
                 ))->toOthers();
             } catch (\Exception $e) {
                 Log::warning('Reverb broadcast error: ' . $e->getMessage());

@@ -19,9 +19,15 @@ class Booking extends Model
         'approved_at' => 'datetime',
         'rate_per_hour' => 'decimal:2',
         'total_amount' => 'decimal:2',
+        'credits_used' => 'decimal:2',
         'total_hours' => 'integer',
         'players_count' => 'integer',
     ];
+
+    public function isPaidWithCredits(): bool
+    {
+        return $this->payment_method === 'credits' || (float) $this->credits_used > 0;
+    }
 
     public function court()
     {

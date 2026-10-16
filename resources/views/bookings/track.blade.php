@@ -7,7 +7,7 @@
 
 <div class="py-12 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
     <!-- Top breadcrumb / back link -->
-    <div class="mb-6 flex items-center justify-between">
+    <div class="mb-6 flex items-center justify-between no-print">
         @if($isOwner)
             <a href="{{ route('owner.bookings.index') }}" class="text-xs font-semibold text-theme-muted hover:text-cyan-600 dark:hover:text-cyan-400 flex items-center gap-1.5 transition-colors">
                 <i class="fa-solid fa-arrow-left"></i> Back to Reservations Management
@@ -32,7 +32,7 @@
     </div>
 
     <!-- Booking Status Main Banner -->
-    <div class="rounded-3xl glass-panel p-6 sm:p-8 shadow-xl relative overflow-hidden mb-8">
+    <div class="rounded-3xl glass-panel p-6 sm:p-8 shadow-xl relative overflow-hidden mb-8 no-print">
         @if($booking->booking_status === 'confirmed')
             <!-- CONFIRMED STATE -->
             <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-cyan-400 via-cyan-500 to-amber-500"></div>
@@ -138,85 +138,135 @@
     </div>
 
     <!-- Booking Pass / Receipt Card -->
-    <div class="rounded-3xl glass-card p-6 sm:p-8 shadow-xl space-y-6">
+    <div id="printableBookingPass" class="rounded-3xl glass-card p-6 sm:p-8 shadow-xl space-y-6">
+        <!-- Print-Only Pass Header (Visible when printing only) -->
+        <div class="hidden print:flex items-center justify-between pb-4 border-b-2 border-stone-800 mb-2">
+            <div class="flex items-center gap-3.5">
+                <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-black tracking-tight text-slate-950 uppercase leading-none">Paddle Field Sports Center</h2>
+                    <p class="text-xs font-bold text-slate-600 tracking-wider uppercase mt-1">Official Court Pass & Reservation Voucher</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] uppercase font-extrabold text-slate-500 tracking-wider">Status</div>
+                <span class="inline-block px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider {{ $booking->booking_status === 'confirmed' ? 'bg-emerald-100 text-emerald-800 border border-emerald-400' : 'bg-amber-100 text-amber-800 border border-amber-400' }}">
+                    {{ str_replace('_', ' ', $booking->booking_status) }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Reference & Action Header -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-stone-200 dark:border-stone-800 gap-4">
             <div>
-                <span class="text-xs font-semibold text-theme-muted">Booking Reference</span>
-                <h3 class="text-xl sm:text-2xl font-mono font-black text-cyan-600 dark:text-cyan-400 mt-0.5 tracking-wider">{{ $booking->booking_reference }}</h3>
-            </div>
-            @if(!$isOwner)
-                <div class="flex items-center gap-2">
-                    <button type="button" onclick="window.print()" class="px-3.5 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-xs font-semibold text-theme-heading border border-stone-300 dark:border-stone-700 flex items-center gap-2 transition-colors cursor-pointer">
-                        <i class="fa-solid fa-print"></i> Print Pass
-                    </button>
+                <span class="text-xs font-semibold text-theme-muted uppercase tracking-wider">Booking Reference</span>
+                <div class="flex items-center gap-3 mt-0.5">
+                    <h3 class="text-2xl sm:text-3xl font-mono font-black text-cyan-600 dark:text-cyan-400 print:text-slate-950 tracking-wider">{{ $booking->booking_reference }}</h3>
+                    <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase {{ $booking->booking_status === 'confirmed' ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30' : 'bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30' }}">
+                        {{ str_replace('_', ' ', $booking->booking_status) }}
+                    </span>
                 </div>
-            @endif
+            </div>
+            <div class="flex items-center gap-2 no-print">
+                <button type="button" onclick="window.print()" class="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white dark:bg-stone-100 dark:hover:bg-stone-200 dark:text-slate-950 text-xs font-bold shadow-md flex items-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-print"></i> Print Court Pass
+                </button>
+            </div>
         </div>
 
         <!-- Grid of Details -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs print:grid-cols-2 print:gap-4">
             <!-- Court & Timing -->
-            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
-                <h4 class="font-bold uppercase tracking-wider text-[11px] text-cyan-700 dark:text-cyan-400 flex items-center gap-2">
-                    <i class="fa-solid fa-table-tennis-paddle-ball"></i> Court & Timeslot
+            <div class="p-4 sm:p-5 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3 print:bg-stone-50 print:border-stone-300">
+                <h4 class="font-bold uppercase tracking-wider text-[11px] text-cyan-700 dark:text-cyan-400 print:text-slate-900 flex items-center gap-2 pb-2 border-b border-stone-200 dark:border-stone-800 print:border-stone-300">
+                    <i class="fa-solid fa-table-tennis-paddle-ball text-cyan-600 dark:text-cyan-400 print:text-slate-800"></i> Court & Timeslot
                 </h4>
-                <div class="space-y-1.5 text-theme-body">
+                <div class="space-y-2 text-theme-body print:text-slate-800">
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Court Name:</span>
-                        <span class="font-bold text-theme-heading">{{ $booking->court->name }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Court Name:</span>
+                        <span class="font-bold text-theme-heading print:text-slate-900">{{ $booking->court->name }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Court Type:</span>
-                        <span class="capitalize font-semibold text-theme-heading">{{ $booking->court->type }} ({{ $booking->court->surface_type }})</span>
+                        <span class="text-theme-muted print:text-slate-500">Court Type:</span>
+                        <span class="capitalize font-semibold text-theme-heading print:text-slate-900">{{ $booking->court->type }} ({{ $booking->court->surface_type }})</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Reservation Date:</span>
-                        <span class="font-bold text-theme-heading">{{ $booking->booking_date->format('l, F j, Y') }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Reservation Date:</span>
+                        <span class="font-bold text-theme-heading print:text-slate-900">{{ $booking->booking_date->format('l, F j, Y') }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Time Range:</span>
-                        <span class="font-bold text-cyan-600 dark:text-cyan-400">{{ date('g:i A', strtotime($booking->start_time)) }} – {{ date('g:i A', strtotime($booking->end_time)) }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Time Range:</span>
+                        <span class="font-bold text-cyan-700 dark:text-cyan-400 print:text-slate-900">{{ date('g:i A', strtotime($booking->start_time)) }} – {{ date('g:i A', strtotime($booking->end_time)) }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Total Hours:</span>
-                        <span class="font-bold text-theme-heading">{{ $booking->total_hours }} {{ $booking->total_hours == 1 ? 'Hour' : 'Hours' }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Total Hours:</span>
+                        <span class="font-bold text-theme-heading print:text-slate-900">{{ $booking->total_hours }} {{ $booking->total_hours == 1 ? 'Hour' : 'Hours' }}</span>
                     </div>
                 </div>
             </div>
 
             <!-- Customer & Payment -->
-            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
-                <h4 class="font-bold uppercase tracking-wider text-[11px] text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                    <i class="fa-solid fa-user-check"></i> Player & Payment
+            <div class="p-4 sm:p-5 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3 print:bg-stone-50 print:border-stone-300">
+                <h4 class="font-bold uppercase tracking-wider text-[11px] text-amber-700 dark:text-amber-400 print:text-slate-900 flex items-center gap-2 pb-2 border-b border-stone-200 dark:border-stone-800 print:border-stone-300">
+                    <i class="fa-solid fa-user-check text-amber-600 dark:text-amber-400 print:text-slate-800"></i> Player & Payment
                 </h4>
-                <div class="space-y-1.5 text-theme-body">
+                <div class="space-y-2 text-theme-body print:text-slate-800">
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Guest / Player:</span>
-                        <span class="font-bold text-theme-heading">{{ $booking->customer_name }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Guest / Player:</span>
+                        <span class="font-bold text-theme-heading print:text-slate-900">{{ $booking->customer_name }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Mobile Phone:</span>
-                        <span class="font-mono text-theme-heading">{{ $booking->customer_phone }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Mobile Phone:</span>
+                        <span class="font-mono font-medium text-theme-heading print:text-slate-900">{{ $booking->customer_phone }}</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Hourly Rate Snapshot:</span>
-                        <span class="font-mono text-theme-body">₱{{ number_format($booking->rate_per_hour, 2) }} / hr</span>
+                        <span class="text-theme-muted print:text-slate-500">Hourly Rate:</span>
+                        <span class="font-mono text-theme-body print:text-slate-700">₱{{ number_format($booking->rate_per_hour, 2) }} / hr</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-theme-muted">Payment Channel:</span>
-                        <span class="capitalize font-bold text-theme-heading">{{ str_replace('_', ' ', $booking->payment_method) }}</span>
+                        <span class="text-theme-muted print:text-slate-500">Payment Channel:</span>
+                        <span class="capitalize font-bold text-theme-heading print:text-slate-900">{{ str_replace('_', ' ', $booking->payment_method) }}</span>
                     </div>
-                    <div class="flex justify-between text-sm pt-1 border-t border-stone-200 dark:border-stone-800">
-                        <span class="font-bold text-theme-heading">Total Paid / Due:</span>
-                        <span class="font-black text-cyan-600 dark:text-cyan-400 text-base">{{ $booking->formatted_amount }}</span>
+                    <div class="flex justify-between text-sm pt-1 border-t border-stone-200 dark:border-stone-800 print:border-stone-300">
+                        <span class="font-bold text-theme-heading print:text-slate-900">Total Paid / Due:</span>
+                        <span class="font-black text-cyan-700 dark:text-cyan-400 print:text-slate-900 text-base">{{ $booking->formatted_amount }}</span>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Uploaded Receipt Preview -->
+        <!-- Verification, Facility Reminders & QR Code -->
+        <div class="p-4 sm:p-5 rounded-2xl bg-stone-100/70 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-xs print:bg-stone-50 print:border-stone-300">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="space-y-1.5 flex-1">
+                    <div class="font-bold text-theme-heading print:text-slate-900 flex items-center gap-1.5 text-xs">
+                        <i class="fa-solid fa-circle-info text-cyan-600 dark:text-cyan-400 print:text-slate-800"></i> Facility Check-in & Rules:
+                    </div>
+                    <ul class="list-disc list-inside space-y-0.5 text-theme-body print:text-slate-700 text-[11px] pl-1">
+                        <li>Please present this pass or reference code upon arriving at Paddle Field Sports Center.</li>
+                        <li>Non-marking indoor court shoes are strictly required on all tournament courts.</li>
+                        <li>Paddle rentals and ball canisters are available at Ace Pro Shop.</li>
+                    </ul>
+                    <div class="pt-1.5 text-[10px] text-theme-muted print:text-slate-500">
+                        Paddle Field Sports Center • Open Daily 6:00 AM – 12:00 AM Midnight • Verified Digital Pass
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0 print:border-l print:border-stone-300 print:pl-4">
+                    <div class="text-center">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=90x90&margin=0&data={{ urlencode(route('booking.track', $booking->booking_reference)) }}" 
+                             alt="Verification QR Code" 
+                             class="w-16 h-16 sm:w-20 sm:h-20 bg-white p-1 rounded-xl border border-stone-300 dark:border-stone-700 shadow-sm mx-auto object-contain">
+                        <span class="text-[9px] font-bold text-theme-muted print:text-slate-600 uppercase tracking-wider block mt-1">Scan to Verify</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Uploaded Receipt Preview (Proof image - hidden during pass printing) -->
         @if($booking->receipt_image_path)
-            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3">
+            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-3 no-print">
                 <div class="flex items-center justify-between">
                     <h4 class="font-bold text-theme-heading uppercase tracking-wider text-[11px] flex items-center gap-2">
                         <i class="fa-solid fa-receipt text-amber-600 dark:text-amber-400"></i> Uploaded Payment Receipt Proof
@@ -237,23 +287,100 @@
                 </div>
             </div>
         @endif
-
-        <!-- Special Notes / Instructions -->
-        @if(!$isOwner)
-            <div class="p-4 rounded-2xl bg-stone-100/70 dark:bg-stone-900/50 border border-stone-200 dark:border-stone-800 text-xs text-theme-muted space-y-1">
-                <div class="font-bold text-theme-heading flex items-center gap-1.5">
-                    <i class="fa-solid fa-circle-exclamation text-amber-600 dark:text-amber-400"></i> Facility Reminders:
-                </div>
-                <ul class="list-disc list-inside space-y-0.5 text-theme-body text-[11px] pl-1">
-                    <li>Please arrive 10 minutes before your scheduled start time.</li>
-                    <li>Non-marking indoor court shoes are strictly required on all tournament courts.</li>
-                    <li>Paddle rentals and ball canisters are available at Ace Pro Shop.</li>
-                </ul>
-            </div>
-        @endif
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+@media print {
+    /* 1. Hide layout elements and non-print items */
+    header,
+    footer,
+    nav,
+    .no-print,
+    .no-print *,
+    .announcement-bar,
+    .reverb-status-indicator,
+    #lookupModal,
+    .swal2-container {
+        display: none !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: hidden !important;
+    }
+
+    /* 2. Reset page flow for single clean pass */
+    @page {
+        size: auto;
+        margin: 10mm 12mm 10mm 12mm;
+    }
+
+    html, body {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        width: 100% !important;
+        min-height: auto !important;
+        font-size: 11pt !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    main {
+        padding: 0 !important;
+        margin: 0 !important;
+        display: block !important;
+    }
+
+    .py-12, .max-w-4xl {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+
+    /* 3. Dedicated Print Pass Container */
+    #printableBookingPass {
+        display: block !important;
+        visibility: visible !important;
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border: 2px solid #0f172a !important;
+        border-radius: 14px !important;
+        box-shadow: none !important;
+        padding: 24px !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        page-break-inside: avoid !important;
+    }
+
+    #printableBookingPass * {
+        visibility: visible !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        text-shadow: none !important;
+    }
+
+    /* Force details grids to print in 2 columns */
+    #printableBookingPass .grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 1rem !important;
+    }
+
+    #printableBookingPass .p-4,
+    #printableBookingPass .sm\:p-5 {
+        background-color: #f8fafc !important;
+        border: 1px solid #cbd5e1 !important;
+        border-radius: 12px !important;
+    }
+}
+</style>
+@endpush
 
 @push('scripts')
 <script>

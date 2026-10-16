@@ -98,7 +98,14 @@
             </div>
 
             <!-- Right: Quick Stat Badges -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 border-t md:border-t-0 md:border-l border-stone-200 dark:border-stone-800 pt-4 md:pt-0 md:pl-6">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 border-t md:border-t-0 md:border-l border-stone-200 dark:border-stone-800 pt-4 md:pt-0 md:pl-6">
+                <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-center">
+                    <div class="text-[11px] text-amber-800 dark:text-amber-400 font-bold flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-coins text-amber-500"></i> Credits Wallet
+                    </div>
+                    <div class="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">{{ number_format($user->credits, 1) }}</div>
+                    <div class="text-[9px] text-theme-muted font-medium">≈ ₱{{ number_format($user->credits * ($settings->credit_conversion_rate ?: 150), 2) }}</div>
+                </div>
                 <div class="p-3 rounded-2xl bg-stone-100/80 dark:bg-stone-900/60 border border-stone-200/80 dark:border-stone-800 text-center">
                     <div class="text-xs text-theme-muted font-semibold">Total Bookings</div>
                     <div class="text-xl font-black text-cyan-600 dark:text-cyan-400 mt-0.5">{{ $totalBookings }}</div>
@@ -114,6 +121,191 @@
                         <span>Active</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COURT CREDITS WALLET & TOP-UP SECTION -->
+    <div id="credits-wallet" class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl border border-amber-500/30 mb-8 space-y-6 relative overflow-hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-stone-200 dark:border-stone-800 gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-amber-600 text-slate-950 flex items-center justify-center text-xl shadow-lg shadow-amber-500/20">
+                    <i class="fa-solid fa-coins"></i>
+                </div>
+                <div>
+                    <h2 class="text-lg font-black text-theme-heading flex items-center gap-2">
+                        <span>Court Credits Wallet</span>
+                        <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30">Pre-paid Balance</span>
+                    </h2>
+                    <p class="text-xs text-theme-muted mt-0.5">
+                        Use credits to book courts instantly without waiting for payment verification! <strong>1 Credit = 1 Hour</strong> of court reservation.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Current Balance Display -->
+            <div class="flex items-center gap-3 bg-amber-500/10 border border-amber-500/30 px-5 py-3 rounded-2xl self-start sm:self-auto">
+                <div class="text-right">
+                    <div class="text-[10px] text-theme-muted font-bold uppercase tracking-wider">Your Balance</div>
+                    <div class="text-2xl font-black text-amber-600 dark:text-amber-400 leading-tight">
+                        {{ number_format($user->credits, 1) }} <span class="text-xs font-semibold">Credits</span>
+                    </div>
+                </div>
+                <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+                    <i class="fa-solid fa-wallet"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top-up Form Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- Left 7 Cols: Top-up Request Form -->
+            <div class="lg:col-span-7 space-y-4">
+                <div class="p-4 rounded-2xl bg-stone-100/80 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-theme-heading flex items-center gap-2">
+                            <i class="fa-solid fa-cart-plus text-amber-500"></i>
+                            <span>Purchase / Top Up Credits</span>
+                        </span>
+                        <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2 py-0.5 rounded-full border border-cyan-500/30">
+                            Rate: ₱{{ number_format($settings->credit_conversion_rate ?: 150, 0) }} = 1 Credit
+                        </span>
+                    </div>
+
+                    <form action="{{ route('credits.topup') }}" method="POST" enctype="multipart/form-data" class="space-y-4 text-xs" id="topupForm">
+                        @csrf
+                        @php
+                            $rate = (float) ($settings->credit_conversion_rate ?: 150.00);
+                        @endphp
+
+                        <!-- Quick Credit Amount Chips -->
+                        <div>
+                            <label class="block font-bold text-theme-body mb-1.5">Select or Enter Credits to Buy</label>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-2.5">
+                                <button type="button" onclick="selectTopupCredits(280, {{ $rate }})" class="p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-amber-500 bg-white dark:bg-stone-900 text-center transition-all cursor-pointer group">
+                                    <div class="font-extrabold text-sm text-theme-heading group-hover:text-amber-600">280 Credits</div>
+                                    <div class="text-[10px] text-theme-muted">₱{{ number_format($rate * 280, 2) }}</div>
+                                </button>
+                                <button type="button" onclick="selectTopupCredits(560, {{ $rate }})" class="p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-amber-500 bg-white dark:bg-stone-900 text-center transition-all cursor-pointer group">
+                                    <div class="font-extrabold text-sm text-theme-heading group-hover:text-amber-600">560 Credits</div>
+                                    <div class="text-[10px] text-theme-muted">₱{{ number_format($rate * 560, 2) }}</div>
+                                </button>
+                                <button type="button" onclick="selectTopupCredits(840, {{ $rate }})" class="p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-amber-500 bg-white dark:bg-stone-900 text-center transition-all cursor-pointer group">
+                                    <div class="font-extrabold text-sm text-theme-heading group-hover:text-amber-600">840 Credits</div>
+                                    <div class="text-[10px] text-theme-muted">₱{{ number_format($rate * 840, 2) }}</div>
+                                </button>
+                                <button type="button" onclick="selectTopupCredits(1120, {{ $rate }})" class="p-2.5 rounded-xl border border-stone-300 dark:border-stone-700 hover:border-amber-500 bg-white dark:bg-stone-900 text-center transition-all cursor-pointer group">
+                                    <div class="font-extrabold text-sm text-theme-heading group-hover:text-amber-600">1120 Credits</div>
+                                    <div class="text-[10px] text-theme-muted">₱{{ number_format($rate * 1120, 2) }}</div>
+                                </button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <span class="text-[11px] font-semibold text-theme-muted block mb-1">Custom Credits</span>
+                                    <input type="number" id="topupCreditsInput" name="credits" step="any" min="1" max="50000" required value="280"
+                                        oninput="updateTopupTotal(this.value, {{ $rate }})"
+                                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-black text-sm focus:border-amber-500 focus:outline-none">
+                                </div>
+                                <div>
+                                    <span class="text-[11px] font-semibold text-theme-muted block mb-1">Total to Pay (PHP)</span>
+                                    <div class="px-3.5 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 border border-stone-300 dark:border-stone-700 text-amber-600 dark:text-amber-400 font-black text-sm flex items-center justify-between">
+                                        <span id="topupTotalDisplay">₱{{ number_format($rate * 280, 2) }}</span>
+                                        <span class="text-[10px] text-theme-muted font-normal">PHP</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Upload Proof of Payment -->
+                        <div class="space-y-1.5">
+                            <label class="block font-bold text-theme-body">Upload Payment Receipt Proof <span class="text-rose-500">*</span></label>
+                            <input type="file" name="receipt" accept="image/*" required
+                                class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-slate-950 hover:file:bg-amber-400 cursor-pointer">
+                            <span class="text-[10px] text-theme-muted block">Take a screenshot of your successful GCash / Maya transfer receipt (JPG, PNG, WebP up to 10MB).</span>
+                        </div>
+
+                        <!-- Notes (Optional) -->
+                        <div>
+                            <label class="block font-medium text-theme-body mb-1">Transaction Ref / Notes <span class="text-theme-muted">(Optional)</span></label>
+                            <input type="text" name="customer_notes" placeholder="e.g. GCash Ref #1234567890"
+                                class="w-full px-3.5 py-2 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:border-amber-500 focus:outline-none">
+                        </div>
+
+                        <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs shadow-lg shadow-amber-500/20 flex items-center justify-center gap-2 transition-transform hover:scale-[1.01] cursor-pointer">
+                            <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                            <span>Submit Payment Proof & Request Credits</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Right 5 Cols: Payment Instructions & Standee -->
+            <div class="lg:col-span-5 space-y-4">
+                <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-xs space-y-3">
+                    <div class="font-bold text-theme-heading flex items-center gap-2 pb-2 border-b border-stone-200 dark:border-stone-800">
+                        <i class="fa-solid fa-qrcode text-amber-500"></i>
+                        <span>Center Payment Accounts</span>
+                    </div>
+
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-theme-muted">Account Name:</span>
+                            <span class="font-bold text-theme-heading">{{ $settings->manual_account_name }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-theme-muted">GCash / Maya No.:</span>
+                            <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400 text-sm">{{ $settings->manual_account_number }}</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-theme-muted">Bank / Channel:</span>
+                            <span class="font-medium text-theme-body">{{ $settings->manual_bank_name }}</span>
+                        </div>
+                    </div>
+
+                    @if($settings->manual_payment_qr)
+                        <div class="pt-2 text-center border-t border-stone-200 dark:border-stone-800">
+                            <a href="{{ asset('storage/' . $settings->manual_payment_qr) }}" target="_blank" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-stone-100 dark:bg-stone-800 text-cyan-600 dark:text-cyan-400 font-bold hover:underline">
+                                <i class="fa-solid fa-image"></i> View GCash QR Code Standee
+                            </a>
+                        </div>
+                    @endif
+
+                    <div class="p-2.5 rounded-xl bg-amber-500/10 text-amber-800 dark:text-amber-300 text-[11px] flex items-start gap-2">
+                        <i class="fa-solid fa-clock text-amber-600 mt-0.5 shrink-0"></i>
+                        <span>Once submitted, the Court Owner verifies your payment receipt in the Approvals Queue and adds the credits to your wallet.</span>
+                    </div>
+                </div>
+
+                <!-- Recent Top-Up Requests List -->
+                @if($creditTopups->count() > 0)
+                    <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-xs space-y-2.5">
+                        <div class="font-bold text-theme-heading text-xs flex items-center justify-between pb-2 border-b border-stone-200 dark:border-stone-800">
+                            <span>Recent Top-Up History</span>
+                            <span class="text-[10px] text-theme-muted font-normal">{{ $creditTopups->count() }} Records</span>
+                        </div>
+
+                        <div class="space-y-2 max-h-48 overflow-y-auto pr-1">
+                            @foreach($creditTopups as $topup)
+                                <div class="p-2.5 rounded-xl bg-stone-100/70 dark:bg-stone-800/50 flex items-center justify-between text-[11px]">
+                                    <div>
+                                        <div class="font-mono font-bold text-theme-heading">{{ $topup->reference }}</div>
+                                        <div class="text-[10px] text-theme-muted">{{ $topup->created_at->format('M d, Y h:i A') }}</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="font-bold text-amber-600 dark:text-amber-400">+{{ $topup->formatted_credits }}</div>
+                                        <span class="inline-block text-[9px] font-black uppercase px-2 py-0.5 rounded-full
+                                            @if($topup->status === 'approved') bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30
+                                            @elseif($topup->status === 'rejected') bg-rose-500/15 text-rose-700 dark:text-rose-400 border border-rose-500/30
+                                            @else bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 @endif">
+                                            {{ ucfirst($topup->status) }}
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
         </div>
     </div>
@@ -467,14 +659,14 @@
                             <i class="fa-solid fa-phone text-cyan-400 w-4"></i>
                             <span>{{ $settings->phone ?? '+63 917 555 7233' }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <!-- <div class="flex items-center gap-2">
                             <i class="fa-solid fa-envelope text-amber-400 w-4"></i>
                             <span>{{ $settings->email ?? 'contact@paddlefield.com' }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-clock text-cyan-400 w-4"></i>
                             <span>Daily: {{ $settings->opening_time ?? '06:00' }} - {{ $settings->closing_time ?? '00:00' }} Midnight</span>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -485,8 +677,25 @@
 
 </div>
 
-@push('styles')
+@push('scripts')
 <script>
+    function selectTopupCredits(credits, rate) {
+        const input = document.getElementById('topupCreditsInput');
+        if (input) {
+            input.value = credits;
+            updateTopupTotal(credits, rate);
+        }
+    }
+
+    function updateTopupTotal(val, rate) {
+        const num = parseFloat(val) || 0;
+        const total = (num * rate).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const display = document.getElementById('topupTotalDisplay');
+        if (display) {
+            display.textContent = '₱' + total;
+        }
+    }
+
     function previewAvatar(input) {
         if (input.files && input.files[0]) {
             const reader = new FileReader();

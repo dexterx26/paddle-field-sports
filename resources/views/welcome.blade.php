@@ -224,23 +224,37 @@
                 </div>
             </div>
 
+            @php
+                $heroCourt = $courts->first();
+            @endphp
             <!-- Hero Feature Image / Card -->
             <div class="lg:col-span-5 relative">
                 <div class="relative rounded-3xl overflow-hidden shadow-2xl border border-stone-300 dark:border-stone-700 group">
-                    <img src="{{ $courts->first() ? $courts->first()->display_image : asset('images/courts/court-1.jpg') }}" onerror="this.onerror=null; this.src='{{ asset('images/courts/court-1.jpg') }}';" alt="Paddle Field Sports Center Pickleball Court" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
+                    <img src="{{ $heroCourt ? $heroCourt->display_image : asset('images/courts/court-1.jpg') }}" 
+                         onerror="this.onerror=null; this.src='{{ asset('images/courts/court-1.jpg') }}';" 
+                         alt="{{ $heroCourt ? $heroCourt->name : 'Paddle Field Sports Center Pickleball Court' }}" 
+                         class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700">
                     <div class="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent"></div>
 
                     <!-- Overlay Info Card -->
                     <div class="absolute bottom-5 left-5 right-5 p-4 rounded-2xl glass-dropdown border border-stone-300 dark:border-stone-700">
                         <div class="flex items-center justify-between">
                             <div>
-                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">Championship Center</span>
-                                <h4 class="text-sm font-bold text-theme-heading mt-1">Court 1 - Tournament Grade</h4>
-                                <p class="text-xs text-theme-muted">Pro Cushion Acrylic • 4 Players Max</p>
+                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 uppercase">
+                                    {{ $heroCourt ? ucfirst($heroCourt->type) . ' Court' : 'Championship Center' }}
+                                </span>
+                                <h4 class="text-sm font-bold text-theme-heading mt-1">
+                                    {{ $heroCourt ? $heroCourt->name . ' - ' . ($heroCourt->surface_type ?: 'Tournament Grade') : 'Court 1 - Tournament Grade' }}
+                                </h4>
+                                <p class="text-xs text-theme-muted">
+                                    {{ $heroCourt ? ($heroCourt->surface_type ?: 'Pro Cushion Acrylic') . ' • ' . $heroCourt->max_players . ' Players Max' : 'Pro Cushion Acrylic • 4 Players Max' }}
+                                </p>
                             </div>
                             <div class="text-right">
                                 <span class="text-xs text-theme-muted block">From</span>
-                                <span class="text-lg font-black text-cyan-600">₱150<span class="text-xs text-theme-muted font-normal">/hr</span></span>
+                                <span class="text-lg font-black text-cyan-600">
+                                    {{ $heroCourt ? $heroCourt->formatted_price : '₱150' }}<span class="text-xs text-theme-muted font-normal">/hr</span>
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -343,7 +357,10 @@
                             <!-- Court Header -->
                             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200">
                                 <div class="flex items-center gap-4">
-                                    <img src="{{ $c['display_image'] }}" alt="{{ $c['name'] }}" class="w-16 h-16 rounded-2xl object-cover border border-stone-200 dark:border-stone-800 shadow-md">
+                                    <img src="{{ $c['display_image'] }}" 
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=300&q=80';" 
+                                         alt="{{ $c['name'] }}" 
+                                         class="w-16 h-16 rounded-2xl object-cover border border-stone-200 dark:border-stone-800 shadow-md">
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <h3 class="text-base sm:text-lg font-extrabold text-theme-heading">{{ $c['name'] }}</h3>
@@ -359,6 +376,11 @@
                                 <div class="text-left sm:text-right">
                                     <div class="text-xs text-theme-muted">Hourly Rate</div>
                                     <div class="text-lg font-black text-cyan-600 dark:text-cyan-400">{{ $c['formatted_price'] }}<span class="text-xs text-theme-muted font-normal">/hr</span></div>
+                                    @if(!empty($settings->credits_enabled) && !empty($c['formatted_credits_price']))
+                                        <div class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center justify-start sm:justify-end gap-1 mt-0.5">
+                                            <i class="fa-solid fa-coins text-[10px]"></i> {{ $c['formatted_credits_price'] }}/hr
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
 
@@ -368,7 +390,7 @@
                                     <span>Available 1-Hour Time Slots (Click or Drag to Add/Remove):</span>
                                     <span class="text-[11px] text-theme-muted font-bold text-cyan-700 dark:text-cyan-400">{{ $c['operating_hours'] ?? '6:00 AM - 12:00 AM' }}</span>
                                 </div>
-                                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 court-slots-grid" data-court-id="{{ $c['id'] }}" data-court-name="{{ $c['name'] }}" data-rate="{{ $c['price_per_hour'] }}" data-max-players="{{ $c['max_players'] }}">
+                                <div class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 court-slots-grid" data-court-id="{{ $c['id'] }}" data-court-name="{{ $c['name'] }}" data-rate="{{ $c['price_per_hour'] }}" data-credits-rate="{{ $c['credits_per_hour'] ?? 1.0 }}" data-max-players="{{ $c['max_players'] }}">
                                     @foreach($courtData['slots'] as $slotKey => $slot)
                                         @php
                                             $status = $slot['status'];
@@ -497,7 +519,14 @@
                             </div>
                             <div class="pt-2 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-sm">
                                 <span class="font-bold text-theme-heading">Total Amount:</span>
-                                <span id="summaryTotalAmount" class="font-black text-cyan-600 dark:text-cyan-400 text-lg">₱0.00</span>
+                                <div class="text-right">
+                                    <span id="summaryTotalAmount" class="font-black text-cyan-600 dark:text-cyan-400 text-lg">₱0.00</span>
+                                    @if(!empty($settings->credits_enabled))
+                                        <div id="summaryTotalCreditsLine" class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center justify-end gap-1">
+                                            <i class="fa-solid fa-coins text-[10px]"></i> <span id="summaryTotalCredits">0.0 Credits</span>
+                                        </div>
+                                    @endif
+                                </div>
                             </div>
                             <div class="text-[10px] text-theme-muted italic text-right flex items-center justify-between">
                                 <span class="text-cyan-600 dark:text-cyan-400 font-semibold cursor-pointer hover:underline" onclick="removeLatestSlotAction()">
@@ -563,103 +592,218 @@
                             </div>
                         </div>
 
-                        <!-- Payment Flow Sections Based on Owner Setting (Manual GCash, Xendit, or PayMongo) -->
-                        @php
-                            $holdSecs = (int) ($settings->holding_duration_seconds ?: 120);
-                            $holdMins = max(1, (int) round($holdSecs / 60));
-                        @endphp
-                        @if($settings->payment_mode === 'paymongo')
-                            <!-- PAYMONGO FLOW: Instant Hold & Pay (GCash, Maya, Cards, QRPH) -->
-                            <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
-                                        <i class="fa-solid fa-bolt text-emerald-600 text-sm"></i>
-                                        <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
-                                    </div>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-extrabold uppercase">PayMongo</span>
-                                </div>
-                                <p class="text-[11px] text-theme-body leading-relaxed">
-                                    Click below to lock these slots for <strong>{{ $holdSecs }} seconds</strong> while you complete checkout via PayMongo (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
-                                </p>
-                                <button type="button" id="startHoldAndPayBtn" data-gateway="paymongo"
-                                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
-                                    <i class="fa-solid fa-lock"></i>
-                                    <span>Hold {{ $holdMins }} Mins & Pay with PayMongo</span>
-                                </button>
-                            </div>
-                        @elseif($settings->payment_mode === 'xendit')
-                            <!-- XENDIT FLOW: Instant Hold & Pay -->
-                            <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-3">
-                                <div class="flex items-center justify-between">
-                                    <div class="flex items-center gap-2 text-cyan-700 dark:text-cyan-300 text-xs font-bold">
-                                        <i class="fa-solid fa-stopwatch text-sm"></i>
-                                        <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
-                                    </div>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-700 font-extrabold uppercase">Xendit</span>
-                                </div>
-                                <p class="text-[11px] text-theme-body leading-relaxed">
-                                    Click below to hold this slot for <strong>{{ $holdSecs }} seconds</strong> while you complete payment via Xendit (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
-                                </p>
-                                <button type="button" id="startHoldAndPayBtn" data-gateway="xendit"
-                                    class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
-                                    <i class="fa-solid fa-lock"></i>
-                                    <span>Hold {{ $holdMins }} Mins & Pay with Xendit</span>
-                                </button>
-                            </div>
-                        @else
-                            <!-- MANUAL RECEIPT FLOW: GCash QR & Upload Proof -->
-                            <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3.5">
-                                <div class="flex items-center justify-between text-amber-800 dark:text-amber-400 text-xs font-bold">
-                                    <div class="flex items-center gap-2">
-                                        <i class="fa-solid fa-qrcode text-base"></i>
-                                        <span>Manual Payment & Receipt Upload</span>
-                                    </div>
-                                    <span class="text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">Owner Approves</span>
-                                </div>
-
-                                <!-- Bank / GCash Details -->
-                                <div class="p-3 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 text-xs space-y-1.5">
-                                    <div class="flex justify-between">
-                                        <span class="text-theme-muted">Account Name:</span>
-                                        <span class="font-bold text-theme-heading">{{ $settings->manual_account_name }}</span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-theme-muted">Account / GCash:</span>
-                                        <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400">{{ $settings->manual_account_number }}</span>
-                                    </div>
-                                    @if($settings->manual_payment_qr)
-                                        <div class="pt-2 text-center">
-                                            <a href="{{ asset('storage/' . $settings->manual_payment_qr) }}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline">
-                                                <i class="fa-solid fa-image"></i> View GCash / Maya QR Standee
-                                            </a>
-                                        </div>
-                                    @endif
-                                </div>
-
-                                <!-- Form for Manual Receipt Submission -->
-                                <form id="manualReceiptForm" action="{{ route('booking.manual_receipt') }}" method="POST" enctype="multipart/form-data" novalidate class="space-y-3">
-                                    @csrf
-                                    <input type="hidden" name="court_id" id="mrCourtId">
-                                    <input type="hidden" name="date" id="mrDate" value="{{ $selectedDate }}">
-                                    <input type="hidden" name="slots" id="mrSlots">
-
-                                    <div>
-                                        <label class="block text-[11px] font-bold text-theme-heading mb-1">
-                                            Upload Payment Receipt Screenshot <span class="text-rose-500">*</span>
-                                        </label>
-                                        <input type="file" name="receipt" id="receiptFileInput" required accept="image/*"
-                                            class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
-                                        <div id="receiptPreviewBox" class="mt-2 hidden">
-                                            <img id="receiptPreviewImg" src="" alt="Receipt Preview" class="w-full max-h-36 object-contain rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-900 p-1">
-                                        </div>
-                                    </div>
-
-                                    <button type="submit" id="submitManualBookingBtn"
-                                        class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-cyan-500 hover:from-amber-500 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
-                                        <i class="fa-solid fa-paper-plane"></i>
-                                        <span>Submit Reservation for Approval</span>
+                        <!-- Payment Method Toggle (Standard Gateway vs Court Credits) -->
+                        @if(!empty($settings->credits_enabled))
+                            <div class="space-y-2 pt-2 border-t border-stone-200 dark:border-stone-800">
+                                <label class="text-[11px] font-bold text-theme-heading uppercase tracking-wider block">Choose Payment Method</label>
+                                <div class="grid grid-cols-2 gap-2 p-1 bg-stone-200/90 dark:bg-stone-800/90 rounded-2xl">
+                                    <button type="button" id="payMethodCreditsBtn" onclick="setBookingPaymentMethod('credits')" 
+                                        class="py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all shadow-xs bg-white dark:bg-stone-900 text-theme-heading cursor-pointer">
+                                        <i class="fa-solid fa-coins text-amber-500"></i>
+                                        <span>Court Credits</span>
+                                        @auth
+                                            <span class="text-[10px] px-1.5 py-0.2 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-black">
+                                                {{ number_format(Auth::user()->credits, 1) }}
+                                            </span>
+                                        @endauth
                                     </button>
-                                </form>
+                                    <button type="button" id="payMethodStandardBtn" onclick="setBookingPaymentMethod('standard')" 
+                                        class="py-2.5 px-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 transition-all text-theme-muted hover:text-theme-heading cursor-pointer">
+                                        <i class="fa-solid fa-credit-card text-cyan-600"></i>
+                                        <span>Cash / GCash</span>
+                                    </button>
+                                </div>
+                            </div>
+                        @endif
+
+                        <!-- Standard Gateway / Manual GCash Flow -->
+                        <div id="standardPaymentFlow" class="{{ !empty($settings->credits_enabled) ? 'hidden ' : '' }}space-y-3.5">
+                            @php
+                                $holdSecs = (int) ($settings->holding_duration_seconds ?: 120);
+                                $holdMins = max(1, (int) round($holdSecs / 60));
+                            @endphp
+                            @if($settings->payment_mode === 'paymongo')
+                                <!-- PAYMONGO FLOW: Instant Hold & Pay (GCash, Maya, Cards, QRPH) -->
+                                <div class="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 text-xs font-bold">
+                                            <i class="fa-solid fa-bolt text-emerald-600 text-sm"></i>
+                                            <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 font-extrabold uppercase">PayMongo</span>
+                                    </div>
+                                    <p class="text-[11px] text-theme-body leading-relaxed">
+                                        Click below to lock these slots for <strong>{{ $holdSecs }} seconds</strong> while you complete checkout via PayMongo (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
+                                    </p>
+                                    <button type="button" id="startHoldAndPayBtn" data-gateway="paymongo"
+                                        class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
+                                        <i class="fa-solid fa-lock"></i>
+                                        <span>Hold {{ $holdMins }} Mins & Pay with PayMongo</span>
+                                    </button>
+                                </div>
+                            @elseif($settings->payment_mode === 'xendit')
+                                <!-- XENDIT FLOW: Instant Hold & Pay -->
+                                <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 text-cyan-700 dark:text-cyan-300 text-xs font-bold">
+                                            <i class="fa-solid fa-stopwatch text-sm"></i>
+                                            <span>{{ $holdMins }}-Minute Real-Time Slot Hold</span>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-700 font-extrabold uppercase">Xendit</span>
+                                    </div>
+                                    <p class="text-[11px] text-theme-body leading-relaxed">
+                                        Click below to hold this slot for <strong>{{ $holdSecs }} seconds</strong> while you complete payment via Xendit (GCash, Maya, QRPH, Card). Once paid, confirmation is 100% instantaneous!
+                                    </p>
+                                    <button type="button" id="startHoldAndPayBtn" data-gateway="xendit"
+                                        class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
+                                        <i class="fa-solid fa-lock"></i>
+                                        <span>Hold {{ $holdMins }} Mins & Pay with Xendit</span>
+                                    </button>
+                                </div>
+                            @else
+                                <!-- MANUAL RECEIPT FLOW: GCash QR & Upload Proof -->
+                                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3.5">
+                                    <div class="flex items-center justify-between text-amber-800 dark:text-amber-400 text-xs font-bold">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fa-solid fa-qrcode text-base"></i>
+                                            <span>Manual Payment & Receipt Upload</span>
+                                        </div>
+                                        <span class="text-[10px] text-amber-700 dark:text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full">Owner Approves</span>
+                                    </div>
+
+                                    <!-- Bank / GCash Details -->
+                                    <div class="p-3 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-800 text-xs space-y-1.5">
+                                        <div class="flex justify-between">
+                                            <span class="text-theme-muted">Account Name:</span>
+                                            <span class="font-bold text-theme-heading">{{ $settings->manual_account_name }}</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-theme-muted">Account / GCash:</span>
+                                            <span class="font-mono font-bold text-cyan-600 dark:text-cyan-400">{{ $settings->manual_account_number }}</span>
+                                        </div>
+                                        @if($settings->manual_payment_qr)
+                                            <div class="pt-2 text-center">
+                                                <a href="{{ asset('storage/' . $settings->manual_payment_qr) }}" target="_blank" class="inline-flex items-center gap-1.5 text-[11px] text-cyan-600 dark:text-cyan-400 hover:underline">
+                                                    <i class="fa-solid fa-image"></i> View GCash / Maya QR Standee
+                                                </a>
+                                            </div>
+                                        @endif
+                                    </div>
+
+                                    <!-- Form for Manual Receipt Submission -->
+                                    <form id="manualReceiptForm" action="{{ route('booking.manual_receipt') }}" method="POST" enctype="multipart/form-data" novalidate class="space-y-3">
+                                        @csrf
+                                        <input type="hidden" name="court_id" id="mrCourtId">
+                                        <input type="hidden" name="date" id="mrDate" value="{{ $selectedDate }}">
+                                        <input type="hidden" name="slots" id="mrSlots">
+
+                                        <div>
+                                            <label class="block text-[11px] font-bold text-theme-heading mb-1">
+                                                Upload Payment Receipt Screenshot <span class="text-rose-500">*</span>
+                                            </label>
+                                            <input type="file" name="receipt" id="receiptFileInput" required accept="image/*"
+                                                class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
+                                            <div id="receiptPreviewBox" class="mt-2 hidden">
+                                                <img id="receiptPreviewImg" src="" alt="Receipt Preview" class="w-full max-h-36 object-contain rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-900 p-1">
+                                            </div>
+                                        </div>
+
+                                        <button type="submit" id="submitManualBookingBtn"
+                                            class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-cyan-500 hover:from-amber-500 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
+                                            <i class="fa-solid fa-paper-plane"></i>
+                                            <span>Submit Reservation for Approval</span>
+                                        </button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+
+                        <!-- Court Credits Booking Flow -->
+                        @if(!empty($settings->credits_enabled))
+                            <div id="creditsPaymentFlow" class="space-y-3.5">
+                                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-3">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center gap-2 text-amber-800 dark:text-amber-300 text-xs font-bold">
+                                            <i class="fa-solid fa-bolt-lightning text-amber-500 text-sm"></i>
+                                            <span>Instant Booking with Credits</span>
+                                        </div>
+                                        <span class="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-800 dark:text-amber-300 font-extrabold uppercase tracking-wider">Zero Waiting</span>
+                                    </div>
+                                    <p class="text-[11px] text-theme-body leading-relaxed">
+                                        Use your pre-approved court credits. Your reservation is <strong>instantaneously confirmed</strong> without waiting for review or checkout redirections!
+                                    </p>
+
+                                    <!-- Credits Math Box -->
+                                    <div class="p-3 rounded-xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 text-xs space-y-2">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-theme-muted">Credits Required:</span>
+                                            <span id="creditsRequiredDisplay" class="font-black text-amber-600 dark:text-amber-400 text-sm">1.0 Credit</span>
+                                        </div>
+                                        <div class="flex items-center justify-between text-[11px]">
+                                            <span class="text-theme-muted">Court Rate:</span>
+                                            <span id="creditsCourtRateDisplay" class="font-semibold text-theme-heading">1.0 Credit/hr</span>
+                                        </div>
+                                        @auth
+                                            <div class="pt-2 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                                                <span class="text-theme-muted">Your Wallet Balance:</span>
+                                                <span class="font-black text-theme-heading flex items-center gap-1">
+                                                    <i class="fa-solid fa-coins text-amber-500"></i>
+                                                    <span id="creditsUserBalanceDisplay">{{ number_format(Auth::user()->credits, 1) }}</span> Credits
+                                                </span>
+                                            </div>
+                                        @endauth
+                                    </div>
+
+                                    @guest
+                                        <div class="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-xs space-y-2">
+                                            <div class="font-bold text-cyan-900 dark:text-cyan-200 flex items-center gap-1.5">
+                                                <i class="fa-solid fa-circle-info text-cyan-600"></i>
+                                                <span>Sign in to use Court Credits</span>
+                                            </div>
+                                            <p class="text-[11px] text-theme-body">
+                                                Court Credits are linked to registered player accounts. Sign in or switch back to Cash / GCash above to book as a guest.
+                                            </p>
+                                            <div class="flex items-center gap-2 pt-1">
+                                                <a href="{{ route('login') }}" class="flex-1 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs text-center transition-all">
+                                                    Sign In Now
+                                                </a>
+                                                <a href="{{ route('register') }}" class="flex-1 py-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-stone-300 dark:hover:bg-stone-700 text-theme-heading font-bold text-xs text-center transition-all">
+                                                    Register
+                                                </a>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <!-- Auth: Sufficient vs Insufficient Balance -->
+                                        <div id="creditsSufficientBox" class="space-y-3">
+                                            <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 dark:text-emerald-300 text-[11px] flex items-center gap-2">
+                                                <i class="fa-solid fa-circle-check text-emerald-600"></i>
+                                                <span>Sufficient balance! Remaining after booking: <strong id="creditsRemainingDisplay">0.0</strong> Credits</span>
+                                            </div>
+                                            <button type="button" id="submitCreditsBookingBtn" onclick="submitCreditsBookingAction()"
+                                                class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
+                                                <i class="fa-solid fa-bolt-lightning"></i>
+                                                <span>Instant Book with <span id="creditsBtnAmount">1.0</span> Credits</span>
+                                            </button>
+                                        </div>
+
+                                        <div id="creditsInsufficientBox" class="hidden space-y-3">
+                                            <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-800 dark:text-rose-300 text-[11px] flex items-start gap-2">
+                                                <i class="fa-solid fa-triangle-exclamation text-rose-600 mt-0.5 shrink-0"></i>
+                                                <div>
+                                                    <strong>Insufficient Credits:</strong> You are short by <span id="creditsShortAmount" class="font-bold">0.0</span> Credits.
+                                                    <div class="text-[10px] text-theme-muted mt-0.5">Rate: 1 Credit = ₱{{ number_format($settings->credit_conversion_rate ?: 150, 2) }}</div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ route('profile.edit') }}#credits-wallet" class="w-full py-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/40 text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center justify-center gap-2 transition-all">
+                                                <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                                                <span>Top Up Credits in Profile (Upload Payment)</span>
+                                            </a>
+                                            <button type="button" onclick="setBookingPaymentMethod('standard')" class="w-full text-center text-[11px] text-cyan-600 dark:text-cyan-400 font-semibold hover:underline cursor-pointer">
+                                                Or pay with Cash / GCash instead
+                                            </button>
+                                        </div>
+                                    @endguest
+                                </div>
                             </div>
                         @endif
 
@@ -691,7 +835,10 @@
             @foreach($courts as $court)
                 <div class="glass-panel rounded-3xl overflow-hidden shadow-xl flex flex-col group hover:border-cyan-500/50 transition-all duration-300">
                     <div class="relative h-48 overflow-hidden">
-                        <img src="{{ $court->display_image }}" alt="{{ $court->name }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                        <img src="{{ $court->display_image }}" 
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1554068865-24cecd4e34b8?auto=format&fit=crop&w=1000&q=80';" 
+                             alt="{{ $court->name }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                         <div class="absolute top-3 left-3 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-cyan-500 text-slate-950 uppercase">
                             {{ ucfirst($court->type) }}
                         </div>
@@ -720,7 +867,14 @@
                         <div class="pt-3 border-t border-stone-200 flex items-center justify-between">
                             <div>
                                 <span class="text-[10px] text-theme-muted block">Rate per hour</span>
-                                <span class="text-lg font-black text-cyan-600">{{ $court->formatted_price }}</span>
+                                <div class="flex items-baseline gap-2">
+                                    <span class="text-lg font-black text-cyan-600">{{ $court->formatted_price }}</span>
+                                    @if(!empty($settings->credits_enabled) && !empty($court->formatted_credits_price))
+                                        <span class="text-xs font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                                            <i class="fa-solid fa-coins text-[10px]"></i> {{ $court->formatted_credits_price }}
+                                        </span>
+                                    @endif
+                                </div>
                             </div>
                             <button type="button" onclick="scrollToCourtInEngine({{ $court->id }})" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 text-xs font-black shadow-md shadow-cyan-500/20 transition-all hover:scale-105 cursor-pointer flex items-center gap-1.5">
                                 <i class="fa-solid fa-calendar-check"></i>
@@ -954,12 +1108,17 @@
         selectedCourtId: null,
         selectedCourtName: '',
         selectedRate: 0,
+        selectedCreditsRate: 1.0,
         selectedMaxPlayers: 4,
         selectedSlots: [], // sorted array of "HH:00" e.g. ['08:00', '09:00']
         isDragging: false,
         dragMode: null, // 'SELECT' or 'REMOVE'
         dragAnchorTime: null,
         paymentMode: "{{ $settings->payment_mode }}",
+        creditsEnabled: {{ !empty($settings->credits_enabled) ? 'true' : 'false' }},
+        chosenPaymentMethod: "{{ !empty($settings->credits_enabled) ? 'credits' : 'standard' }}", // default to credits if enabled
+        userCredits: {{ Auth::check() ? (float) Auth::user()->credits : 0 }},
+        creditsConversionRate: {{ (float) ($settings->credit_conversion_rate ?: 150) }},
         activeHold: null,
         activeHoldRef: null,
         holdTimerInterval: null,
@@ -1783,6 +1942,7 @@
         const courtGrid = slotBtn.closest('.court-slots-grid');
         const courtName = courtGrid.getAttribute('data-court-name');
         const rate = parseFloat(courtGrid.getAttribute('data-rate'));
+        const creditsRate = parseFloat(courtGrid.getAttribute('data-credits-rate')) || 1.0;
         const maxPlayers = parseInt(courtGrid.getAttribute('data-max-players'));
         const time = slotBtn.getAttribute('data-slot-time');
         const status = slotBtn.getAttribute('data-status');
@@ -1815,6 +1975,7 @@
             bookingState.selectedCourtId = courtId;
             bookingState.selectedCourtName = courtName;
             bookingState.selectedRate = rate;
+            bookingState.selectedCreditsRate = creditsRate;
             bookingState.selectedMaxPlayers = maxPlayers;
             bookingState.selectedSlots = [time];
             bookingState.dragAnchorTime = time;
@@ -1825,6 +1986,7 @@
         bookingState.selectedCourtId = courtId;
         bookingState.selectedCourtName = courtName;
         bookingState.selectedRate = rate;
+        bookingState.selectedCreditsRate = creditsRate;
         bookingState.selectedMaxPlayers = maxPlayers;
 
         // If no slots currently selected
@@ -2100,6 +2262,8 @@
         // Calculate hours and amount
         const totalHours = bookingState.selectedSlots.length;
         const totalAmount = totalHours * bookingState.selectedRate;
+        const creditsRate = bookingState.selectedCreditsRate || 1.0;
+        const totalCredits = totalHours * creditsRate;
 
         // Times string format
         const sorted = [...bookingState.selectedSlots].sort();
@@ -2125,7 +2289,40 @@
         document.getElementById('summaryDuration').textContent = `${totalHours} ${totalHours > 1 ? 'Hours' : 'Hour'} (${rangeStr})`;
         document.getElementById('summarySlotsList').textContent = formatMergedSlotRanges(sorted);
         document.getElementById('summaryTotalAmount').textContent = `₱${totalAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`;
-        document.getElementById('summaryRateSnapshot').textContent = `₱${bookingState.selectedRate.toFixed(2)}`;
+        document.getElementById('summaryRateSnapshot').textContent = `₱${bookingState.selectedRate.toFixed(2)} (${creditsRate.toFixed(1)} Cr)`;
+
+        // Update Credits breakdown elements
+        const summaryTotalCreditsEl = document.getElementById('summaryTotalCredits');
+        if (summaryTotalCreditsEl) summaryTotalCreditsEl.textContent = `${totalCredits.toFixed(1)} Credits`;
+
+        const reqCreditsEl = document.getElementById('creditsRequiredDisplay');
+        if (reqCreditsEl) reqCreditsEl.textContent = `${totalCredits.toFixed(1)} ${totalCredits === 1 ? 'Credit' : 'Credits'}`;
+
+        const courtRateEl = document.getElementById('creditsCourtRateDisplay');
+        if (courtRateEl) courtRateEl.textContent = `${creditsRate.toFixed(1)} Credit/hr`;
+
+        const btnAmountEl = document.getElementById('creditsBtnAmount');
+        if (btnAmountEl) btnAmountEl.textContent = `${totalCredits.toFixed(1)}`;
+
+        // Dynamic balance validation for logged-in users
+        const sufficientBox = document.getElementById('creditsSufficientBox');
+        const insufficientBox = document.getElementById('creditsInsufficientBox');
+        if (sufficientBox && insufficientBox) {
+            const userCredits = bookingState.userCredits || 0;
+            if (userCredits >= totalCredits) {
+                sufficientBox.classList.remove('hidden');
+                insufficientBox.classList.add('hidden');
+                const remaining = (userCredits - totalCredits).toFixed(1);
+                const remEl = document.getElementById('creditsRemainingDisplay');
+                if (remEl) remEl.textContent = remaining;
+            } else {
+                sufficientBox.classList.add('hidden');
+                insufficientBox.classList.remove('hidden');
+                const short = (totalCredits - userCredits).toFixed(1);
+                const shortEl = document.getElementById('creditsShortAmount');
+                if (shortEl) shortEl.textContent = short;
+            }
+        }
 
         // Update hidden inputs for manual receipt form
         if (document.getElementById('mrCourtId')) {
@@ -2135,10 +2332,161 @@
         }
     }
 
+    function setBookingPaymentMethod(method) {
+        const standardFlow = document.getElementById('standardPaymentFlow');
+        const creditsFlow = document.getElementById('creditsPaymentFlow');
+        const standardBtn = document.getElementById('payMethodStandardBtn');
+        const creditsBtn = document.getElementById('payMethodCreditsBtn');
+
+        if (method === 'credits') {
+            bookingState.chosenPaymentMethod = 'credits';
+            if (standardFlow) standardFlow.classList.add('hidden');
+            if (creditsFlow) creditsFlow.classList.remove('hidden');
+
+            if (standardBtn) {
+                standardBtn.classList.remove('bg-white', 'dark:bg-stone-900', 'shadow-xs', 'text-theme-heading');
+                standardBtn.classList.add('text-theme-muted');
+            }
+            if (creditsBtn) {
+                creditsBtn.classList.add('bg-white', 'dark:bg-stone-900', 'shadow-xs', 'text-theme-heading');
+                creditsBtn.classList.remove('text-theme-muted');
+            }
+        } else {
+            bookingState.chosenPaymentMethod = 'standard';
+            if (standardFlow) standardFlow.classList.remove('hidden');
+            if (creditsFlow) creditsFlow.classList.add('hidden');
+
+            if (creditsBtn) {
+                creditsBtn.classList.remove('bg-white', 'dark:bg-stone-900', 'shadow-xs', 'text-theme-heading');
+                creditsBtn.classList.add('text-theme-muted');
+            }
+            if (standardBtn) {
+                standardBtn.classList.add('bg-white', 'dark:bg-stone-900', 'shadow-xs', 'text-theme-heading');
+                standardBtn.classList.remove('text-theme-muted');
+            }
+        }
+    }
+
+    async function submitCreditsBookingAction() {
+        const custName = (document.getElementById('custName')?.value || '').trim();
+        const custPhone = (document.getElementById('custPhone')?.value || '').trim();
+        const custEmail = (document.getElementById('custEmail')?.value || '').trim();
+        const custPlayers = document.getElementById('custPlayersCount')?.value || 4;
+        const custNotes = (document.getElementById('custNotes')?.value || '').trim();
+
+        if (!custName || !custPhone) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Contact Details',
+                text: 'Please provide your Full Name and Mobile Phone Number.',
+                confirmButtonColor: '#0891b2'
+            });
+            return;
+        }
+
+        if (!bookingState.selectedCourtId || bookingState.selectedSlots.length === 0) {
+            Swal.fire({
+                icon: 'info',
+                title: 'No Timeslots Selected',
+                text: 'Please select at least one timeslot on the court schedule before proceeding.',
+                confirmButtonColor: '#0891b2'
+            });
+            return;
+        }
+
+        const totalHours = bookingState.selectedSlots.length;
+        const creditsRate = bookingState.selectedCreditsRate || 1.0;
+        const totalCredits = totalHours * creditsRate;
+
+        const confirmRes = await Swal.fire({
+            icon: 'question',
+            title: 'Confirm Booking with Credits',
+            html: `
+                <div class="text-left text-xs space-y-2 p-1">
+                    <p>Court: <strong>${bookingState.selectedCourtName}</strong></p>
+                    <p>Duration: <strong>${totalHours} ${totalHours > 1 ? 'hours' : 'hour'}</strong></p>
+                    <div class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                        <div class="flex justify-between font-bold text-amber-800">
+                            <span>Credits to Deduct:</span>
+                            <span>${totalCredits.toFixed(1)} Credits</span>
+                        </div>
+                    </div>
+                    <p class="text-[11px] text-stone-500">Your reservation will be confirmed immediately without waiting for review.</p>
+                </div>
+            `,
+            showCancelButton: true,
+            confirmButtonColor: '#d97706',
+            cancelButtonColor: '#78716c',
+            confirmButtonText: `Yes, Pay ${totalCredits.toFixed(1)} Credits`,
+            cancelButtonText: 'Cancel'
+        });
+
+        if (!confirmRes.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Securing Your Court...',
+            text: 'Deducting credits and confirming reservation.',
+            allowOutsideClick: false,
+            didOpen: () => Swal.showLoading()
+        });
+
+        try {
+            const response = await fetch("{{ route('booking.credits') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    court_id: bookingState.selectedCourtId,
+                    date: currentActiveDate || document.getElementById('selectedDateInput')?.value,
+                    slots: bookingState.selectedSlots,
+                    customer_name: custName,
+                    customer_phone: custPhone,
+                    customer_email: custEmail,
+                    players_count: custPlayers,
+                    notes: custNotes
+                })
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.success) {
+                // Instantly reroute directly to the booking tracker without extra dialog
+                if (data.track_url) {
+                    window.location.href = data.track_url;
+                } else {
+                    window.location.href = `/track/${data.reference}`;
+                }
+                return;
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Booking Failed',
+                    text: data.message || 'Unable to complete credit reservation.',
+                    confirmButtonColor: '#0891b2'
+                });
+            }
+        } catch (err) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'Could not connect to reservation server. Please try again.',
+                confirmButtonColor: '#0891b2'
+            });
+        }
+    }
+
     function resetSelection() {
         bookingState.selectedCourtId = null;
         bookingState.selectedCourtName = '';
         bookingState.selectedSlots = [];
+        if (bookingState.creditsEnabled) {
+            setBookingPaymentMethod('credits');
+        } else {
+            setBookingPaymentMethod('standard');
+        }
         renderSelectionUI();
     }
 

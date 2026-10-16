@@ -26,11 +26,10 @@
             <!-- Radio Selection Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <!-- Option 1: Manual Receipt Mode (Crunch Tan Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'manual_receipt' ? 'border-amber-500 bg-amber-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-amber-400' }}">
-                    <div class="flex items-start justify-between">
+                <label id="paymentCard-manual_receipt" class="payment-mode-card payment-mode-amber p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'manual_receipt' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-file-invoice"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Manual Receipt Upload</h4>
@@ -38,42 +37,66 @@
                                 Client scans your GCash / Maya QR Standee, then uploads payment screenshot. Owner reviews & approves manually.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="manual_receipt" {{ $settings->payment_mode === 'manual_receipt' ? 'checked' : '' }} class="mt-1 text-cyan-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="manual_receipt" {{ $settings->payment_mode === 'manual_receipt' ? 'checked' : '' }} onchange="selectPaymentMode('manual_receipt')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2 py-1 rounded-lg border border-amber-500/25 self-start">
-                        Manual Verification
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-lg border border-amber-500/25">
+                            Manual Verification
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-amber-500 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
 
                 <!-- Option 2: Xendit API Mode (Dreamland Cyan Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'xendit' ? 'border-cyan-500 bg-cyan-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-cyan-400' }}">
-                    <div class="flex items-start justify-between">
+                @php
+                    $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
+                @endphp
+                <label id="paymentCard-xendit" class="payment-mode-card payment-mode-cyan p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'xendit' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Xendit API (Auto-Reserve)</h4>
-                            @php
-                                $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
-                            @endphp
                             <p class="text-theme-muted text-[11px] leading-relaxed">
                                 Automatically confirms bookings when paid. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong> during checkout.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} class="mt-1 text-cyan-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} onchange="selectPaymentMode('xendit')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2 py-1 rounded-lg border border-cyan-500/25 self-start">
-                        {{ $currentHoldMins }}-Min Hold & Instant Confirm
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2.5 py-1 rounded-lg border border-cyan-500/25">
+                            {{ $currentHoldMins }}-Min Hold & Instant Confirm
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-cyan-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
 
                 <!-- Option 3: PayMongo API Mode (Teal / Emerald Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'paymongo' ? 'border-emerald-500 bg-emerald-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-emerald-400' }}">
-                    <div class="flex items-start justify-between">
+                <label id="paymentCard-paymongo" class="payment-mode-card payment-mode-emerald p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'paymongo' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-money-bill-wave"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">PayMongo API (Auto-Reserve)</h4>
@@ -81,11 +104,24 @@
                                 Auto-confirms bookings via PayMongo GCash, Maya, QRPH, and Cards. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong>.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} class="mt-1 text-emerald-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} onchange="selectPaymentMode('paymongo')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 px-2 py-1 rounded-lg border border-emerald-500/25 self-start">
-                        {{ $currentHoldMins }}-Min Checkout
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded-lg border border-emerald-500/25">
+                            {{ $currentHoldMins }}-Min Checkout
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
             </div>
 
@@ -130,6 +166,40 @@
                     <button type="button" onclick="setHoldingTime(300)" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500 hover:text-slate-950 text-theme-heading border border-stone-300 dark:border-stone-700 transition-colors cursor-pointer">
                         5 Mins (300s)
                     </button>
+                </div>
+            </div>
+
+            <!-- Court Credits for Booking Payment Config (Enable / Disable) -->
+            <div class="pt-5 border-t border-stone-200 dark:border-stone-800">
+                <div class="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-coins"></i>
+                            </div>
+                            <h4 class="font-extrabold text-theme-heading text-sm">Court Credits Booking Option</h4>
+                            <span id="creditsConfigBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                                {{ $settings->credits_enabled ? 'Active / Enabled' : 'Disabled (Gateway Only)' }}
+                            </span>
+                        </div>
+                        <p class="text-theme-muted text-[11px] leading-relaxed max-w-xl">
+                            Choose whether registered players can use their pre-paid court credits to book courts at checkout. When disabled, bookings can only be paid via Gateway / Cash (PayMongo, Xendit, or Manual GCash).
+                        </p>
+                    </div>
+
+                    <!-- Explicit Segmented Switch for Credits Booking (Yes / No) -->
+                    <div class="flex items-center gap-2 bg-white dark:bg-stone-900 p-1.5 rounded-2xl border border-stone-300 dark:border-stone-700 shadow-sm shrink-0">
+                        <label id="creditsBtnYes" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ $settings->credits_enabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-theme-muted hover:text-theme-heading' }}">
+                            <input type="radio" name="credits_enabled" value="1" {{ $settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(true)">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Allow Credits</span>
+                        </label>
+                        <label id="creditsBtnNo" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ !$settings->credits_enabled ? 'bg-rose-500 text-white shadow-md' : 'text-theme-muted hover:text-theme-heading' }}" >
+                            <input type="radio" name="credits_enabled" value="0" {{ !$settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(false)">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>Disallow Credits</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         </div>
@@ -261,6 +331,56 @@
             </div>
         </div>
 
+        <!-- COURT CREDITS & WALLET SETTINGS -->
+        <div class="rounded-3xl glass-panel border border-amber-500/30 p-6 sm:p-8 shadow-xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800 gap-2">
+                <div>
+                    <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-amber-500"></i> Court Credits & Wallet System
+                    </h3>
+                    <p class="text-theme-muted text-xs mt-0.5">Configure player pre-paid credits conversion rate and top-up rules.</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 self-start sm:self-auto">
+                    Pre-paid Court Credits
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label class="block font-bold text-theme-heading text-xs">
+                        Credit Conversion Rate (₱ PHP per 1 Credit) <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-2.5 font-bold text-theme-muted text-xs">₱</span>
+                        <input type="number" step="1" min="1" max="10000" name="credit_conversion_rate" required value="{{ $settings->credit_conversion_rate ?: 150 }}"
+                            class="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-black text-sm focus:border-amber-500 focus:outline-none">
+                    </div>
+                    <p class="text-[11px] text-theme-muted leading-relaxed">
+                        Setting this to <strong>150</strong> means <strong>₱150.00 = 1 Court Credit</strong>. When a player purchases 2 credits, they will pay ₱300.00.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-theme-body flex flex-col justify-center space-y-1.5">
+                    <div class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check"></i> How Credits Work
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-theme-muted">
+                        Players upload payment receipts (GCash/Maya/Bank) to purchase credits. Once you confirm and approve in the <strong>Approvals</strong> queue, credits are credited directly to their account, allowing instant court bookings without waiting for receipt checks!
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-theme-heading">Checkout Booking Status:</span>
+                    <span id="creditsSystemPill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                        {{ $settings->credits_enabled ? 'Allowed for Court Booking' : 'Disallowed for Booking' }}
+                    </span>
+                </div>
+                <span class="text-[11px] text-theme-muted">Configured in Payment Settings above</span>
+            </div>
+        </div>
+
         <!-- VENUE GENERAL INFO -->
         <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 p-6 sm:p-8 shadow-xl space-y-5">
             <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
@@ -337,6 +457,22 @@
 
 @push('scripts')
 <script>
+    function selectPaymentMode(mode) {
+        const modes = ['manual_receipt', 'xendit', 'paymongo'];
+        modes.forEach(m => {
+            const card = document.getElementById(`paymentCard-${m}`);
+            const radio = document.querySelector(`input[name="payment_mode"][value="${m}"]`);
+            if (card) {
+                if (m === mode) {
+                    card.classList.add('is-active');
+                    if (radio) radio.checked = true;
+                } else {
+                    card.classList.remove('is-active');
+                }
+            }
+        });
+    }
+
     function setHoldingTime(seconds) {
         const input = document.getElementById('holdingDurationInput');
         const badge = document.getElementById('holdingMinutesBadge');
@@ -360,5 +496,36 @@
             });
         }
     });
+
+    function updateCreditsToggle(enabled) {
+        const btnYes = document.getElementById('creditsBtnYes');
+        const btnNo = document.getElementById('creditsBtnNo');
+        const badge = document.getElementById('creditsConfigBadge');
+        const pill = document.getElementById('creditsSystemPill');
+
+        if (enabled) {
+            btnYes.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow-md';
+            btnNo.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 text-theme-muted hover:text-theme-heading';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30';
+                badge.textContent = 'Active / Enabled';
+            }
+            if (pill) {
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30';
+                pill.textContent = 'Allowed for Court Booking';
+            }
+        } else {
+            btnNo.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 bg-rose-500 text-white shadow-md';
+            btnYes.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 text-theme-muted hover:text-theme-heading';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30';
+                badge.textContent = 'Disabled (Gateway Only)';
+            }
+            if (pill) {
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30';
+                pill.textContent = 'Disallowed for Booking';
+            }
+        }
+    }
 </script>
 @endpush

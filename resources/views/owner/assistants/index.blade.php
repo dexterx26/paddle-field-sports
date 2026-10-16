@@ -417,19 +417,35 @@
 
                 <div class="space-y-2.5">
                     @foreach($availableModules as $key => $mod)
-                        <label class="flex items-start gap-3 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-cyan-500/40 bg-stone-100/70 dark:bg-stone-900/40 cursor-pointer transition-all">
+                        <label class="module-permission-card flex items-start gap-3 p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/60 dark:bg-stone-900/40 hover:border-cyan-500/50 cursor-pointer select-none transition-all duration-200">
                             <input type="checkbox" name="modules[]" value="{{ $key }}"
                                 {{ $mod['default'] ? 'checked' : '' }}
-                                class="mt-0.5 rounded text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 w-4 h-4 cursor-pointer">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid {{ $mod['icon'] }} text-xs text-cyan-600 dark:text-cyan-400"></i>
-                                    <span class="text-xs font-bold text-theme-heading">{{ $mod['name'] }}</span>
-                                    @if($mod['default'])
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500 text-slate-950 uppercase">Default</span>
-                                    @endif
+                                onchange="syncParentModuleCard(this)"
+                                class="sr-only module-checkbox">
+                            <div class="module-icon-box w-9 h-9 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-500 flex items-center justify-center shrink-0 transition-all duration-200">
+                                <i class="fa-solid {{ $mod['icon'] }} text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <span class="text-xs font-black text-theme-heading module-title">{{ $mod['name'] }}</span>
+                                        @if($mod['default'])
+                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 uppercase">Default</span>
+                                        @endif
+                                    </div>
+                                    <div class="shrink-0 flex items-center gap-2">
+                                        <span class="module-badge-granted hidden items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/30">
+                                            <i class="fa-solid fa-check text-[10px]"></i> Active
+                                        </span>
+                                        <span class="module-badge-disabled inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i> Off
+                                        </span>
+                                        <div class="module-indicator-check w-5 h-5 rounded-lg border flex items-center justify-center transition-all duration-200">
+                                            <i class="fa-solid fa-check text-[10px]"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] text-theme-muted mt-0.5 leading-snug">{{ $mod['description'] }}</p>
+                                <p class="text-[11px] text-theme-muted mt-1 leading-snug">{{ $mod['description'] }}</p>
                             </div>
                         </label>
                     @endforeach
@@ -528,18 +544,34 @@
 
                 <div class="space-y-2.5">
                     @foreach($availableModules as $key => $mod)
-                        <label class="flex items-start gap-3 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 hover:border-cyan-500/40 bg-stone-100/70 dark:bg-stone-900/40 cursor-pointer transition-all">
+                        <label class="module-permission-card flex items-start gap-3 p-3.5 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/60 dark:bg-stone-900/40 hover:border-cyan-500/50 cursor-pointer select-none transition-all duration-200">
                             <input type="checkbox" name="modules[]" value="{{ $key }}" id="edit_module_{{ $key }}"
-                                class="mt-0.5 rounded text-cyan-500 focus:ring-cyan-500 focus:ring-offset-0 w-4 h-4 cursor-pointer">
-                            <div class="flex-1">
-                                <div class="flex items-center gap-2">
-                                    <i class="fa-solid {{ $mod['icon'] }} text-xs text-cyan-600 dark:text-cyan-400"></i>
-                                    <span class="text-xs font-bold text-theme-heading">{{ $mod['name'] }}</span>
-                                    @if($mod['default'])
-                                        <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-cyan-500 text-slate-950 uppercase">Default</span>
-                                    @endif
+                                onchange="syncParentModuleCard(this)"
+                                class="sr-only module-checkbox">
+                            <div class="module-icon-box w-9 h-9 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-500 flex items-center justify-center shrink-0 transition-all duration-200">
+                                <i class="fa-solid {{ $mod['icon'] }} text-sm"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-2 truncate">
+                                        <span class="text-xs font-black text-theme-heading module-title">{{ $mod['name'] }}</span>
+                                        @if($mod['default'])
+                                            <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 uppercase">Default</span>
+                                        @endif
+                                    </div>
+                                    <div class="shrink-0 flex items-center gap-2">
+                                        <span class="module-badge-granted hidden items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500 text-slate-950 shadow-sm shadow-cyan-500/30">
+                                            <i class="fa-solid fa-check text-[10px]"></i> Active
+                                        </span>
+                                        <span class="module-badge-disabled inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+                                            <i class="fa-solid fa-xmark text-[10px]"></i> Off
+                                        </span>
+                                        <div class="module-indicator-check w-5 h-5 rounded-lg border flex items-center justify-center transition-all duration-200">
+                                            <i class="fa-solid fa-check text-[10px]"></i>
+                                        </div>
+                                    </div>
                                 </div>
-                                <p class="text-[11px] text-theme-muted mt-0.5 leading-snug">{{ $mod['description'] }}</p>
+                                <p class="text-[11px] text-theme-muted mt-1 leading-snug">{{ $mod['description'] }}</p>
                             </div>
                         </label>
                     @endforeach
@@ -572,8 +604,32 @@
 
 @push('scripts')
 <script>
+    function syncParentModuleCard(checkbox) {
+        if (!checkbox) return;
+        const card = checkbox.closest('.module-permission-card');
+        if (!card) return;
+        if (checkbox.checked) {
+            card.classList.add('is-active');
+        } else {
+            card.classList.remove('is-active');
+        }
+    }
+
+    function syncAllModuleCards(containerId = null) {
+        const root = containerId ? document.getElementById(containerId) : document;
+        if (!root) return;
+        root.querySelectorAll('.module-permission-card input[type="checkbox"]').forEach(cb => {
+            syncParentModuleCard(cb);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        syncAllModuleCards();
+    });
+
     function openAddAssistantModal() {
         document.getElementById('addAssistantModal').classList.remove('hidden');
+        syncAllModuleCards('addAssistantModal');
     }
 
     function closeAddAssistantModal() {
@@ -594,6 +650,7 @@
                 cb.checked = Array.isArray(permissions) && permissions.includes(mod);
             }
         });
+        syncAllModuleCards('editAssistantModal');
 
         document.getElementById('editAssistantModal').classList.remove('hidden');
     }

@@ -14,6 +14,7 @@ class Court extends Model
 
     protected $casts = [
         'price_per_hour' => 'decimal:2',
+        'credits_per_hour' => 'decimal:2',
         'max_players' => 'integer',
         'court_number' => 'integer',
         'is_active' => 'boolean',
@@ -32,6 +33,12 @@ class Court extends Model
     public function getFormattedPriceAttribute(): string
     {
         return '₱' . number_format($this->price_per_hour, 2);
+    }
+
+    public function getFormattedCreditsPriceAttribute(): string
+    {
+        $val = (float) ($this->credits_per_hour ?: 1.0);
+        return number_format($val, $val == (int) $val ? 0 : 1) . ' ' . ($val == 1 ? 'Credit' : 'Credits');
     }
 
     public function getEffectiveOpeningTime(): string
@@ -87,33 +94,34 @@ class Court extends Model
             return $this->image_path;
         }
 
-        $cleanPath = !empty($this->image_path) ? preg_replace('/^storage\//', '', ltrim($this->image_path, '/')) : '';
+        $cleanPath = !empty($this->image_path) ? preg_replace('/^storage\//', '', ltrim(str_replace('\\', '/', $this->image_path), '/')) : '';
+        $version = $this->updated_at ? '?v=' . $this->updated_at->timestamp : '';
 
         // 1. Check if file exists in public/storage
         if (!empty($cleanPath) && file_exists(public_path('storage/' . $cleanPath))) {
-            return asset('storage/' . $cleanPath);
+            return asset('storage/' . $cleanPath) . $version;
         }
 
         // 2. Check if file exists in storage/app/public
         if (!empty($cleanPath) && file_exists(storage_path('app/public/' . $cleanPath))) {
-            return asset('storage/' . $cleanPath);
+            return asset('storage/' . $cleanPath) . $version;
         }
 
         // 3. Check direct public path (e.g. public/images/courts/...)
         if (!empty($cleanPath) && file_exists(public_path('images/' . $cleanPath))) {
-            return asset('images/' . $cleanPath);
+            return asset('images/' . $cleanPath) . $version;
         }
         if (!empty($cleanPath) && file_exists(public_path($cleanPath))) {
-            return asset($cleanPath);
+            return asset($cleanPath) . $version;
         }
 
         // 4. Check court number specific committed image in public/images/courts/
         $num = $this->court_number ?? $this->id ?? 1;
         if (file_exists(public_path("images/courts/court-{$num}.jpg"))) {
-            return asset("images/courts/court-{$num}.jpg");
+            return asset("images/courts/court-{$num}.jpg") . $version;
         }
         if (file_exists(storage_path("app/public/courts/court-{$num}.jpg"))) {
-            return asset("storage/courts/court-{$num}.jpg");
+            return asset("storage/courts/court-{$num}.jpg") . $version;
         }
 
         // 5. Fallback to court-1.jpg if available

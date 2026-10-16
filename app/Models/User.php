@@ -32,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'google_id',
         'facebook_id',
         'avatar',
+        'credits',
     ];
 
     /**
@@ -283,6 +284,26 @@ class User extends Authenticatable implements MustVerifyEmail
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&background=0891b2&color=fff&bold=true';
     }
 
+    public function creditTopups()
+    {
+        return $this->hasMany(CreditTopup::class)->orderBy('created_at', 'desc');
+    }
+
+    public function creditTransactions()
+    {
+        return $this->hasMany(CreditTransaction::class)->orderBy('created_at', 'desc');
+    }
+
+    public function hasEnoughCredits(float $needed): bool
+    {
+        return (float) $this->credits >= $needed;
+    }
+
+    public function getFormattedCreditsAttribute(): string
+    {
+        return number_format((float) ($this->credits ?? 0), 1) . ' Credits';
+    }
+
     /**
      * Get the attributes that should be cast.
      *
@@ -295,6 +316,7 @@ class User extends Authenticatable implements MustVerifyEmail
             'password' => 'hashed',
             'permissions' => 'array',
             'is_active' => 'boolean',
+            'credits' => 'decimal:2',
         ];
     }
 }
