@@ -26,11 +26,10 @@
             <!-- Radio Selection Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <!-- Option 1: Manual Receipt Mode (Crunch Tan Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'manual_receipt' ? 'border-amber-500 bg-amber-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-amber-400' }}">
-                    <div class="flex items-start justify-between">
+                <label id="paymentCard-manual_receipt" class="payment-mode-card payment-mode-amber p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'manual_receipt' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-file-invoice"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Manual Receipt Upload</h4>
@@ -38,42 +37,66 @@
                                 Client scans your GCash / Maya QR Standee, then uploads payment screenshot. Owner reviews & approves manually.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="manual_receipt" {{ $settings->payment_mode === 'manual_receipt' ? 'checked' : '' }} class="mt-1 text-cyan-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="manual_receipt" {{ $settings->payment_mode === 'manual_receipt' ? 'checked' : '' }} onchange="selectPaymentMode('manual_receipt')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2 py-1 rounded-lg border border-amber-500/25 self-start">
-                        Manual Verification
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-500/15 px-2.5 py-1 rounded-lg border border-amber-500/25">
+                            Manual Verification
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-amber-500 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
 
                 <!-- Option 2: Xendit API Mode (Dreamland Cyan Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'xendit' ? 'border-cyan-500 bg-cyan-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-cyan-400' }}">
-                    <div class="flex items-start justify-between">
+                @php
+                    $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
+                @endphp
+                <label id="paymentCard-xendit" class="payment-mode-card payment-mode-cyan p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'xendit' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-bolt"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Xendit API (Auto-Reserve)</h4>
-                            @php
-                                $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
-                            @endphp
                             <p class="text-theme-muted text-[11px] leading-relaxed">
                                 Automatically confirms bookings when paid. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong> during checkout.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} class="mt-1 text-cyan-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} onchange="selectPaymentMode('xendit')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2 py-1 rounded-lg border border-cyan-500/25 self-start">
-                        {{ $currentHoldMins }}-Min Hold & Instant Confirm
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-cyan-700 dark:text-cyan-300 bg-cyan-500/15 px-2.5 py-1 rounded-lg border border-cyan-500/25">
+                            {{ $currentHoldMins }}-Min Hold & Instant Confirm
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-cyan-400 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
 
                 <!-- Option 3: PayMongo API Mode (Teal / Emerald Tone) -->
-                <label class="p-5 rounded-2xl border-2 cursor-pointer transition-all flex flex-col justify-between space-y-4
-                    {{ $settings->payment_mode === 'paymongo' ? 'border-emerald-500 bg-emerald-500/10' : 'border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900/60 hover:border-emerald-400' }}">
-                    <div class="flex items-start justify-between">
+                <label id="paymentCard-paymongo" class="payment-mode-card payment-mode-emerald p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'paymongo' ? 'is-active' : '' }}">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
-                            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2">
+                            <div class="mode-icon-box w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2 transition-all">
                                 <i class="fa-solid fa-money-bill-wave"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">PayMongo API (Auto-Reserve)</h4>
@@ -81,11 +104,24 @@
                                 Auto-confirms bookings via PayMongo GCash, Maya, QRPH, and Cards. Slots held for <strong>{{ $currentHoldMins }} minute{{ $currentHoldMins > 1 ? 's' : '' }}</strong>.
                             </p>
                         </div>
-                        <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} class="mt-1 text-emerald-500 focus:ring-0">
+                        <div class="flex flex-col items-end gap-1 shrink-0">
+                            <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
+                                <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
+                            </div>
+                            <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} onchange="selectPaymentMode('paymongo')" class="sr-only">
+                        </div>
                     </div>
-                    <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 px-2 py-1 rounded-lg border border-emerald-500/25 self-start">
-                        {{ $currentHoldMins }}-Min Checkout
-                    </span>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-500/15 px-2.5 py-1 rounded-lg border border-emerald-500/25">
+                            {{ $currentHoldMins }}-Min Checkout
+                        </span>
+                        <span class="mode-active-pill text-[10px] font-black tracking-wider uppercase bg-emerald-500 text-slate-950 px-2 py-0.5 rounded-md shadow-xs">
+                            Active Engine
+                        </span>
+                        <span class="mode-select-pill text-[10px] font-semibold text-stone-500 dark:text-stone-400 bg-stone-200/50 dark:bg-stone-800/50 px-2 py-0.5 rounded-md">
+                            Select
+                        </span>
+                    </div>
                 </label>
             </div>
 
@@ -421,6 +457,22 @@
 
 @push('scripts')
 <script>
+    function selectPaymentMode(mode) {
+        const modes = ['manual_receipt', 'xendit', 'paymongo'];
+        modes.forEach(m => {
+            const card = document.getElementById(`paymentCard-${m}`);
+            const radio = document.querySelector(`input[name="payment_mode"][value="${m}"]`);
+            if (card) {
+                if (m === mode) {
+                    card.classList.add('is-active');
+                    if (radio) radio.checked = true;
+                } else {
+                    card.classList.remove('is-active');
+                }
+            }
+        });
+    }
+
     function setHoldingTime(seconds) {
         const input = document.getElementById('holdingDurationInput');
         const badge = document.getElementById('holdingMinutesBadge');

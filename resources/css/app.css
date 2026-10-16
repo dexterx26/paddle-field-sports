@@ -372,3 +372,131 @@ input:-webkit-autofill:active {
     color: #020617 !important;
     box-shadow: 0 1px 6px rgba(6, 182, 212, 0.4) !important;
 }
+
+/* Payment Mode Selection Cards Interactive Visual Shift */
+.payment-mode-card {
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    border-width: 2px !important;
+}
+
+/* Default / Unselected State */
+.payment-mode-card:not(:has(input:checked)):not(.is-active) {
+    opacity: 0.68;
+    border-color: rgba(168, 162, 158, 0.35) !important;
+    background-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.dark .payment-mode-card:not(:has(input:checked)):not(.is-active) {
+    background-color: rgba(28, 25, 23, 0.4) !important;
+    border-color: rgba(68, 64, 60, 0.5) !important;
+}
+
+.payment-mode-card:not(:has(input:checked)):not(.is-active):hover {
+    opacity: 0.95;
+    transform: translateY(-2px);
+}
+
+.payment-mode-card:not(:has(input:checked)):not(.is-active) .mode-check-icon {
+    display: none !important;
+}
+
+.payment-mode-card:not(:has(input:checked)):not(.is-active) .mode-active-pill {
+    display: none !important;
+}
+
+.payment-mode-card:not(:has(input:checked)):not(.is-active) .mode-select-pill {
+    display: inline-flex !important;
+}
+
+/* Selected State General */
+.payment-mode-card:has(input:checked),
+.payment-mode-card.is-active {
+    opacity: 1 !important;
+    transform: translateY(-2px);
+}
+
+.payment-mode-card:has(input:checked) .mode-check-icon,
+.payment-mode-card.is-active .mode-check-icon {
+    display: inline-flex !important;
+}
+
+.payment-mode-card:has(input:checked) .mode-active-pill,
+.payment-mode-card.is-active .mode-active-pill {
+    display: inline-flex !important;
+}
+
+.payment-mode-card:has(input:checked) .mode-select-pill,
+.payment-mode-card.is-active .mode-select-pill {
+    display: none !important;
+}
+
+/* Amber Theme (Manual Receipt) */
+.payment-mode-amber:has(input:checked),
+.payment-mode-amber.is-active {
+    border-color: #f59e0b !important;
+    background-color: rgba(245, 158, 11, 0.12) !important;
+    box-shadow: 0 10px 25px -4px rgba(245, 158, 11, 0.22), 0 0 0 1px #f59e0b !important;
+}
+
+.payment-mode-amber:has(input:checked) .mode-icon-box,
+.payment-mode-amber.is-active .mode-icon-box {
+    background-color: #f59e0b !important;
+    color: #451a03 !important;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35) !important;
+    transform: scale(1.08);
+}
+
+.payment-mode-amber:has(input:checked) .mode-indicator,
+.payment-mode-amber.is-active .mode-indicator {
+    border-color: #f59e0b !important;
+    background-color: #f59e0b !important;
+    color: #451a03 !important;
+}
+
+/* Cyan Theme (Xendit) */
+.payment-mode-cyan:has(input:checked),
+.payment-mode-cyan.is-active {
+    border-color: #06b6d4 !important;
+    background-color: rgba(6, 182, 212, 0.12) !important;
+    box-shadow: 0 10px 25px -4px rgba(6, 182, 212, 0.22), 0 0 0 1px #06b6d4 !important;
+}
+
+.payment-mode-cyan:has(input:checked) .mode-icon-box,
+.payment-mode-cyan.is-active .mode-icon-box {
+    background-color: #06b6d4 !important;
+    color: #020617 !important;
+    box-shadow: 0 4px 12px rgba(6, 182, 212, 0.35) !important;
+    transform: scale(1.08);
+}
+
+.payment-mode-cyan:has(input:checked) .mode-indicator,
+.payment-mode-cyan.is-active .mode-indicator {
+    border-color: #06b6d4 !important;
+    background-color: #06b6d4 !important;
+    color: #020617 !important;
+}
+
+/* Emerald Theme (PayMongo) */
+.payment-mode-emerald:has(input:checked),
+.payment-mode-emerald.is-active {
+    border-color: #10b981 !important;
+    background-color: rgba(16, 185, 129, 0.12) !important;
+    box-shadow: 0 10px 25px -4px rgba(16, 185, 129, 0.22), 0 0 0 1px #10b981 !important;
+}
+
+.payment-mode-emerald:has(input:checked) .mode-icon-box,
+.payment-mode-emerald.is-active .mode-icon-box {
+    background-color: #10b981 !important;
+    color: #022c22 !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35) !important;
+    transform: scale(1.08);
+}
+
+.payment-mode-emerald:has(input:checked) .mode-indicator,
+.payment-mode-emerald.is-active .mode-indicator {
+    border-color: #10b981 !important;
+    background-color: #10b981 !important;
+    color: #022c22 !important;
+}
+
