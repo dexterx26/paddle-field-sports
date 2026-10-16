@@ -659,14 +659,14 @@
                             <i class="fa-solid fa-phone text-cyan-400 w-4"></i>
                             <span>{{ $settings->phone ?? '+63 917 555 7233' }}</span>
                         </div>
-                        <div class="flex items-center gap-2">
+                        <!-- <div class="flex items-center gap-2">
                             <i class="fa-solid fa-envelope text-amber-400 w-4"></i>
                             <span>{{ $settings->email ?? 'contact@paddlefield.com' }}</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <i class="fa-solid fa-clock text-cyan-400 w-4"></i>
                             <span>Daily: {{ $settings->opening_time ?? '06:00' }} - {{ $settings->closing_time ?? '00:00' }} Midnight</span>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>

@@ -1109,7 +1109,7 @@
         dragAnchorTime: null,
         paymentMode: "{{ $settings->payment_mode }}",
         creditsEnabled: {{ !empty($settings->credits_enabled) ? 'true' : 'false' }},
-        chosenPaymentMethod: {{ !empty($settings->credits_enabled) ? "'credits'" : "'standard'" }}, // default to credits if enabled
+        chosenPaymentMethod: "{{ !empty($settings->credits_enabled) ? 'credits' : 'standard' }}", // default to credits if enabled
         userCredits: {{ Auth::check() ? (float) Auth::user()->credits : 0 }},
         creditsConversionRate: {{ (float) ($settings->credit_conversion_rate ?: 150) }},
         activeHold: null,
