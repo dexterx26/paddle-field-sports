@@ -57,7 +57,9 @@
         <!-- Current Payment Mode Badge in Sidebar -->
         @php
             $globalSettings = \App\Models\VenueSetting::getSettings();
-            $pendingCount = \App\Models\Booking::where('booking_status', 'pending_approval')->count();
+            $pendingBookingsCount = \App\Models\Booking::where('booking_status', 'pending_approval')->count();
+            $pendingTopupsCount = \App\Models\CreditTopup::where('status', 'pending')->count();
+            $pendingCount = $pendingBookingsCount + $pendingTopupsCount;
         @endphp
         <div class="px-5 py-3 border-b border-stone-200 bg-stone-200/50">
             <div class="flex items-center justify-between text-[11px] mb-1">

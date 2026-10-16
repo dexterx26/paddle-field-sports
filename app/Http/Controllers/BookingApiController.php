@@ -192,6 +192,94 @@ class BookingApiController extends Controller
     }
 
     /**
+     * Submit booking paid with Court Credits
+     */
+    public function submitCreditsBooking(Request $request)
+    {
+        $settings = \App\Models\VenueSetting::getSettings();
+        if (empty($settings->credits_enabled)) {
+            $msg = 'Paying with Court Credits is currently disabled by venue administration. Please select a cash/gateway payment option.';
+            return $request->expectsJson() || $request->is('api/*')
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg);
+        }
+
+        if (!Auth::check()) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Please sign in to your account to pay with Court Credits.',
+                ], 401);
+            }
+            return redirect()->route('login')->with('error', 'Please sign in to pay with Court Credits.');
+        }
+
+        $request->validate([
+            'court_id' => 'required|exists:courts,id',
+            'date' => 'required|date|after_or_equal:today',
+            'slots' => 'required',
+            'customer_name' => 'nullable|string|max:100',
+            'customer_phone' => 'nullable|string|max:25',
+            'customer_email' => 'nullable|email|max:100',
+            'players_count' => 'nullable|integer|min:1|max:20',
+            'notes' => 'nullable|string|max:500',
+        ]);
+
+        $slots = $request->input('slots');
+        if (is_string($slots)) {
+            $slots = json_decode($slots, true) ?: explode(',', $slots);
+        }
+        $slots = array_filter(array_map('trim', (array) $slots));
+
+        if (empty($slots)) {
+            $msg = 'Please select at least one timeslot.';
+            return $request->expectsJson()
+                ? response()->json(['success' => false, 'message' => $msg], 422)
+                : back()->with('error', $msg)->withInput();
+        }
+
+        $courtId = (int) $request->input('court_id');
+        $date = $request->input('date');
+        $user = Auth::user();
+
+        $customerData = [
+            'name' => trim($request->input('customer_name') ?: $user->name),
+            'phone' => trim($request->input('customer_phone') ?: ($user->phone ?? 'N/A')),
+            'email' => $request->input('customer_email') ?: $user->email,
+            'players_count' => $request->input('players_count'),
+            'notes' => $request->input('notes'),
+        ];
+
+        try {
+            $booking = $this->bookingService->createCreditsBooking(
+                $courtId,
+                $date,
+                $slots,
+                $customerData,
+                $user
+            );
+
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Booking {$booking->booking_reference} confirmed successfully using Court Credits!",
+                    'reference' => $booking->booking_reference,
+                    'track_url' => route('booking.track', ['reference' => $booking->booking_reference]),
+                    'credits_remaining' => (float) $user->fresh()->credits,
+                ]);
+            }
+
+            return redirect()->route('booking.track', ['reference' => $booking->booking_reference])
+                ->with('success', "Your reservation {$booking->booking_reference} has been CONFIRMED immediately using your Court Credits! Remaining balance: " . $user->fresh()->credits . " credits.");
+        } catch (\Exception $e) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 400);
+            }
+            return back()->with('error', $e->getMessage())->withInput();
+        }
+    }
+
+    /**
      * Check real-time status of a booking
      */
     public function status(string $reference): JsonResponse

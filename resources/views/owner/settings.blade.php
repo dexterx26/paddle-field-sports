@@ -132,6 +132,40 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Court Credits for Booking Payment Config (Enable / Disable) -->
+            <div class="pt-5 border-t border-stone-200 dark:border-stone-800">
+                <div class="p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">
+                                <i class="fa-solid fa-coins"></i>
+                            </div>
+                            <h4 class="font-extrabold text-theme-heading text-sm">Court Credits Booking Option</h4>
+                            <span id="creditsConfigBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                                {{ $settings->credits_enabled ? 'Active / Enabled' : 'Disabled (Gateway Only)' }}
+                            </span>
+                        </div>
+                        <p class="text-theme-muted text-[11px] leading-relaxed max-w-xl">
+                            Choose whether registered players can use their pre-paid court credits to book courts at checkout. When disabled, bookings can only be paid via Gateway / Cash (PayMongo, Xendit, or Manual GCash).
+                        </p>
+                    </div>
+
+                    <!-- Explicit Segmented Switch for Credits Booking (Yes / No) -->
+                    <div class="flex items-center gap-2 bg-white dark:bg-stone-900 p-1.5 rounded-2xl border border-stone-300 dark:border-stone-700 shadow-sm shrink-0">
+                        <label id="creditsBtnYes" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ $settings->credits_enabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-theme-muted hover:text-theme-heading' }}">
+                            <input type="radio" name="credits_enabled" value="1" {{ $settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(true)">
+                            <i class="fa-solid fa-check"></i>
+                            <span>Allow Credits</span>
+                        </label>
+                        <label id="creditsBtnNo" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ !$settings->credits_enabled ? 'bg-rose-500 text-white shadow-md' : 'text-theme-muted hover:text-theme-heading' }}" >
+                            <input type="radio" name="credits_enabled" value="0" {{ !$settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(false)">
+                            <i class="fa-solid fa-ban"></i>
+                            <span>Disallow Credits</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- MANUAL RECEIPT SETTINGS -->
@@ -261,6 +295,56 @@
             </div>
         </div>
 
+        <!-- COURT CREDITS & WALLET SETTINGS -->
+        <div class="rounded-3xl glass-panel border border-amber-500/30 p-6 sm:p-8 shadow-xl space-y-5">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800 gap-2">
+                <div>
+                    <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
+                        <i class="fa-solid fa-coins text-amber-500"></i> Court Credits & Wallet System
+                    </h3>
+                    <p class="text-theme-muted text-xs mt-0.5">Configure player pre-paid credits conversion rate and top-up rules.</p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 self-start sm:self-auto">
+                    Pre-paid Court Credits
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="space-y-2">
+                    <label class="block font-bold text-theme-heading text-xs">
+                        Credit Conversion Rate (₱ PHP per 1 Credit) <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <span class="absolute left-3.5 top-2.5 font-bold text-theme-muted text-xs">₱</span>
+                        <input type="number" step="1" min="1" max="10000" name="credit_conversion_rate" required value="{{ $settings->credit_conversion_rate ?: 150 }}"
+                            class="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-black text-sm focus:border-amber-500 focus:outline-none">
+                    </div>
+                    <p class="text-[11px] text-theme-muted leading-relaxed">
+                        Setting this to <strong>150</strong> means <strong>₱150.00 = 1 Court Credit</strong>. When a player purchases 2 credits, they will pay ₱300.00.
+                    </p>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-xs text-theme-body flex flex-col justify-center space-y-1.5">
+                    <div class="font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-circle-check"></i> How Credits Work
+                    </div>
+                    <p class="text-[11px] leading-relaxed text-theme-muted">
+                        Players upload payment receipts (GCash/Maya/Bank) to purchase credits. Once you confirm and approve in the <strong>Approvals</strong> queue, credits are credited directly to their account, allowing instant court bookings without waiting for receipt checks!
+                    </p>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-theme-heading">Checkout Booking Status:</span>
+                    <span id="creditsSystemPill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                        {{ $settings->credits_enabled ? 'Allowed for Court Booking' : 'Disallowed for Booking' }}
+                    </span>
+                </div>
+                <span class="text-[11px] text-theme-muted">Configured in Payment Settings above</span>
+            </div>
+        </div>
+
         <!-- VENUE GENERAL INFO -->
         <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 p-6 sm:p-8 shadow-xl space-y-5">
             <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
@@ -360,5 +444,36 @@
             });
         }
     });
+
+    function updateCreditsToggle(enabled) {
+        const btnYes = document.getElementById('creditsBtnYes');
+        const btnNo = document.getElementById('creditsBtnNo');
+        const badge = document.getElementById('creditsConfigBadge');
+        const pill = document.getElementById('creditsSystemPill');
+
+        if (enabled) {
+            btnYes.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 bg-amber-500 text-slate-950 shadow-md';
+            btnNo.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 text-theme-muted hover:text-theme-heading';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30';
+                badge.textContent = 'Active / Enabled';
+            }
+            if (pill) {
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30';
+                pill.textContent = 'Allowed for Court Booking';
+            }
+        } else {
+            btnNo.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 bg-rose-500 text-white shadow-md';
+            btnYes.className = 'px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 text-theme-muted hover:text-theme-heading';
+            if (badge) {
+                badge.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30';
+                badge.textContent = 'Disabled (Gateway Only)';
+            }
+            if (pill) {
+                pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30';
+                pill.textContent = 'Disallowed for Booking';
+            }
+        }
+    }
 </script>
 @endpush

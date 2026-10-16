@@ -50,7 +50,18 @@ class ProfileController extends Controller
         ->limit(5)
         ->get();
 
-        return view('profile.edit', compact('user', 'settings', 'totalBookings', 'activeBookings', 'recentBookings'));
+        $creditTopups = $user->creditTopups()->limit(10)->get();
+        $creditTransactions = $user->creditTransactions()->limit(10)->get();
+
+        return view('profile.edit', compact(
+            'user',
+            'settings',
+            'totalBookings',
+            'activeBookings',
+            'recentBookings',
+            'creditTopups',
+            'creditTransactions'
+        ));
     }
 
     /**

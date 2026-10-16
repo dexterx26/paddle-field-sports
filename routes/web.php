@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BookingApiController;
+use App\Http\Controllers\CreditController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\ProfileController;
@@ -21,6 +22,9 @@ Route::get('/privacy-policy', [HomeController::class, 'privacy']);
 Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
 Route::get('/terms-of-service', [HomeController::class, 'terms']);
 Route::post('/booking/manual-receipt', [BookingApiController::class, 'submitManualReceipt'])->name('booking.manual_receipt');
+Route::post('/booking/credits', [BookingApiController::class, 'submitCreditsBooking'])->name('booking.credits');
+Route::post('/credits/topup', [CreditController::class, 'submitTopup'])->name('credits.topup')->middleware('auth');
+Route::delete('/credits/topup/{id}', [CreditController::class, 'cancelTopup'])->name('credits.topup.cancel')->middleware('auth');
 Route::get('/xendit-checkout/{reference}', [BookingApiController::class, 'simulatedCheckout'])->name('xendit.simulated.checkout');
 Route::get('/paymongo-checkout/{reference}', [BookingApiController::class, 'paymongoCheckout'])->name('paymongo.simulated.checkout');
 Route::post('/simulate-payment/{reference}', [BookingApiController::class, 'simulatePayment'])->name('booking.simulate_payment');
@@ -38,6 +42,7 @@ Route::prefix('api')->group(function () {
     Route::post('/xendit/webhook', [BookingApiController::class, 'xenditWebhook'])->name('api.xendit.webhook');
     Route::post('/paymongo/webhook', [BookingApiController::class, 'paymongoWebhook'])->name('api.paymongo.webhook');
     Route::post('/paymongo/dynamic-qr/{reference}', [BookingApiController::class, 'generatePayMongoQr'])->name('api.paymongo.dynamic_qr');
+    Route::get('/user/credits', [CreditController::class, 'getBalance'])->name('api.user.credits');
 });
 
 /*
@@ -93,6 +98,8 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
         Route::get('/approvals', [OwnerController::class, 'approvals'])->name('approvals');
         Route::post('/approvals/{id}/approve', [OwnerController::class, 'approveBooking'])->name('approve');
         Route::post('/approvals/{id}/reject', [OwnerController::class, 'rejectBooking'])->name('reject');
+        Route::post('/approvals/credits/{id}/approve', [OwnerController::class, 'approveCreditTopup'])->name('approvals.credits.approve');
+        Route::post('/approvals/credits/{id}/reject', [OwnerController::class, 'rejectCreditTopup'])->name('approvals.credits.reject');
     });
 
     // Courts Management (Pricing per hour, max players, photo, add/edit)

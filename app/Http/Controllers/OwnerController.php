@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Booking;
 use App\Models\Court;
+use App\Models\CreditTopup;
+use App\Models\CreditTransaction;
 use App\Models\FacilityPhoto;
 use App\Models\User;
 use App\Models\VenueSetting;
@@ -12,6 +14,7 @@ use App\Services\EmailNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 
@@ -103,9 +106,14 @@ class OwnerController extends Controller
         $pendingBookings = Booking::with(['court', 'slots'])
             ->where('booking_status', 'pending_approval')
             ->orderBy('created_at', 'asc')
-            ->paginate(15);
+            ->paginate(15, ['*'], 'bookings_page');
 
-        return view('owner.approvals', compact('settings', 'pendingBookings'));
+        $pendingTopups = CreditTopup::with('user')
+            ->where('status', 'pending')
+            ->orderBy('created_at', 'asc')
+            ->paginate(15, ['*'], 'topups_page');
+
+        return view('owner.approvals', compact('settings', 'pendingBookings', 'pendingTopups'));
     }
 
     /**
@@ -140,6 +148,67 @@ class OwnerController extends Controller
         $this->bookingService->rejectBooking($booking, $reason, Auth::id());
 
         return back()->with('info', "Booking {$booking->booking_reference} was rejected and slots released.");
+    }
+
+    /**
+     * Approve a pending Credit Top-Up
+     */
+    public function approveCreditTopup(int $id)
+    {
+        $topup = CreditTopup::with('user')->findOrFail($id);
+
+        if ($topup->status !== 'pending') {
+            return back()->with('error', "Top-up request {$topup->reference} is already {$topup->status}.");
+        }
+
+        $user = $topup->user;
+        $creditsToAdd = (float) $topup->credits;
+
+        DB::transaction(function () use ($topup, $user, $creditsToAdd) {
+            $user->increment('credits', $creditsToAdd);
+            $newBalance = (float) $user->fresh()->credits;
+
+            $topup->update([
+                'status' => 'approved',
+                'approved_by' => Auth::id(),
+                'approved_at' => now(),
+            ]);
+
+            CreditTransaction::create([
+                'user_id' => $user->id,
+                'type' => 'topup',
+                'amount_credits' => $creditsToAdd,
+                'balance_after' => $newBalance,
+                'reference_id' => $topup->id,
+                'reference_type' => CreditTopup::class,
+                'description' => "Credit top-up approved ({$topup->reference}) - ₱" . number_format($topup->amount_php, 2) . " via " . ucfirst(str_replace('_', ' ', $topup->payment_method)),
+            ]);
+        });
+
+        return back()->with('success', "Credit top-up {$topup->reference} for {$user->name} ({$topup->formatted_credits}) has been APPROVED and credited to their wallet!");
+    }
+
+    /**
+     * Reject a pending Credit Top-Up
+     */
+    public function rejectCreditTopup(Request $request, int $id)
+    {
+        $topup = CreditTopup::with('user')->findOrFail($id);
+
+        if ($topup->status !== 'pending') {
+            return back()->with('error', "Top-up request {$topup->reference} is already {$topup->status}.");
+        }
+
+        $reason = $request->input('reason', 'Payment proof receipt could not be verified.');
+
+        $topup->update([
+            'status' => 'rejected',
+            'rejection_reason' => $reason,
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        return back()->with('info', "Credit top-up {$topup->reference} was rejected.");
     }
 
     /**
@@ -181,6 +250,7 @@ class OwnerController extends Controller
             'opening_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'closing_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'price_per_hour' => 'required|numeric|min:0',
+            'credits_per_hour' => 'nullable|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
             'image_url' => 'nullable|url|max:500',
@@ -213,6 +283,7 @@ class OwnerController extends Controller
             'opening_time' => $data['opening_time'] ?? '06:00',
             'closing_time' => $data['closing_time'] ?? '00:00',
             'price_per_hour' => $data['price_per_hour'],
+            'credits_per_hour' => $data['credits_per_hour'] ?? 1.00,
             'max_players' => $data['max_players'],
             'image_path' => $imagePath,
             'is_active' => $request->has('is_active'),
@@ -255,6 +326,7 @@ class OwnerController extends Controller
             'opening_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'closing_time' => 'nullable|string|regex:/^\d{2}:\d{2}$/',
             'price_per_hour' => 'required|numeric|min:0',
+            'credits_per_hour' => 'nullable|numeric|min:0',
             'max_players' => 'required|integer|min:1|max:20',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,webp,gif,avif,svg|max:10240',
             'image_url' => 'nullable|url|max:500',
@@ -270,6 +342,7 @@ class OwnerController extends Controller
             'opening_time' => $data['opening_time'] ?? '06:00',
             'closing_time' => $data['closing_time'] ?? '00:00',
             'price_per_hour' => $data['price_per_hour'], // New rate applied only for future bookings!
+            'credits_per_hour' => $data['credits_per_hour'] ?? 1.00,
             'max_players' => $data['max_players'],
             'is_active' => $request->has('is_active'),
         ];
@@ -528,6 +601,9 @@ class OwnerController extends Controller
             'currency_symbol' => 'required|string|max:5',
             'payment_mode' => 'required|in:manual_receipt,xendit,paymongo',
             'holding_duration_seconds' => 'required|integer|min:30|max:600',
+            // Credits settings
+            'credit_conversion_rate' => 'nullable|numeric|min:1|max:10000',
+            'credits_enabled' => 'nullable',
             // Xendit credentials
             'xendit_secret_key' => 'nullable|string',
             'xendit_public_key' => 'nullable|string',
@@ -551,6 +627,10 @@ class OwnerController extends Controller
         $data = $request->except(['_token', 'manual_payment_qr']);
         $data['xendit_simulation_mode'] = $request->boolean('xendit_simulation_mode', false);
         $data['paymongo_simulation_mode'] = $request->boolean('paymongo_simulation_mode', false);
+        $data['credits_enabled'] = $request->has('credits_enabled')
+            ? in_array($request->input('credits_enabled'), [1, '1', true, 'true', 'on'], true)
+            : false;
+        $data['credit_conversion_rate'] = $request->filled('credit_conversion_rate') ? (float) $request->input('credit_conversion_rate') : 150.00;
 
         if ($request->hasFile('manual_payment_qr')) {
             $data['manual_payment_qr'] = $request->file('manual_payment_qr')->store('qr', 'public');
@@ -559,7 +639,7 @@ class OwnerController extends Controller
         $settings->update($data);
 
         return redirect()->route('owner.settings')
-            ->with('success', 'Settings updated successfully! Payment mode is currently set to: ' . strtoupper(str_replace('_', ' ', $settings->payment_mode)));
+            ->with('success', 'Settings updated successfully! Payment gateway: ' . strtoupper(str_replace('_', ' ', $settings->payment_mode)) . ' | Court Credits: ' . ($settings->credits_enabled ? 'ENABLED' : 'DISABLED'));
     }
 
     /**

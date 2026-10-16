@@ -70,7 +70,12 @@
                         <div class="p-3.5 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-2 text-xs">
                             <div class="flex justify-between items-center">
                                 <span class="text-theme-muted">Rate per Hour:</span>
-                                <span class="font-black text-cyan-600 dark:text-cyan-400 text-base">{{ $court->formatted_price }}<span class="text-xs text-theme-muted font-normal">/hr</span></span>
+                                <div class="text-right">
+                                    <span class="font-black text-cyan-600 dark:text-cyan-400 text-base">{{ $court->formatted_price }}<span class="text-xs text-theme-muted font-normal">/hr</span></span>
+                                    <span class="block text-[11px] font-bold text-amber-600 dark:text-amber-400">
+                                        <i class="fa-solid fa-coins text-[10px] mr-0.5"></i> {{ $court->formatted_credits_price }}/hr
+                                    </span>
+                                </div>
                             </div>
                             <div class="flex justify-between items-center">
                                 <span class="text-theme-muted">Available Hours:</span>
@@ -165,12 +170,18 @@
             </div>
 
             <!-- PRICING AND CAPACITY (Req #7 - Crunch Accent) -->
-            <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
                 <div>
                     <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Hourly Rate (₱) <span class="text-rose-500">*</span></label>
                     <input type="number" step="0.01" min="0" name="price_per_hour" required value="150.00" placeholder="150.00"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
                     <span class="text-[10px] text-theme-muted">Charge per 1 hour slot</span>
+                </div>
+                <div>
+                    <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Credits Rate <span class="text-rose-500">*</span></label>
+                    <input type="number" step="0.5" min="0" name="credits_per_hour" required value="1.00" placeholder="1.00"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
+                    <span class="text-[10px] text-theme-muted">Credits to book 1 hour</span>
                 </div>
                 <div>
                     <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Max Players <span class="text-rose-500">*</span></label>
@@ -303,12 +314,18 @@
             </div>
 
             <!-- PRICING & MAX PLAYERS EDIT (Req #7) -->
-            <div class="grid grid-cols-2 gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30">
                 <div>
                     <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Hourly Rate (₱) <span class="text-rose-500">*</span></label>
                     <input type="number" step="0.01" min="0" name="price_per_hour" id="editCourtPrice" required
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
                     <span class="text-[10px] text-theme-muted">Applies to new bookings</span>
+                </div>
+                <div>
+                    <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Credits Rate <span class="text-rose-500">*</span></label>
+                    <input type="number" step="0.5" min="0" name="credits_per_hour" id="editCourtCredits" required
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-bold focus:outline-none focus:border-cyan-500">
+                    <span class="text-[10px] text-theme-muted">Credits to book 1 hour</span>
                 </div>
                 <div>
                     <label class="block font-bold text-amber-800 dark:text-amber-400 mb-1">Max Players <span class="text-rose-500">*</span></label>
@@ -463,6 +480,7 @@
         document.getElementById('editCourtType').value = court.type || 'indoor';
         document.getElementById('editCourtSurface').value = court.surface_type || 'Pro Cushion Acrylic';
         document.getElementById('editCourtPrice').value = court.price_per_hour || '150.00';
+        document.getElementById('editCourtCredits').value = court.credits_per_hour || '1.00';
         document.getElementById('editCourtMaxPlayers').value = court.max_players || 4;
         document.getElementById('editCourtDesc').value = court.description || '';
         document.getElementById('editCourtOpeningTime').value = court.opening_time || '06:00';

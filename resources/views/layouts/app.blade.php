@@ -33,14 +33,14 @@
 </head>
 <body class="min-h-screen flex flex-col selection:bg-cyan-400 selection:text-slate-950 antialiased transition-colors duration-200">
     <!-- Top Announcement Bar (Lead, Crunch & Dreamland Accents) -->
-    <div class="bg-lead text-cascading-white py-1.5 px-4 text-xs font-semibold text-center tracking-wide flex items-center justify-center gap-3 border-b border-stone-800">
+    <div class="bg-lead text-cascading-white py-1.5 px-4 text-xs font-semibold text-center tracking-wide flex items-center justify-center gap-3 border-b border-stone-800 no-print">
         <span>⚡ Open Daily 6:00 AM – 12:00 AM Midnight • Fast Real-Time Court Reservations</span>
         <span class="hidden md:inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
         <span class="hidden md:inline text-amber-300">Instant Slot Hold with Paymongo or Manual GCash Receipt</span>
     </div>
 
     <!-- Main Navigation Header -->
-    <header class="sticky top-0 z-50 glass-panel border-b backdrop-blur-md">
+    <header class="sticky top-0 z-50 glass-panel border-b backdrop-blur-md no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <!-- Brand / Logo -->
@@ -126,6 +126,13 @@
 
                     @auth
                         <div class="flex items-center gap-2 sm:gap-3">
+                            <!-- User Credits Wallet Badge -->
+                            <a href="{{ route('profile.edit') }}#credits-wallet" class="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5 transition-all shadow-sm group cursor-pointer" title="Your Court Credits Wallet (Click to Top Up)">
+                                <i class="fa-solid fa-coins text-amber-600 dark:text-amber-400 group-hover:rotate-12 transition-transform"></i>
+                                <span>{{ number_format(Auth::user()->credits, 1) }}</span>
+                                <span class="text-[10px] uppercase font-bold text-amber-700 dark:text-amber-400 hidden sm:inline">Credits</span>
+                            </a>
+
                             @if(Auth::user()->isStaffOrAdmin())
                                 <a href="{{ route(Auth::user()->getFirstAllowedRoute()) }}" class="px-3.5 py-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold shadow-md shadow-cyan-500/20 flex items-center gap-1.5 transition-all">
                                     <i class="fa-solid fa-gauge-high"></i>
@@ -145,12 +152,25 @@
                                     <div class="px-3.5 py-2 border-b border-stone-200">
                                         <div class="font-bold text-xs text-theme-heading truncate">{{ Auth::user()->name }}</div>
                                         <div class="text-[10px] text-theme-muted truncate">{{ Auth::user()->email }}</div>
-                                        <span class="inline-block mt-1 px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 border border-cyan-500/30">
-                                            {{ str_replace('_', ' ', Auth::user()->role) }}
-                                        </span>
+                                        <div class="flex items-center gap-1.5 mt-1">
+                                            <span class="inline-block px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 border border-cyan-500/30">
+                                                {{ str_replace('_', ' ', Auth::user()->role) }}
+                                            </span>
+                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase bg-amber-500/15 text-amber-800 border border-amber-500/30">
+                                                <i class="fa-solid fa-coins text-[8px] text-amber-600"></i> {{ number_format(Auth::user()->credits, 1) }} Cr
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div class="py-1">
+                                        <a href="{{ route('profile.edit') }}#credits-wallet" class="flex items-center justify-between px-3.5 py-2 text-xs text-theme-heading hover:bg-amber-500/10 hover:text-amber-700 transition-colors">
+                                            <div class="flex items-center gap-2.5">
+                                                <i class="fa-solid fa-coins w-4 text-center text-amber-500"></i>
+                                                <span class="font-semibold">Court Credits Wallet</span>
+                                            </div>
+                                            <span class="font-black text-amber-600 dark:text-amber-400">{{ number_format(Auth::user()->credits, 1) }}</span>
+                                        </a>
+
                                         <a href="{{ route('profile.edit') }}" class="flex items-center gap-2.5 px-3.5 py-2 text-xs text-theme-heading hover:bg-cyan-500/10 hover:text-cyan-600 transition-colors">
                                             <i class="fa-solid fa-user-pen w-4 text-center text-cyan-600"></i>
                                             <span>My Profile & Password</span>
@@ -197,7 +217,7 @@
     </header>
 
     <!-- Flash Notifications -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4 w-full no-print">
         @if(session('success'))
             <div class="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-900 dark:text-cyan-200 text-sm flex items-center justify-between">
                 <div class="flex items-center gap-3">
@@ -235,7 +255,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="mt-20 border-t border-stone-200 dark:border-stone-800 bg-stone-100/90 dark:bg-stone-900/60 backdrop-blur-md">
+    <footer class="mt-20 border-t border-stone-200 dark:border-stone-800 bg-stone-100/90 dark:bg-stone-900/60 backdrop-blur-md no-print">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
                 <!-- Col 1: Venue Info -->
@@ -312,7 +332,7 @@
     </footer>
 
     <!-- Booking Lookup Modal -->
-    <div id="lookupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300">
+    <div id="lookupModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md opacity-0 pointer-events-none transition-all duration-300 no-print">
         <div class="glass-dropdown p-6 rounded-3xl max-w-md w-full border border-stone-300 dark:border-stone-700 shadow-2xl relative">
             <div class="flex items-start justify-between mb-4">
                 <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl border border-cyan-500/30 shrink-0">

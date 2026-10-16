@@ -14,6 +14,7 @@ class Court extends Model
 
     protected $casts = [
         'price_per_hour' => 'decimal:2',
+        'credits_per_hour' => 'decimal:2',
         'max_players' => 'integer',
         'court_number' => 'integer',
         'is_active' => 'boolean',
@@ -32,6 +33,12 @@ class Court extends Model
     public function getFormattedPriceAttribute(): string
     {
         return '₱' . number_format($this->price_per_hour, 2);
+    }
+
+    public function getFormattedCreditsPriceAttribute(): string
+    {
+        $val = (float) ($this->credits_per_hour ?: 1.0);
+        return number_format($val, $val == (int) $val ? 0 : 1) . ' ' . ($val == 1 ? 'Credit' : 'Credits');
     }
 
     public function getEffectiveOpeningTime(): string
