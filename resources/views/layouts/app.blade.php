@@ -45,7 +45,7 @@
     <div class="bg-lead text-cascading-white py-1.5 px-4 text-xs font-semibold text-center tracking-wide flex items-center justify-center gap-3 border-b border-stone-800 no-print">
         <span>⚡ Open Daily 6:00 AM – 12:00 AM Midnight • Fast Real-Time Court Reservations</span>
         <span class="hidden md:inline-block w-1.5 h-1.5 rounded-full bg-cyan-400"></span>
-        <span class="hidden md:inline text-amber-300">Instant Slot Hold with Paymongo or Manual GCash Receipt</span>
+        <span class="hidden md:inline text-amber-300">Instant Slot Hold with PayMongo, Manual GCash Receipt, or Instant Booking Using Credits</span>
     </div>
 
     <!-- Main Navigation Header -->
