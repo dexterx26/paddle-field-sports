@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="100%" stop-color="#1e293b" />
+    </linearGradient>
+    <linearGradient id="paddleFace" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#06b6d4" />
+      <stop offset="50%" stop-color="#0891b2" />
+      <stop offset="100%" stop-color="#0e7490" />
+    </linearGradient>
+    <linearGradient id="paddleRim" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" />
+      <stop offset="100%" stop-color="#0284c7" />
+    </linearGradient>
+    <linearGradient id="ballGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="60%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+    <linearGradient id="handleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1f5f9" />
+      <stop offset="100%" stop-color="#cbd5e1" />
+    </linearGradient>
+    <linearGradient id="accentGlow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0891b2" flood-opacity="0.35" />
+    </filter>
+  </defs>
+
+  <rect width="128" height="128" rx="28" fill="url(#bgGrad)" />
+  <rect width="124" height="124" x="2" y="2" rx="26" fill="none" stroke="url(#accentGlow)" stroke-width="2" opacity="0.4" />
+
+  <g transform="translate(18, 14)" filter="url(#shadow)">
+    <path d="M22 68 L10 88 C8 92 12 96 16 94 L36 78 Z" fill="url(#handleGrad)" stroke="#64748b" stroke-width="1.5" stroke-linejoin="round" />
+    <path d="M18 74 L25 81 M15 79 L22 86 M12 84 L19 91" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" />
+    <rect x="22" y="65" width="16" height="6" rx="2" transform="rotate(-40 22 65)" fill="#f59e0b" />
+    <rect x="24" y="6" width="56" height="64" rx="18" fill="url(#paddleFace)" stroke="url(#paddleRim)" stroke-width="3" transform="rotate(-15 52 38)" />
+    <g fill="#ffffff" opacity="0.18" transform="rotate(-15 52 38)">
+      <circle cx="38" cy="22" r="2.5" />
+      <circle cx="52" cy="22" r="2.5" />
+      <circle cx="66" cy="22" r="2.5" />
+      <circle cx="45" cy="34" r="2.5" />
+      <circle cx="59" cy="34" r="2.5" />
+      <circle cx="38" cy="46" r="2.5" />
+      <circle cx="52" cy="46" r="2.5" />
+      <circle cx="66" cy="46" r="2.5" />
+    </g>
+    <path d="M38 18 C52 14, 68 24, 72 38" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" opacity="0.4" transform="rotate(-15 52 38)" />
+  </g>
+
+  <g transform="translate(74, 62)">
+    <circle cx="22" cy="22" r="21" fill="url(#ballGrad)" stroke="#ffffff" stroke-width="2.5" />
+    <circle cx="22" cy="22" r="3.2" fill="#78350f" opacity="0.85" />
+    <circle cx="12" cy="18" r="2.8" fill="#78350f" opacity="0.85" />
+    <circle cx="32" cy="18" r="2.8" fill="#78350f" opacity="0.85" />
+    <circle cx="15" cy="29" r="2.8" fill="#78350f" opacity="0.85" />
+    <circle cx="29" cy="29" r="2.8" fill="#78350f" opacity="0.85" />
+    <circle cx="22" cy="10" r="2.4" fill="#78350f" opacity="0.8" />
+    <circle cx="22" cy="34" r="2.4" fill="#78350f" opacity="0.8" />
+    <ellipse cx="16" cy="12" rx="4" ry="2" fill="#ffffff" opacity="0.5" transform="rotate(-30 16 12)" />
+  </g>
+</svg>

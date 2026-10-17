@@ -6,7 +6,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="light">
 
-    <title>{{ $title ?? 'Owner Portal' }} - Paddle Field Sports Center</title>
+    @php
+        $globalSettings = $globalSettings ?? \App\Models\VenueSetting::getSettings();
+        $venueTabIcon = ($globalSettings->tab_icon_url ?? null) ?: asset('images/default-logo.svg');
+        $venueDisplayName = $globalSettings->venue_name ?? 'Paddle Field Sports Center';
+    @endphp
+    <title>{{ $title ?? 'Owner Portal' }} - {{ $venueDisplayName }}</title>
+
+    <!-- Venue Favicon & Browser Tab Icon -->
+    <link rel="icon" type="image/svg+xml" href="{{ $venueTabIcon }}">
+    <link rel="alternate icon" href="{{ $venueTabIcon }}">
+    <link rel="apple-touch-icon" href="{{ $venueTabIcon }}">
 
     <!-- Light Mode Initialization -->
     <script>
@@ -39,11 +49,17 @@
         <!-- Brand Header with Minimize / Close Button -->
         <div class="h-20 px-5 flex items-center justify-between border-b border-stone-200">
             <div class="flex items-center gap-3 min-w-0">
-                <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-white shrink-0">
-                    <i class="fa-solid fa-table-tennis-paddle-ball text-lg"></i>
-                </div>
+                @if(!empty($globalSettings->logo_path))
+                    <div class="w-10 h-10 rounded-2xl bg-white border border-stone-200 dark:border-stone-700 p-1 flex items-center justify-center shadow-md shadow-cyan-500/10 overflow-hidden shrink-0">
+                        <img src="{{ $globalSettings->logo_url }}" alt="{{ $venueDisplayName }}" class="w-full h-full object-contain">
+                    </div>
+                @else
+                    <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 text-white shrink-0">
+                        <i class="fa-solid fa-table-tennis-paddle-ball text-lg"></i>
+                    </div>
+                @endif
                 <div class="truncate">
-                    <h1 class="text-sm font-extrabold text-theme-heading tracking-tight leading-tight truncate">Paddle Field</h1>
+                    <h1 class="text-sm font-extrabold text-theme-heading tracking-tight leading-tight truncate">{{ $venueDisplayName }}</h1>
                     <p class="text-[11px] text-cyan-700 font-bold tracking-wider uppercase truncate">Owner & Admin Hub</p>
                 </div>
             </div>

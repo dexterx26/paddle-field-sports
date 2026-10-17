@@ -142,11 +142,17 @@
         <!-- Print-Only Pass Header (Visible when printing only) -->
         <div class="hidden print:flex items-center justify-between pb-4 border-b-2 border-stone-800 mb-2">
             <div class="flex items-center gap-3.5">
-                <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xl shrink-0">
-                    <i class="fa-solid fa-table-tennis-paddle-ball"></i>
-                </div>
+                @if(!empty($venueSettings->logo_path))
+                    <div class="w-12 h-12 rounded-xl bg-white border border-stone-300 p-1 flex items-center justify-center overflow-hidden shrink-0">
+                        <img src="{{ $venueSettings->logo_url }}" alt="{{ $venueSettings->venue_name ?? 'Paddle Field' }}" class="w-full h-full object-contain">
+                    </div>
+                @else
+                    <div class="w-12 h-12 rounded-xl bg-slate-900 text-white flex items-center justify-center text-xl shrink-0">
+                        <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+                    </div>
+                @endif
                 <div>
-                    <h2 class="text-xl font-black tracking-tight text-slate-950 uppercase leading-none">Paddle Field Sports Center</h2>
+                    <h2 class="text-xl font-black tracking-tight text-slate-950 uppercase leading-none">{{ $venueSettings->venue_name ?? 'Paddle Field Sports Center' }}</h2>
                     <p class="text-xs font-bold text-slate-600 tracking-wider uppercase mt-1">Official Court Pass & Reservation Voucher</p>
                 </div>
             </div>

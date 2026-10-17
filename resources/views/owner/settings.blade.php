@@ -381,6 +381,142 @@
             </div>
         </div>
 
+        <!-- PICKLEBALL VENUE & COURT LOGO (Branding & Browser Tab Icon) -->
+        <div class="rounded-3xl glass-panel border border-cyan-500/30 p-6 sm:p-8 shadow-xl space-y-6">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-stone-200 dark:border-stone-800 gap-2">
+                <div>
+                    <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
+                        <i class="fa-solid fa-image text-cyan-600 dark:text-cyan-400"></i> Pickleball Court & Venue Logo
+                    </h3>
+                    <p class="text-theme-muted text-xs mt-0.5">
+                        Upload your official pickleball sports center logo. It will be displayed on the public navigation header, owner portal, printable booking passes, emails, and the browser tab icon (favicon).
+                    </p>
+                </div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 self-start sm:self-auto">
+                    Venue Branding & Favicon
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                <!-- Preview Column (Left) -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="p-5 rounded-2xl bg-stone-100 dark:bg-stone-900 border border-stone-200 dark:border-stone-800 space-y-4">
+                        <div class="flex items-center justify-between text-xs font-bold text-theme-heading">
+                            <span>Live Brand Previews</span>
+                            <span class="text-[10px] font-semibold text-theme-muted">Real-time simulation</span>
+                        </div>
+
+                        <!-- 1. Simulated Browser Tab (Icon on top of tab) -->
+                        <div class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-theme-muted flex items-center gap-1.5">
+                                <i class="fa-solid fa-window-maximize text-cyan-500"></i> Browser Tab Icon (Favicon):
+                            </span>
+                            <div class="w-full bg-stone-200 dark:bg-stone-950 p-2 rounded-xl flex items-center gap-2 border border-stone-300 dark:border-stone-800">
+                                <div class="bg-white dark:bg-stone-800 px-3 py-1.5 rounded-lg flex items-center gap-2 border border-stone-300 dark:border-stone-700 shadow-xs max-w-full">
+                                    <img id="simulatedTabIcon" src="{{ $settings->tab_icon_url }}" alt="Tab Icon" class="w-4 h-4 object-contain rounded-xs shrink-0">
+                                    <span class="text-[11px] font-bold text-theme-heading truncate">{{ $settings->venue_name ?? 'Paddle Field' }} - Court...</span>
+                                    <i class="fa-solid fa-xmark text-[9px] text-stone-400 ml-1"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 2. Header Brand Simulation -->
+                        <div class="space-y-1.5">
+                            <span class="text-[11px] font-semibold text-theme-muted flex items-center gap-1.5">
+                                <i class="fa-solid fa-bars text-amber-500"></i> Navigation Header Logo:
+                            </span>
+                            <div class="p-3 bg-white dark:bg-stone-800/80 rounded-xl border border-stone-200 dark:border-stone-700 flex items-center gap-3">
+                                <div id="logoPreviewContainer" class="w-12 h-12 rounded-2xl border border-stone-200 dark:border-stone-700 bg-stone-50 dark:bg-stone-900 flex items-center justify-center p-1.5 overflow-hidden shadow-xs shrink-0">
+                                    @if($settings->has_custom_logo)
+                                        <img id="logoPreviewImg" src="{{ $settings->logo_url }}" alt="Venue Logo" class="w-full h-full object-contain">
+                                    @else
+                                        <img id="logoPreviewImg" src="{{ asset('images/default-logo.svg') }}" alt="Default Logo" class="w-full h-full object-contain">
+                                    @endif
+                                </div>
+                                <div class="truncate">
+                                    <div class="text-xs font-black text-theme-heading leading-tight truncate">{{ $settings->venue_name ?? 'Paddle Field Sports Center' }}</div>
+                                    <div class="text-[10px] text-theme-muted truncate">{{ $settings->tagline ?? 'Pickleball Arena & Club' }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current status indicator -->
+                        <div class="pt-2 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-[11px]">
+                            <span class="text-theme-muted">Logo Status:</span>
+                            @if($settings->has_custom_logo)
+                                <span class="px-2 py-0.5 rounded-full font-bold bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30">
+                                    <i class="fa-solid fa-check text-[10px] mr-1"></i> Custom Logo Active
+                                </span>
+                            @else
+                                <span class="px-2 py-0.5 rounded-full font-bold bg-stone-200 dark:bg-stone-800 text-stone-600 dark:text-stone-400">
+                                    Default Pickleball Icon
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Controls Column (Right) -->
+                <div class="lg:col-span-7 space-y-4">
+                    <div>
+                        <label class="block font-bold text-theme-heading mb-1.5">
+                            Upload Logo Image (PNG, JPG, WEBP, SVG, or ICO)
+                        </label>
+                        <p class="text-[11px] text-theme-muted mb-3 leading-relaxed">
+                            Recommended: High-resolution PNG or SVG with transparent background, square or rectangular (minimum 256×256 pixels). Max file size: 4MB.
+                        </p>
+
+                        <!-- Custom File Input with Drag & Drop styling -->
+                        <div class="relative">
+                            <label for="venueLogoInput" class="flex flex-col items-center justify-center p-6 border-2 border-dashed border-stone-300 dark:border-stone-700 hover:border-cyan-500 dark:hover:border-cyan-400 rounded-2xl bg-white dark:bg-stone-900 cursor-pointer transition-all group">
+                                <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl mb-2 group-hover:scale-110 transition-transform">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                                </div>
+                                <span class="text-xs font-bold text-theme-heading group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">
+                                    Click to select image or drag & drop here
+                                </span>
+                                <span id="venueLogoFileName" class="text-[11px] text-theme-muted mt-1">
+                                    PNG, JPG, WEBP, SVG, or ICO up to 4MB
+                                </span>
+                            </label>
+                            <input type="file" id="venueLogoInput" name="logo" accept="image/png,image/jpeg,image/webp,image/svg+xml,image/x-icon" onchange="previewVenueLogo(this)" class="sr-only">
+                        </div>
+                    </div>
+
+                    <!-- Remove Logo Option (if custom logo already exists) -->
+                    @if($settings->has_custom_logo)
+                        <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-between gap-3">
+                            <div class="flex items-center gap-2.5">
+                                <i class="fa-solid fa-trash-can text-rose-500 text-sm shrink-0"></i>
+                                <div class="text-[11px] text-rose-700 dark:text-rose-300">
+                                    <span class="font-bold">Remove Custom Logo:</span> Reset back to default Paddle Field emblem.
+                                </div>
+                            </div>
+                            <label class="inline-flex items-center gap-2 cursor-pointer shrink-0">
+                                <input type="checkbox" name="remove_logo" value="1" id="removeLogoCheckbox" onchange="handleRemoveLogoToggle(this)" class="w-4 h-4 rounded text-rose-600 bg-white dark:bg-stone-900 border-stone-300 dark:border-stone-700 focus:ring-rose-500">
+                                <span class="text-xs font-bold text-rose-600 dark:text-rose-400">Remove</span>
+                            </label>
+                        </div>
+                    @endif
+
+                    <!-- Where this logo is shown Info Checklist -->
+                    <div class="p-4 rounded-2xl bg-cyan-500/5 border border-cyan-500/15 space-y-2">
+                        <span class="text-[11px] font-extrabold uppercase tracking-wider text-cyan-800 dark:text-cyan-300 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-info"></i> Automatically Displayed On:
+                        </span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-theme-muted">
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Browser Tab Icon (Favicon)</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Main Public Website Header</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Owner & Staff Admin Hub</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Printable Pass & Receipts</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Sign-in & Authentication Screens</div>
+                            <div class="flex items-center gap-1.5"><i class="fa-solid fa-check text-cyan-600 text-[10px]"></i> Booking & Email Confirmations</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- VENUE GENERAL INFO -->
         <div class="rounded-3xl glass-panel border border-stone-200 dark:border-stone-800 p-6 sm:p-8 shadow-xl space-y-5">
             <h3 class="text-base font-bold text-theme-heading flex items-center gap-2">
@@ -525,6 +661,45 @@
                 pill.className = 'px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30';
                 pill.textContent = 'Disallowed for Booking';
             }
+        }
+    }
+
+    function previewVenueLogo(input) {
+        if (input.files && input.files[0]) {
+            const file = input.files[0];
+            const fileNameDisplay = document.getElementById('venueLogoFileName');
+            if (fileNameDisplay) {
+                fileNameDisplay.textContent = `Selected: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+                fileNameDisplay.classList.add('text-cyan-600', 'font-bold');
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const previewImg = document.getElementById('logoPreviewImg');
+                const tabIcon = document.getElementById('simulatedTabIcon');
+                if (previewImg) previewImg.src = e.target.result;
+                if (tabIcon) tabIcon.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+
+            // If user selects a new file, uncheck the remove checkbox
+            const removeCheckbox = document.getElementById('removeLogoCheckbox');
+            if (removeCheckbox) removeCheckbox.checked = false;
+        }
+    }
+
+    function handleRemoveLogoToggle(checkbox) {
+        const previewImg = document.getElementById('logoPreviewImg');
+        const tabIcon = document.getElementById('simulatedTabIcon');
+        const defaultLogoUrl = "{{ asset('images/default-logo.svg') }}";
+        const currentLogoUrl = "{{ $settings->logo_url }}";
+
+        if (checkbox.checked) {
+            if (previewImg) previewImg.src = defaultLogoUrl;
+            if (tabIcon) tabIcon.src = defaultLogoUrl;
+        } else {
+            if (previewImg) previewImg.src = currentLogoUrl || defaultLogoUrl;
+            if (tabIcon) tabIcon.src = currentLogoUrl || defaultLogoUrl;
         }
     }
 </script>

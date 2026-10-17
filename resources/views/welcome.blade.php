@@ -187,7 +187,7 @@
                 <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black text-theme-heading tracking-tight leading-[1.1]">
                     Smash, Rally & Win at <br>
                     <span class="bg-gradient-to-r from-amber-600 via-cyan-600 dark:via-cyan-400 to-cyan-500 bg-clip-text text-transparent">
-                        Paddle Field
+                        {{ $venueSettings->venue_name ?? 'Paddle Field' }}
                     </span>
                 </h1>
 

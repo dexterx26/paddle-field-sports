@@ -644,17 +644,36 @@ class OwnerController extends Controller
             'manual_account_number' => 'nullable|string|max:100',
             'manual_payment_instructions' => 'nullable|string|max:2000',
             'manual_payment_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+            // Venue / Court Logo
+            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg,ico|max:4096',
+            'remove_logo' => 'nullable|boolean',
         ]);
 
         $settings = VenueSetting::getSettings();
 
-        $data = $request->except(['_token', 'manual_payment_qr']);
+        $data = $request->except(['_token', 'manual_payment_qr', 'logo', 'remove_logo']);
         $data['xendit_simulation_mode'] = $request->boolean('xendit_simulation_mode', false);
         $data['paymongo_simulation_mode'] = $request->boolean('paymongo_simulation_mode', false);
         $data['credits_enabled'] = $request->has('credits_enabled')
             ? in_array($request->input('credits_enabled'), [1, '1', true, 'true', 'on'], true)
             : false;
         $data['credit_conversion_rate'] = $request->filled('credit_conversion_rate') ? (float) $request->input('credit_conversion_rate') : 150.00;
+
+        // Handle venue logo removal
+        if ($request->boolean('remove_logo')) {
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+            $data['logo_path'] = null;
+        }
+
+        // Handle venue logo upload
+        if ($request->hasFile('logo')) {
+            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
+                Storage::disk('public')->delete($settings->logo_path);
+            }
+            $data['logo_path'] = $request->file('logo')->store('logos', 'public');
+        }
 
         if ($request->hasFile('manual_payment_qr')) {
             $data['manual_payment_qr'] = $request->file('manual_payment_qr')->store('qr', 'public');

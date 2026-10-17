@@ -6,8 +6,17 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="color-scheme" content="light">
 
-    <title>{{ $title ?? 'Paddle Field Sports Center' }} - Pickleball Court Reservation</title>
-    <meta name="description" content="Premier indoor and outdoor pickleball court reservation for Paddle Field Sports Center. Real-time availability, instant slot holding, and seamless booking.">
+    @php
+        $venueTabIcon = ($venueSettings->tab_icon_url ?? null) ?: asset('images/default-logo.svg');
+        $venueDisplayName = $venueSettings->venue_name ?? 'Paddle Field Sports Center';
+    @endphp
+    <title>{{ $title ?? $venueDisplayName }} - Pickleball Court Reservation</title>
+    <meta name="description" content="Premier indoor and outdoor pickleball court reservation for {{ $venueDisplayName }}. Real-time availability, instant slot holding, and seamless booking.">
+
+    <!-- Venue Favicon & Browser Tab Icon -->
+    <link rel="icon" type="image/svg+xml" href="{{ $venueTabIcon }}">
+    <link rel="alternate icon" href="{{ $venueTabIcon }}">
+    <link rel="apple-touch-icon" href="{{ $venueTabIcon }}">
 
     <!-- Light Mode Initialization (Ensures clean Light theme across all browsers) -->
     <script>
@@ -45,15 +54,23 @@
             <div class="flex items-center justify-between h-20">
                 <!-- Brand / Logo -->
                 <a href="{{ route('home') }}" class="flex items-center gap-3 group">
-                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform text-white">
-                        <i class="fa-solid fa-table-tennis-paddle-ball text-xl"></i>
-                    </div>
+                    @if(!empty($venueSettings->logo_path))
+                        <div class="w-11 h-11 rounded-2xl bg-white border border-stone-200 dark:border-stone-700 p-1 flex items-center justify-center shadow-md shadow-cyan-500/10 group-hover:scale-105 transition-transform overflow-hidden shrink-0">
+                            <img src="{{ $venueSettings->logo_url }}" alt="{{ $venueDisplayName }}" class="w-full h-full object-contain">
+                        </div>
+                    @else
+                        <div class="w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 flex items-center justify-center shadow-lg shadow-cyan-500/20 group-hover:scale-105 transition-transform text-white shrink-0">
+                            <i class="fa-solid fa-table-tennis-paddle-ball text-xl"></i>
+                        </div>
+                    @endif
                     <div>
                         <div class="text-lg font-extrabold tracking-tight flex items-center gap-2">
-                            <span class="text-theme-heading">Paddle Field</span>
-                            <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 uppercase tracking-widest font-bold">Sports Center</span>
+                            <span class="text-theme-heading">{{ $venueDisplayName }}</span>
+                            @if(empty($venueSettings->venue_name) || $venueSettings->venue_name === 'Paddle Field Sports Center')
+                                <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 uppercase tracking-widest font-bold">Sports Center</span>
+                            @endif
                         </div>
-                        <p class="text-xs text-theme-muted font-medium">Pickleball Arena & Club</p>
+                        <p class="text-xs text-theme-muted font-medium">{{ $venueSettings->tagline ?? 'Pickleball Arena & Club' }}</p>
                     </div>
                 </a>
 
@@ -261,10 +278,16 @@
                 <!-- Col 1: Venue Info -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-3">
-                        <div class="w-9 h-9 rounded-xl bg-cyan-500 text-slate-950 flex items-center justify-center font-bold shadow-md">
-                            <i class="fa-solid fa-table-tennis-paddle-ball"></i>
-                        </div>
-                        <span class="text-lg font-extrabold text-theme-heading">Paddle Field</span>
+                        @if(!empty($venueSettings->logo_path))
+                            <div class="w-9 h-9 rounded-xl bg-white border border-stone-200 dark:border-stone-700 p-0.5 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
+                                <img src="{{ $venueSettings->logo_url }}" alt="{{ $venueDisplayName }}" class="w-full h-full object-contain">
+                            </div>
+                        @else
+                            <div class="w-9 h-9 rounded-xl bg-cyan-500 text-slate-950 flex items-center justify-center font-bold shadow-md shrink-0">
+                                <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+                            </div>
+                        @endif
+                        <span class="text-lg font-extrabold text-theme-heading">{{ $venueDisplayName }}</span>
                     </div>
                     <p class="text-xs text-theme-muted leading-relaxed">
                         Paddle Field Sports Center is Bacal 3, Talavera's premier pickleball facility featuring tournament-grade cushion acrylic courts, anti-glare floodlights, and a social clubhouse lounge.

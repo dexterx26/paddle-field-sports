@@ -3,10 +3,16 @@
 @section('content')
 <div class="py-16 px-4 sm:px-6 lg:px-8 max-w-md mx-auto">
     <div class="text-center mb-8 space-y-2">
-        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 text-white flex items-center justify-center text-2xl mx-auto shadow-lg shadow-cyan-500/20">
-            <i class="fa-solid fa-table-tennis-paddle-ball"></i>
-        </div>
-        <h2 class="text-2xl font-black text-theme-heading">Sign In to Paddle Field</h2>
+        @if(!empty($venueSettings->logo_path))
+            <div class="w-16 h-16 rounded-2xl bg-white border border-stone-200 dark:border-stone-700 p-1.5 flex items-center justify-center mx-auto shadow-lg shadow-cyan-500/10 overflow-hidden">
+                <img src="{{ $venueSettings->logo_url }}" alt="{{ $venueSettings->venue_name ?? 'Paddle Field' }}" class="w-full h-full object-contain">
+            </div>
+        @else
+            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-600 via-amber-700 to-cyan-500 text-white flex items-center justify-center text-2xl mx-auto shadow-lg shadow-cyan-500/20">
+                <i class="fa-solid fa-table-tennis-paddle-ball"></i>
+            </div>
+        @endif
+        <h2 class="text-2xl font-black text-theme-heading">Sign In to {{ $venueSettings->venue_name ?? 'Paddle Field' }}</h2>
         <p class="text-xs text-theme-muted">Owner, Admin & Player Authentication</p>
     </div>
 

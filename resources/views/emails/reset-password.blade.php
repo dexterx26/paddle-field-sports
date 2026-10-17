@@ -21,9 +21,15 @@
                                 <tr>
                                     <td align="center">
                                         <!-- Brand Badge -->
-                                        <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 16px; background: linear-gradient(135deg, #b88250 0%, #0891b2 100%); color: #ffffff; font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35);">
-                                            🏓
-                                        </div>
+                                        @if(!empty($settings->logo_path))
+                                            <div style="display: inline-block; width: 64px; height: 64px; border-radius: 16px; background-color: #ffffff; padding: 6px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35); box-sizing: border-box;">
+                                                <img src="{{ $settings->logo_url }}" alt="{{ $settings->venue_name ?? 'Paddle Field' }}" width="52" height="52" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
+                                            </div>
+                                        @else
+                                            <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 16px; background: linear-gradient(135deg, #b88250 0%, #0891b2 100%); color: #ffffff; font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35);">
+                                                🏓
+                                            </div>
+                                        @endif
                                         <h1 style="margin: 0; color: #f7fafc; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; text-transform: uppercase;">
                                             {{ $settings->venue_name ?? 'Paddle Field Sports Center' }}
                                         </h1>

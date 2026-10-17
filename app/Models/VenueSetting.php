@@ -47,4 +47,36 @@ class VenueSetting extends Model
             'holding_duration_seconds' => 120, // 2 minutes hold for Xendit / PayMongo checkout
         ]);
     }
+
+    /**
+     * Get the public URL for the uploaded venue logo, if set.
+     */
+    public function getLogoUrlAttribute(): ?string
+    {
+        if (!empty($this->logo_path)) {
+            if (str_starts_with($this->logo_path, 'http://') || str_starts_with($this->logo_path, 'https://')) {
+                return $this->logo_path;
+            }
+            return asset('storage/' . ltrim($this->logo_path, '/'));
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if a custom venue logo has been uploaded.
+     */
+    public function getHasCustomLogoAttribute(): bool
+    {
+        return !empty($this->logo_path);
+    }
+
+    /**
+     * Get the icon URL for browser tab favicon and branding.
+     * Falls back to the default pickleball vector icon if no custom logo is uploaded.
+     */
+    public function getTabIconUrlAttribute(): string
+    {
+        return $this->logo_url ?: asset('images/default-logo.svg');
+    }
 }
