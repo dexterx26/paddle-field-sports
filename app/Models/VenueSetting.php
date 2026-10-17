@@ -26,7 +26,7 @@ class VenueSetting extends Model
     {
         return static::firstOrCreate([], [
             'venue_name' => 'Paddle Field Sports Center',
-            'tagline' => 'Premier Indoor & Outdoor Pickleball Facility',
+            'tagline' => 'Premier Indoor Pickleball Facility',
             'description' => 'Experience world-class pickleball action at Paddle Field Sports Center. Equipped with tournament-grade cushioned acrylic courts, high-powered LED lighting, and premium club amenities.',
             'phone' => '+63 917 555 7233',
             'email' => 'contact@paddlefield.com',

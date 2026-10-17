@@ -46,7 +46,7 @@ class PickleballVenueLogoUploadTest extends TestCase
 
         $response = $this->actingAs($this->owner)->put(route('owner.settings.update'), [
             'venue_name' => 'Paddle Field Sports Center',
-            'tagline' => 'Premier Indoor & Outdoor Pickleball Facility',
+            'tagline' => 'Premier Indoor Pickleball Facility',
             'opening_time' => '06:00',
             'closing_time' => '00:00',
             'currency' => 'PHP',

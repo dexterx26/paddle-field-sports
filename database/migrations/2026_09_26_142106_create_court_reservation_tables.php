@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('venue_settings', function (Blueprint $table) {
             $table->id();
             $table->string('venue_name')->default('Paddle Field Sports Center');
-            $table->string('tagline')->default('Premier Indoor & Outdoor Pickleball Facility');
+            $table->string('tagline')->default('Premier Indoor Pickleball Facility');
             $table->text('description')->nullable();
             $table->string('phone')->nullable()->default('+63 917 555 7233');
             $table->string('email')->nullable()->default('contact@paddlefield.com');

@@ -11,7 +11,7 @@
         $venueDisplayName = $venueSettings->venue_name ?? 'Paddle Field Sports Center';
     @endphp
     <title>{{ $title ?? $venueDisplayName }} - Pickleball Court Reservation</title>
-    <meta name="description" content="Premier indoor and outdoor pickleball court reservation for {{ $venueDisplayName }}. Real-time availability, instant slot holding, and seamless booking.">
+    <meta name="description" content="Premier indoor pickleball court reservation for {{ $venueDisplayName }}. Real-time availability, instant slot holding, and seamless booking.">
 
     <!-- Venue Favicon & Browser Tab Icon -->
     <link rel="icon" type="image/svg+xml" href="{{ $venueTabIcon }}">
@@ -66,9 +66,9 @@
                     <div>
                         <div class="text-lg font-extrabold tracking-tight flex items-center gap-2">
                             <span class="text-theme-heading">{{ $venueDisplayName }}</span>
-                            @if(empty($venueSettings->venue_name) || $venueSettings->venue_name === 'Paddle Field Sports Center')
+                            <!-- @if(empty($venueSettings->venue_name) || $venueSettings->venue_name === 'Paddle Field Sports Center')
                                 <span class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/30 uppercase tracking-widest font-bold">Sports Center</span>
-                            @endif
+                            @endif -->
                         </div>
                         <p class="text-xs text-theme-muted font-medium">{{ $venueSettings->tagline ?? 'Pickleball Arena & Club' }}</p>
                     </div>

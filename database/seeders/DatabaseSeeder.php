@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
         // 1. Create Venue Settings
         $settings = VenueSetting::create([
             'venue_name' => 'Paddle Field Sports Center',
-            'tagline' => 'Premier Indoor & Outdoor Pickleball Facility',
+            'tagline' => 'Premier Indoor Pickleball Facility',
             'description' => 'Welcome to Paddle Field Sports Center — the leading destination for competitive and social pickleball. Featuring tournament-grade cushion acrylic courts, high-lumen anti-glare LED lighting, luxury player lounge, and automated reservations.',
             'phone' => '+63 917 555 7233',
             'email' => 'info@paddlefieldsports.com',
