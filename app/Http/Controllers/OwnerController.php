@@ -645,7 +645,7 @@ class OwnerController extends Controller
             'manual_payment_instructions' => 'nullable|string|max:2000',
             'manual_payment_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
             // Venue / Court Logo
-            'logo' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg,ico|max:4096',
+            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,svg,ico|max:4096',
             'remove_logo' => 'nullable|boolean',
         ]);
 
