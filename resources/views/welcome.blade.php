@@ -163,6 +163,14 @@
     .datepicker-dropdown.datepicker-orient-bottom:after {
         display: none !important;
     }
+
+    /* Mobile-optimized touch styles for timeslots */
+    .court-slot {
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+        user-select: none;
+        -webkit-user-select: none;
+    }
 </style>
 @endpush
 
@@ -2142,8 +2150,73 @@
 
         container.addEventListener('dragstart', (e) => e.preventDefault());
 
-        // Mouse Down
+        let lastTouchTime = 0;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchSlotBtn = null;
+        let touchIsScrolling = false;
+
+        // Mobile Touch Support:
+        // Do NOT trigger on touchstart immediately because the user may be scrolling the page.
+        // Instead, track touch movement: if user scrolls (>10px), abort. If clean tap (finger lifted), select slot!
+        container.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1) {
+                touchSlotBtn = null;
+                return;
+            }
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+            touchIsScrolling = false;
+            touchSlotBtn = e.target.closest('.court-slot');
+        }, { passive: true });
+
+        container.addEventListener('touchmove', (e) => {
+            if (touchIsScrolling || !touchSlotBtn) return;
+            const touch = e.touches[0];
+            const moveDist = Math.hypot(touch.clientX - touchStartX, touch.clientY - touchStartY);
+            // If finger movement exceeds 10px, this is a scroll gesture, not an intentional tap
+            if (moveDist > 10) {
+                touchIsScrolling = true;
+                touchSlotBtn = null;
+            }
+        }, { passive: true });
+
+        container.addEventListener('touchend', (e) => {
+            if (touchIsScrolling || !touchSlotBtn) {
+                touchSlotBtn = null;
+                return;
+            }
+
+            const slotBtn = touchSlotBtn;
+            touchSlotBtn = null;
+
+            if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) {
+                return;
+            }
+
+            lastTouchTime = Date.now();
+            // Prevent synthetic mouse events (mousedown/mouseup/click) from firing after touch
+            if (e.cancelable) {
+                e.preventDefault();
+            }
+
+            handleSlotClickOrDrag(slotBtn, false);
+        });
+
+        container.addEventListener('touchcancel', () => {
+            touchSlotBtn = null;
+            touchIsScrolling = false;
+        });
+
+        // Mouse Down (Laptop / Desktop / Mouse)
         container.addEventListener('mousedown', (e) => {
+            // Guard against synthetic mouse events fired by mobile browsers after touch
+            if (Date.now() - lastTouchTime < 700) {
+                return;
+            }
+            if (e.button !== 0) return; // Only primary left-click
+
             const slotBtn = e.target.closest('.court-slot');
             if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
 
@@ -2151,8 +2224,9 @@
             handleSlotClickOrDrag(slotBtn, false);
         });
 
-        // Mouse Over while dragging
+        // Mouse Over while dragging (Laptop / Desktop / Mouse)
         container.addEventListener('mouseover', (e) => {
+            if (Date.now() - lastTouchTime < 700) return;
             if (!bookingState.isDragging) return;
             const slotBtn = e.target.closest('.court-slot');
             if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
@@ -2163,13 +2237,20 @@
             handleSlotClickOrDrag(slotBtn, true);
         });
 
-        // Mouse Up
+        // Mouse Up (Laptop / Desktop / Mouse)
         window.addEventListener('mouseup', () => {
             bookingState.isDragging = false;
         });
 
-        // Keyboard navigation support (Enter / Space clicks)
+        // Keyboard navigation support (Enter / Space clicks) & Click guard
         container.addEventListener('click', (e) => {
+            // Guard against synthetic click events fired by mobile browsers after touch
+            if (Date.now() - lastTouchTime < 700) {
+                e.preventDefault();
+                return;
+            }
+
+            // Keyboard navigation (Enter / Space on focused button triggers click with detail === 0)
             if (e.detail === 0) {
                 const slotBtn = e.target.closest('.court-slot');
                 if (slotBtn && !slotBtn.disabled && !slotBtn.classList.contains('slot-my-hold')) {
@@ -2177,15 +2258,6 @@
                 }
             }
         });
-
-        // Touch support for mobile devices
-        container.addEventListener('touchstart', (e) => {
-            const touch = e.touches[0];
-            const target = document.elementFromPoint(touch.clientX, touch.clientY);
-            const slotBtn = target?.closest('.court-slot');
-            if (!slotBtn || slotBtn.disabled || slotBtn.classList.contains('slot-my-hold')) return;
-            handleSlotClickOrDrag(slotBtn, false);
-        }, { passive: true });
 
         // Clear Selection
         document.getElementById('clearSelectionBtn')?.addEventListener('click', resetSelection);
