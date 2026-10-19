@@ -124,4 +124,49 @@ class EmailNotificationService
             return false;
         }
     }
+
+    /**
+     * Send booking approval / confirmation email to customer.
+     * Supports both registered user accounts and guest bookings with email provided.
+     *
+     * @param \App\Models\Booking $booking
+     * @return bool
+     */
+    public static function sendBookingApproved(\App\Models\Booking $booking): bool
+    {
+        if (!static::isEnabled()) {
+            Log::info("Email notifications are currently disabled (MAIL_ENABLED=false). Skipping booking confirmation email for reference '{$booking->booking_reference}'.");
+            return false;
+        }
+
+        // Determine recipient email: either customer_email on booking or user account email
+        $recipient = trim((string) ($booking->customer_email ?: ($booking->user?->email ?? '')));
+
+        if (empty($recipient)) {
+            Log::info("Skipping booking confirmation email for reference '{$booking->booking_reference}': No recipient email address provided on booking or user account.");
+            return false;
+        }
+
+        // Eager load necessary relationships
+        $booking->loadMissing(['court', 'slots', 'user', 'approver']);
+
+        $settings = VenueSetting::getSettings();
+
+        try {
+            Mail::to($recipient)->send(new \App\Mail\BookingApprovedMail($booking, $settings));
+            Log::info("Booking confirmation email dispatched successfully to {$recipient} for booking '{$booking->booking_reference}'.");
+            return true;
+        } catch (\Throwable $e) {
+            Log::warning("Primary mail dispatch failed for {$recipient} ({$booking->booking_reference}): " . $e->getMessage() . ". Recording to log mailer as fallback.");
+
+            try {
+                Mail::mailer('log')->to($recipient)->send(new \App\Mail\BookingApprovedMail($booking, $settings));
+                Log::info("Booking confirmation email safely written to storage/logs/laravel.log for {$recipient}.");
+            } catch (\Throwable $logEx) {
+                Log::error("Booking confirmation email fallback logging failed: " . $logEx->getMessage());
+            }
+
+            return false;
+        }
+    }
 }

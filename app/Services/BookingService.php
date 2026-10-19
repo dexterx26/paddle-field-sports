@@ -136,9 +136,19 @@ class BookingService
             $courtStartHour = $court->start_hour;
             $courtEndHour = $court->end_hour;
 
+            $todayStr = now()->toDateString();
+            $curHourStr = now()->format('H:00');
+
             for ($h = $courtStartHour; $h < $courtEndHour; $h++) {
                 $timeKey = sprintf('%02d:00', $h);
                 $slot = $courtOccupied->get($timeKey);
+
+                $isPast = false;
+                if ($date < $todayStr) {
+                    $isPast = true;
+                } elseif ($date === $todayStr && $timeKey < $curHourStr) {
+                    $isPast = true;
+                }
 
                 $displayTime = Carbon::createFromFormat('H:i', $timeKey)->format('g:i A');
                 $nextHour = $h + 1;
@@ -154,7 +164,7 @@ class BookingService
                     $isExpired = ($slot->status === 'held' && (!$slot->held_until || now()->gte($slot->held_until)));
 
                     if ($isExpired) {
-                        $status = 'available';
+                        $status = $isPast ? 'past' : 'available';
                         $remainingSeconds = 0;
                     } else {
                         $status = $slot->status; // 'held', 'pending_approval', 'confirmed'
@@ -167,6 +177,7 @@ class BookingService
                         'display_range' => $displayRange,
                         'short_range' => $shortRange,
                         'status' => $status,
+                        'is_past' => $isPast,
                         'remaining_seconds' => $remainingSeconds,
                         'held_until' => $slot->held_until ? $slot->held_until->toISOString() : null,
                         'booking_reference' => $slot->booking ? $slot->booking->booking_reference : null,
@@ -177,7 +188,8 @@ class BookingService
                         'display_time' => $displayTime,
                         'display_range' => $displayRange,
                         'short_range' => $shortRange,
-                        'status' => 'available',
+                        'status' => $isPast ? 'past' : 'available',
+                        'is_past' => $isPast,
                         'remaining_seconds' => 0,
                         'held_until' => null,
                         'booking_reference' => null,
@@ -215,6 +227,22 @@ class BookingService
     public function areSlotsAvailable(int $courtId, string $date, array $slots): bool
     {
         $this->releaseExpiredHolds();
+
+        $todayStr = now()->toDateString();
+        $curHourStr = now()->format('H:00');
+
+        // Do not allow reserving dates or timeslots that have already passed
+        if ($date < $todayStr) {
+            return false;
+        }
+
+        if ($date === $todayStr) {
+            foreach ($slots as $slot) {
+                if ($slot < $curHourStr) {
+                    return false;
+                }
+            }
+        }
 
         $court = Court::find($courtId);
         if ($court) {
@@ -547,6 +575,9 @@ class BookingService
                 Log::warning('Reverb broadcast error: ' . $e->getMessage());
             }
 
+            // Send instant confirmation email for credit booking (registered user)
+            EmailNotificationService::sendBookingApproved($booking);
+
             return $booking;
         });
     }
@@ -590,6 +621,9 @@ class BookingService
         } catch (\Exception $e) {
             Log::warning('Reverb broadcast error: ' . $e->getMessage());
         }
+
+        // Send booking approval / confirmation email to customer (logged in user or guest with email)
+        EmailNotificationService::sendBookingApproved($booking);
 
         return $booking;
     }

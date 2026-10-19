@@ -17,7 +17,7 @@ class SendTestMailCommand extends Command
      */
     protected $signature = 'mail:test 
                             {email? : The recipient email address (defaults to current MAIL_USERNAME or trackerteer.dj.luciano@gmail.com)}
-                            {--template=welcome : Which template to send: "welcome" or "ping"}';
+                            {--template=welcome : Which template to send: "welcome", "booking", or "ping"}';
 
     /**
      * The console command description.
@@ -82,10 +82,38 @@ class SendTestMailCommand extends Command
             $template = $this->option('template');
 
             if ($template === 'ping') {
-                Mail::raw("Hello! This is a test email sent from Paddle Field Sports Center at " . now()->toDayDateTimeString() . " to confirm Gmail SMTP is working properly.", function ($message) use ($recipient) {
+                Mail::raw("Hello! This is a test email sent from Paddle Field Sports Center at " . now()->toDayDateTimeString() . " to confirm Brevo SMTP is working properly.", function ($message) use ($recipient) {
                     $message->to($recipient)
-                            ->subject("🏓 Paddle Field Sports - Gmail SMTP Test Ping");
+                            ->subject("🏓 Paddle Field Sports - SMTP Test Ping");
                 });
+            } elseif ($template === 'booking') {
+                // Test with the actual Booking Approved / Confirmed template
+                $court = \App\Models\Court::first();
+                $booking = \App\Models\Booking::latest()->first() ?? new \App\Models\Booking([
+                    'booking_reference' => 'PF-' . date('Ymd') . '-DEMO1',
+                    'customer_name' => 'Allan (Test Player)',
+                    'customer_phone' => '0917-555-7233',
+                    'customer_email' => $recipient,
+                    'court_id' => $court?->id ?? 1,
+                    'booking_date' => now()->toDateString(),
+                    'start_time' => '14:00:00',
+                    'end_time' => '16:00:00',
+                    'total_hours' => 2,
+                    'rate_per_hour' => 300,
+                    'total_amount' => 600,
+                    'players_count' => 4,
+                    'payment_method' => 'manual_receipt',
+                    'payment_status' => 'paid',
+                    'booking_status' => 'confirmed',
+                    'approved_at' => now(),
+                ]);
+
+                if ($court) {
+                    $booking->setRelation('court', $court);
+                }
+
+                $settings = VenueSetting::getSettings();
+                Mail::to($recipient)->send(new \App\Mail\BookingApprovedMail($booking, $settings));
             } else {
                 // Test with the actual Welcome / Registration template
                 $dummyUser = User::where('email', $recipient)->first() ?? new User([

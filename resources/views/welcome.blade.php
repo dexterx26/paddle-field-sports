@@ -171,6 +171,23 @@
         user-select: none;
         -webkit-user-select: none;
     }
+
+    /* Past / Passed timeslots */
+    .court-slot.slot-past {
+        background: #f5f5f4 !important;
+        border: 1px solid #e7e5e4 !important;
+        color: #a8a29e !important;
+        cursor: not-allowed !important;
+        user-select: none !important;
+        opacity: 0.55 !important;
+        pointer-events: none !important;
+    }
+    .dark .court-slot.slot-past {
+        background: #1c1917 !important;
+        border-color: #292524 !important;
+        color: #78716c !important;
+        opacity: 0.45 !important;
+    }
 </style>
 @endpush
 
@@ -402,6 +419,10 @@
                                     @foreach($courtData['slots'] as $slotKey => $slot)
                                         @php
                                             $status = $slot['status'];
+                                            $isPast = $status === 'past' || (!empty($slot['is_past']) && $status === 'available');
+                                            if ($isPast) {
+                                                $status = 'past';
+                                            }
                                             $isAvailable = $status === 'available';
                                             $hNum = (int) substr($slot['time'], 0, 2);
                                             $nextH = $hNum + 1;
@@ -412,9 +433,11 @@
                                         <button type="button"
                                             class="court-slot p-2.5 rounded-xl text-center text-xs font-semibold transition-all relative
                                                 {{ $isAvailable ? 'slot-available cursor-pointer' : '' }}
+                                                {{ $isPast ? 'slot-past cursor-not-allowed select-none opacity-50 pointer-events-none' : '' }}
                                                 {{ $status === 'held' ? 'slot-held cursor-pointer select-none opacity-80' : '' }}
                                                 {{ $status === 'pending_approval' ? 'slot-pending cursor-not-allowed select-none opacity-80' : '' }}
                                                 {{ $status === 'confirmed' ? 'slot-booked cursor-not-allowed select-none opacity-80' : '' }}"
+                                            {{ $isPast ? 'disabled' : '' }}
                                             data-court-id="{{ $c['id'] }}"
                                             data-slot-time="{{ $slot['time'] }}"
                                             data-display-time="{{ $slot['display_time'] }}"
@@ -422,10 +445,12 @@
                                             data-short-range="{{ $slotRange }}"
                                             data-status="{{ $status }}"
                                             data-remaining-seconds="{{ $slot['remaining_seconds'] }}"
-                                            title="{{ $slot['display_range'] }}">
-                                            <div class="font-bold text-xs whitespace-nowrap">{{ $slotRange }}</div>
+                                            title="{{ $isPast ? 'This timeslot has already passed' : $slot['display_range'] }}">
+                                            <div class="font-bold text-xs whitespace-nowrap {{ $isPast ? 'line-through opacity-70' : '' }}">{{ $slotRange }}</div>
                                             <div class="text-[10px] opacity-85 mt-0.5 slot-status-label">
-                                                @if($status === 'available')
+                                                @if($isPast)
+                                                    <span class="text-stone-400 dark:text-stone-500 font-medium">Passed</span>
+                                                @elseif($status === 'available')
                                                     <span class="text-cyan-600 dark:text-cyan-400">Open</span>
                                                 @elseif($status === 'held')
                                                     <span class="text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1">
@@ -1138,6 +1163,27 @@
     let currentActiveDate = '{{ $selectedDate }}';
     let isProgrammaticDateUpdate = false;
 
+    function getTodayDateString() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function getCurrentHourString() {
+        const d = new Date();
+        const hour = String(d.getHours()).padStart(2, '0');
+        return `${hour}:00`;
+    }
+
+    function isSlotInPast(slotDate, slotTime) {
+        const todayStr = getTodayDateString();
+        if (slotDate < todayStr) return true;
+        if (slotDate === todayStr && slotTime < getCurrentHourString()) return true;
+        return false;
+    }
+
     // Helper: Normalize slot time strings (e.g., '06:00:00' -> '06:00')
     function normalizeSlotTime(t) {
         return (t || '').toString().trim().substring(0, 5);
@@ -1624,7 +1670,13 @@
         const slotBtn = document.querySelector(`.court-slot[data-court-id="${courtId}"][data-slot-time="${slotTime}"]`);
         if (!slotBtn) return;
 
-        const normalizedStatus = (status === 'released') ? 'available' : status;
+        let normalizedStatus = (status === 'released') ? 'available' : status;
+
+        // If the slot is in the past and was available/released, mark as past
+        if ((normalizedStatus === 'available' || normalizedStatus === 'past') && isSlotInPast(currentActiveDate, slotTime)) {
+            normalizedStatus = 'past';
+        }
+
         slotBtn.setAttribute('data-status', normalizedStatus);
 
         // Check if THIS slot is currently selected by the active user in the booking engine
@@ -1633,12 +1685,29 @@
             bookingState.selectedSlots.includes(slotTime)
         );
 
-        slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold');
+        slotBtn.classList.remove('slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-selected', 'slot-my-hold', 'slot-past');
+
+        if (normalizedStatus === 'past') {
+            slotBtn.classList.add('slot-past', 'cursor-not-allowed', 'select-none', 'opacity-50', 'pointer-events-none');
+            slotBtn.disabled = true;
+            slotBtn.title = 'This timeslot has already passed';
+            const rangeText = slotBtn.querySelector('.font-bold');
+            if (rangeText) rangeText.classList.add('line-through', 'opacity-70');
+            const label = slotBtn.querySelector('.slot-status-label');
+            if (label) label.innerHTML = '<span class="text-stone-400 dark:text-stone-500 font-medium">Passed</span>';
+            if (isCurrentlySelectedByMe) {
+                bookingState.selectedSlots = bookingState.selectedSlots.filter(t => t !== slotTime);
+                renderSelectionUI();
+            }
+            return;
+        }
 
         if (normalizedStatus === 'available') {
-            slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold');
+            slotBtn.classList.remove('pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold', 'slot-past');
             slotBtn.disabled = false;
             slotBtn.title = '';
+            const rangeText = slotBtn.querySelector('.font-bold');
+            if (rangeText) rangeText.classList.remove('line-through', 'opacity-70');
 
             if (isCurrentlySelectedByMe) {
                 slotBtn.classList.add('slot-selected');
@@ -1930,11 +1999,12 @@
         return allSlots.slice(minIdx, maxIdx + 1);
     }
 
-    // Helper: check if all slots in a range are bookable (STRICT: all must be 'available')
+    // Helper: check if all slots in a range are bookable (STRICT: all must be 'available' and not in past)
     function isRangeAvailable(courtId, range) {
         const grid = document.querySelector(`.court-slots-grid[data-court-id="${courtId}"]`);
         if (!grid) return false;
         return range.every(time => {
+            if (isSlotInPast(currentActiveDate, time)) return false;
             const slotEl = grid.querySelector(`.court-slot[data-slot-time="${time}"]`);
             return slotEl && slotEl.getAttribute('data-status') === 'available';
         });
@@ -1954,6 +2024,21 @@
         const maxPlayers = parseInt(courtGrid.getAttribute('data-max-players'));
         const time = slotBtn.getAttribute('data-slot-time');
         const status = slotBtn.getAttribute('data-status');
+
+        // Check if slot has already passed
+        if (status === 'past' || isSlotInPast(currentActiveDate, time)) {
+            if (!isDragMove) {
+                resetSelection();
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Timeslot Passed',
+                    text: `Timeslot ${time} has already passed and cannot be selected.`,
+                    confirmButtonColor: '#0891b2',
+                    confirmButtonText: 'Understood'
+                });
+            }
+            return;
+        }
 
         // Check if slot is unavailable (Held by another player, Confirmed, or In Review)
         if (status !== 'available') {
@@ -2264,9 +2349,10 @@
     }
 
     function renderSelectionUI() {
-        // Automatically eject any slot that is no longer 'available' (unless currently held by this user's active checkout)
+        // Automatically eject any slot that is no longer 'available' or is in the past (unless currently held by this user's active checkout)
         if (bookingState.selectedCourtId && bookingState.selectedSlots.length > 0 && !bookingState.activeHoldRef) {
             bookingState.selectedSlots = bookingState.selectedSlots.filter(time => {
+                if (isSlotInPast(currentActiveDate, time)) return false;
                 const btn = document.querySelector(`.court-slot[data-court-id="${bookingState.selectedCourtId}"][data-slot-time="${time}"]`);
                 return btn && btn.getAttribute('data-status') === 'available';
             });
@@ -2280,19 +2366,36 @@
             const courtId = parseInt(btn.getAttribute('data-court-id'));
             const time = btn.getAttribute('data-slot-time');
             const statusLabel = btn.querySelector('.slot-status-label');
-            const status = btn.getAttribute('data-status');
+            let status = btn.getAttribute('data-status');
 
-            if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(time) && (status === 'available' || bookingState.activeHoldRef)) {
+            if ((status === 'available' || status === 'past') && isSlotInPast(currentActiveDate, time)) {
+                status = 'past';
+                btn.setAttribute('data-status', 'past');
+            }
+
+            if (status === 'past') {
+                btn.disabled = true;
+                btn.classList.remove('slot-selected', 'slot-available', 'slot-held', 'slot-pending', 'slot-booked', 'slot-my-hold', 'cursor-pointer');
+                btn.classList.add('slot-past', 'cursor-not-allowed', 'select-none', 'opacity-50', 'pointer-events-none');
+                btn.title = 'This timeslot has already passed';
+                const rangeText = btn.querySelector('.font-bold');
+                if (rangeText) rangeText.classList.add('line-through', 'opacity-70');
+                if (statusLabel) {
+                    statusLabel.innerHTML = '<span class="text-stone-400 dark:text-stone-500 font-medium">Passed</span>';
+                }
+            } else if (bookingState.selectedCourtId === courtId && bookingState.selectedSlots.includes(time) && (status === 'available' || bookingState.activeHoldRef)) {
                 btn.classList.add('slot-selected');
-                btn.classList.remove('slot-available', 'pointer-events-none', 'cursor-not-allowed', 'select-none');
+                btn.classList.remove('slot-available', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'slot-past');
                 btn.disabled = false;
                 if (statusLabel) {
                     statusLabel.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
                 }
             } else if (status === 'available') {
-                btn.classList.remove('slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'slot-my-hold');
+                btn.classList.remove('slot-selected', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'slot-my-hold', 'slot-past');
                 btn.classList.add('slot-available', 'cursor-pointer');
                 btn.disabled = false;
+                const rangeText = btn.querySelector('.font-bold');
+                if (rangeText) rangeText.classList.remove('line-through', 'opacity-70');
                 if (statusLabel) {
                     statusLabel.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
                 }
@@ -2301,20 +2404,20 @@
                 if (isMine) {
                     // DISABLED FOR THE CLIENT WHO SUCCESSFULLY RESERVED IT
                     btn.disabled = true;
-                    btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer');
+                    btn.classList.remove('slot-selected', 'slot-available', 'cursor-pointer', 'slot-past');
                     btn.classList.add('slot-held', 'slot-my-hold', 'cursor-not-allowed', 'pointer-events-none');
                     btn.title = 'Your held reservation';
                 } else {
                     // CLICKABLE FOR OTHER CLIENTS
                     btn.disabled = false;
-                    btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold');
+                    btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'cursor-not-allowed', 'slot-my-hold', 'slot-past');
                     btn.classList.add('slot-held', 'cursor-pointer', 'select-none', 'opacity-80');
                     btn.title = 'Temporarily held by another customer';
                 }
             } else {
                 // Confirmed or in-review: allow clicking to trigger error warning & unselection
                 btn.disabled = false;
-                btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'slot-my-hold');
+                btn.classList.remove('slot-selected', 'slot-available', 'pointer-events-none', 'slot-my-hold', 'slot-past');
                 btn.classList.add('cursor-not-allowed', 'select-none', 'opacity-80');
             }
         });
@@ -3022,6 +3125,17 @@
                 }
             }
 
+            // Automatically advance available slots to 'past' if current time has passed their hour
+            if (currentActiveDate === getTodayDateString()) {
+                const curHourStr = getCurrentHourString();
+                document.querySelectorAll('.court-slot[data-status="available"]').forEach(slotBtn => {
+                    const slotTime = slotBtn.getAttribute('data-slot-time');
+                    if (slotTime < curHourStr) {
+                        applyCourtSlotUpdate(slotBtn.getAttribute('data-court-id'), slotTime, 'past');
+                    }
+                });
+            }
+
             document.querySelectorAll('.slot-timer').forEach(el => {
                 let sec = parseInt(el.getAttribute('data-seconds'));
                 if (sec > 0) {
@@ -3035,21 +3149,27 @@
                     if (slotBtn) {
                         const courtId = parseInt(slotBtn.getAttribute('data-court-id'));
                         const slotTime = slotBtn.getAttribute('data-slot-time');
-                        const isCurrentlySelected = (
-                            bookingState.selectedCourtId === courtId &&
-                            bookingState.selectedSlots.includes(slotTime)
-                        );
-                        slotBtn.setAttribute('data-status', 'available');
-                        slotBtn.classList.remove('slot-held', 'slot-my-hold', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80');
-                        slotBtn.disabled = false;
-                        slotBtn.title = '';
-                        const labelEl = slotBtn.querySelector('.slot-status-label');
-                        if (isCurrentlySelected) {
-                            slotBtn.classList.add('slot-selected');
-                            if (labelEl) labelEl.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
+                        if (isSlotInPast(currentActiveDate, slotTime)) {
+                            applyCourtSlotUpdate(courtId, slotTime, 'past');
                         } else {
-                            slotBtn.classList.add('slot-available', 'cursor-pointer');
-                            if (labelEl) labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                            const isCurrentlySelected = (
+                                bookingState.selectedCourtId === courtId &&
+                                bookingState.selectedSlots.includes(slotTime)
+                            );
+                            slotBtn.setAttribute('data-status', 'available');
+                            slotBtn.classList.remove('slot-held', 'slot-my-hold', 'pointer-events-none', 'cursor-not-allowed', 'select-none', 'opacity-80', 'slot-past');
+                            slotBtn.disabled = false;
+                            slotBtn.title = '';
+                            const rangeText = slotBtn.querySelector('.font-bold');
+                            if (rangeText) rangeText.classList.remove('line-through', 'opacity-70');
+                            const labelEl = slotBtn.querySelector('.slot-status-label');
+                            if (isCurrentlySelected) {
+                                slotBtn.classList.add('slot-selected');
+                                if (labelEl) labelEl.innerHTML = '<span class="text-slate-950 font-extrabold">Selected</span>';
+                            } else {
+                                slotBtn.classList.add('slot-available', 'cursor-pointer');
+                                if (labelEl) labelEl.innerHTML = '<span class="text-cyan-600 dark:text-cyan-400">Open</span>';
+                            }
                         }
                     }
                 }
