@@ -1003,7 +1003,7 @@ class OwnerController extends Controller
             $query->where('role', $roleFilter);
         }
 
-        // Status & Held filtering
+        // Status & Held & Credits filtering
         if ($statusFilter === 'active') {
             $query->where('is_active', true);
         } elseif ($statusFilter === 'inactive') {
@@ -1012,6 +1012,8 @@ class OwnerController extends Controller
             $query->whereHas('bookings', function ($q) {
                 $q->whereIn('booking_status', ['held', 'expired', 'cancelled']);
             });
+        } elseif ($statusFilter === 'has_credits') {
+            $query->where('credits', '>', 0);
         }
 
         if ($request->boolean('held_only')) {
@@ -1030,9 +1032,11 @@ class OwnerController extends Controller
             });
         }
 
-        // Ordering: if requested sort by held timeslots desc, otherwise role hierarchy
+        // Ordering: if requested sort by held timeslots desc or credits desc, otherwise role hierarchy
         if ($sort === 'held_desc') {
             $query->orderByDesc('held_timeslots_count')->orderBy('id', 'desc');
+        } elseif ($sort === 'credits_desc') {
+            $query->orderByDesc('credits')->orderBy('id', 'desc');
         } else {
             // Owners first, then Assistants, then Clients, ordered by newest
             $query->orderByRaw("CASE 
@@ -1061,6 +1065,8 @@ class OwnerController extends Controller
                 })
                 ->whereIn('booking_status', ['held', 'expired', 'cancelled'])
                 ->sum('total_hours'),
+            'has_credits' => User::where('role', '!=', 'admin')->where('credits', '>', 0)->count(),
+            'total_credits' => (float) User::where('role', '!=', 'admin')->sum('credits'),
         ];
 
         $availableModules = User::availableModules();
@@ -1411,6 +1417,146 @@ class OwnerController extends Controller
             'active_held_slots' => $user->active_held_slots_count,
             'held_bookings_count' => $user->held_bookings_count,
             'bookings' => $heldBookings,
+        ]);
+    }
+
+    /**
+     * Manually add or deduct wallet credits for a user (Owner / Admin Assistant)
+     */
+    public function adjustUserCredits(Request $request, int $id)
+    {
+        $currentUser = Auth::user();
+        $targetUser = User::findOrFail($id);
+
+        if ($currentUser->isAdminAssistant() && ($targetUser->isAdmin() || $targetUser->isOwner())) {
+            abort(403, 'You do not have permission to adjust credits for administrators or court owners.');
+        }
+
+        if ($currentUser->isOwner() && $targetUser->isAdmin()) {
+            abort(403, 'You do not have permission to adjust credits for system administrators.');
+        }
+
+        $validated = $request->validate([
+            'action' => 'required|in:add,deduct',
+            'amount' => 'required|numeric|min:0.1|max:50000',
+            'reason' => 'required|string|max:500',
+        ]);
+
+        $action = $validated['action'];
+        $amount = round((float) $validated['amount'], 2);
+        $reason = trim($validated['reason']);
+
+        try {
+            $res = DB::transaction(function () use ($targetUser, $action, $amount, $reason, $currentUser) {
+                $user = User::lockForUpdate()->findOrFail($targetUser->id);
+                $currentCredits = (float) ($user->credits ?? 0);
+
+                if ($action === 'deduct') {
+                    if ($currentCredits < $amount) {
+                        throw new \Exception("Cannot deduct {$amount} credits: {$user->name} only has " . number_format($currentCredits, 1) . " Credits in their wallet.");
+                    }
+                    $user->decrement('credits', $amount);
+                    $amountSigned = -$amount;
+                } else {
+                    $user->increment('credits', $amount);
+                    $amountSigned = $amount;
+                }
+
+                $newBalance = (float) $user->fresh()->credits;
+
+                $tx = CreditTransaction::create([
+                    'user_id' => $user->id,
+                    'type' => 'adjustment',
+                    'amount_credits' => $amountSigned,
+                    'balance_after' => $newBalance,
+                    'reference_id' => $currentUser->id,
+                    'reference_type' => 'AdminAdjustment',
+                    'description' => "Manual " . ($action === 'add' ? 'addition' : 'deduction') . " by {$currentUser->name}: {$reason}",
+                ]);
+
+                return [
+                    'user' => $user,
+                    'new_balance' => $newBalance,
+                    'tx' => $tx,
+                ];
+            });
+
+            $verb = $action === 'add' ? 'added to' : 'deducted from';
+            $formattedAmount = ($action === 'add' ? "+{$amount}" : "-{$amount}") . ' Credits';
+            $message = "Successfully {$verb} {$targetUser->name}'s wallet ({$formattedAmount}). New balance: " . number_format($res['new_balance'], 1) . " Credits.";
+
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'user_id' => $targetUser->id,
+                    'action' => $action,
+                    'amount' => $amount,
+                    'credits' => $res['new_balance'],
+                    'formatted_credits' => number_format($res['new_balance'], 1) . ' Credits',
+                    'message' => $message,
+                    'transaction' => [
+                        'id' => $res['tx']->id,
+                        'type' => $res['tx']->type,
+                        'amount_credits' => (float) $res['tx']->amount_credits,
+                        'formatted_credits' => $res['tx']->formatted_credits,
+                        'balance_after' => (float) $res['tx']->balance_after,
+                        'description' => $res['tx']->description,
+                        'created_at' => $res['tx']->created_at ? $res['tx']->created_at->format('M d, Y h:i A') : '—',
+                    ],
+                ]);
+            }
+
+            return back()->with('success', $message);
+        } catch (\Throwable $e) {
+            if ($request->expectsJson() || $request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Retrieve recent credit ledger / transaction history for a specific user (Modal / AJAX)
+     */
+    public function userCreditHistory(int $id)
+    {
+        $user = User::findOrFail($id);
+
+        if ($user->isAdmin()) {
+            abort(404, 'User not found.');
+        }
+
+        $transactions = $user->creditTransactions()
+            ->orderByDesc('id')
+            ->limit(25)
+            ->get()
+            ->map(function ($tx) {
+                return [
+                    'id' => $tx->id,
+                    'type' => $tx->type,
+                    'amount_credits' => (float) $tx->amount_credits,
+                    'formatted_credits' => $tx->formatted_credits,
+                    'balance_after' => (float) $tx->balance_after,
+                    'description' => $tx->description,
+                    'created_at' => $tx->created_at ? $tx->created_at->format('M d, Y h:i A') : '—',
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+                'credits' => (float) ($user->credits ?? 0),
+                'formatted_credits' => number_format((float) ($user->credits ?? 0), 1) . ' Credits',
+            ],
+            'transactions' => $transactions,
         ]);
     }
 }

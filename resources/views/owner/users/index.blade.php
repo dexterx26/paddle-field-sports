@@ -22,62 +22,81 @@
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg">
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-3 sm:gap-4">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-users"></i>
             </div>
-            <div>
-                <p class="text-xs text-theme-muted font-medium">Total Registered</p>
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium truncate">Total Registered</p>
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['all'] }}</h3>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg">
+        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-3 sm:gap-4">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-user"></i>
             </div>
-            <div>
-                <p class="text-xs text-theme-muted font-medium">Clients / Players</p>
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium truncate">Players / Clients</p>
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['client'] }}</h3>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg">
+        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-3 sm:gap-4">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-user-tie"></i>
             </div>
-            <div>
-                <p class="text-xs text-theme-muted font-medium">Admin Assistants</p>
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium truncate">Admin Assistants</p>
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['admin_assistant'] }}</h3>
             </div>
         </div>
 
-        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-4">
-            <div class="w-12 h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg">
+        <div class="p-4 rounded-2xl glass-panel border border-stone-200 dark:border-stone-800 flex items-center gap-3 sm:gap-4">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center text-lg shrink-0">
                 <i class="fa-solid fa-crown"></i>
             </div>
-            <div>
-                <p class="text-xs text-theme-muted font-medium">Court Owners</p>
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium truncate">Court Owners</p>
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['court_owner'] }}</h3>
             </div>
         </div>
 
         <a href="{{ route('owner.users.index', array_merge(request()->except('status', 'page'), ['status' => $statusFilter === 'has_held' ? null : 'has_held'])) }}"
-            class="p-4 rounded-2xl glass-panel border {{ $statusFilter === 'has_held' ? 'border-amber-500/60 bg-amber-500/10 shadow-lg shadow-amber-500/10' : 'border-stone-200 dark:border-stone-800 hover:border-amber-500/40' }} flex items-center gap-4 transition-all group cursor-pointer"
+            class="p-4 rounded-2xl glass-panel border {{ $statusFilter === 'has_held' ? 'border-amber-500/60 bg-amber-500/10 shadow-lg shadow-amber-500/10' : 'border-stone-200 dark:border-stone-800 hover:border-amber-500/40' }} flex items-center gap-3 sm:gap-4 transition-all group cursor-pointer"
             title="Click to filter users with held timeslots">
-            <div class="w-12 h-12 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg group-hover:scale-110 transition-transform">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-amber-500/15 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg shrink-0 group-hover:scale-110 transition-transform">
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
-            <div>
-                <p class="text-xs text-theme-muted font-medium flex items-center gap-1.5">
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium flex items-center gap-1.5 truncate">
                     <span>Held Slots</span>
                     @if($counts['has_held'] > 0)
                         <span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
                     @endif
                 </p>
                 <h3 class="text-xl font-extrabold text-theme-heading">{{ $counts['total_held_slots'] }}</h3>
-                <p class="text-[10px] text-amber-800 dark:text-amber-300 font-semibold">{{ $counts['has_held'] }} {{ Str::plural('user', $counts['has_held']) }} flagged</p>
+                <p class="text-[10px] text-amber-800 dark:text-amber-300 font-semibold truncate">{{ $counts['has_held'] }} {{ Str::plural('user', $counts['has_held']) }}</p>
+            </div>
+        </a>
+
+        <!-- Total Wallet Credits Card -->
+        <a href="{{ route('owner.users.index', array_merge(request()->except('status', 'sort', 'page'), ['status' => $statusFilter === 'has_credits' ? null : 'has_credits', 'sort' => 'credits_desc'])) }}"
+            class="p-4 rounded-2xl glass-panel border {{ $statusFilter === 'has_credits' ? 'border-cyan-500/60 bg-cyan-500/10 shadow-lg shadow-cyan-500/10' : 'border-stone-200 dark:border-stone-800 hover:border-cyan-500/40' }} flex items-center gap-3 sm:gap-4 transition-all group cursor-pointer"
+            title="Click to filter and sort users by wallet credit balance">
+            <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg shrink-0 group-hover:scale-110 transition-transform">
+                <i class="fa-solid fa-coins text-amber-500"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs text-theme-muted font-medium flex items-center gap-1.5 truncate">
+                    <span>User Credits</span>
+                    @if(($counts['has_credits'] ?? 0) > 0)
+                        <span class="w-2 h-2 rounded-full bg-cyan-500 animate-pulse"></span>
+                    @endif
+                </p>
+                <h3 class="text-xl font-extrabold text-cyan-600 dark:text-cyan-400">{{ number_format($counts['total_credits'] ?? 0, 1) }}</h3>
+                <p class="text-[10px] text-theme-muted font-semibold truncate">{{ $counts['has_credits'] ?? 0 }} {{ Str::plural('player', $counts['has_credits'] ?? 0) }} with balance</p>
             </div>
         </a>
     </div>
@@ -193,6 +212,7 @@
                             <th class="py-3.5 px-6">Role</th>
                             <th class="py-3.5 px-6">Phone</th>
                             <th class="py-3.5 px-6">Permissions / Activity</th>
+                            <th class="py-3.5 px-6 text-center">Wallet Credits</th>
                             <th class="py-3.5 px-6 text-center">Held Timeslots</th>
                             <th class="py-3.5 px-6 text-center">Status</th>
                             <th class="py-3.5 px-6 text-right">Actions</th>
@@ -316,6 +336,25 @@
                                     @endif
                                 </td>
 
+                                <!-- Wallet Credits -->
+                                <td class="py-4 px-6 text-center whitespace-nowrap" id="user-credits-cell-{{ $user->id }}">
+                                    @php
+                                        $userCredits = (float) ($user->credits ?? 0);
+                                    @endphp
+                                    <button type="button"
+                                        onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ $userCredits }})"
+                                        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm group
+                                            {{ $userCredits > 0 
+                                                ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30 hover:bg-cyan-500/25' 
+                                                : 'bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700 hover:border-cyan-500/40 hover:text-cyan-600' }}"
+                                        title="Click to view ledger or adjust credits">
+                                        <i class="fa-solid fa-coins text-[11px] text-amber-500 group-hover:scale-110 transition-transform"></i>
+                                        <span id="user-credits-val-{{ $user->id }}"><strong>{{ number_format($userCredits, 1) }}</strong></span>
+                                        <span class="text-[10px] opacity-75">Credits</span>
+                                        <i class="fa-solid fa-pen text-[8px] opacity-0 group-hover:opacity-100 transition-opacity ml-0.5"></i>
+                                    </button>
+                                </td>
+
                                 <!-- Held Timeslots Counter -->
                                 <td class="py-4 px-6 text-center whitespace-nowrap">
                                     @if($heldCount > 0)
@@ -399,6 +438,14 @@
                                         @endphp
 
                                         @if($canEdit)
+                                            <!-- Manage Credits Button -->
+                                            <button type="button"
+                                                onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ (float) ($user->credits ?? 0) }})"
+                                                class="p-2 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 text-theme-muted transition-colors cursor-pointer"
+                                                title="Manage Wallet Credits (Add / Deduct)">
+                                                <i class="fa-solid fa-coins text-amber-500"></i>
+                                            </button>
+
                                             <!-- Reset Password Button -->
                                             <form method="POST" action="{{ route('owner.users.reset_password', $user->id) }}"
                                                 id="reset-password-form-{{ $user->id }}" class="inline-block">
@@ -529,6 +576,25 @@
                                 @endif
                             </div>
 
+                            <!-- Wallet Credits Row -->
+                            <div class="flex items-center justify-between">
+                                <span class="text-theme-muted flex items-center gap-1.5">
+                                    <i class="fa-solid fa-coins text-[10px] text-amber-500"></i> Wallet Credits
+                                </span>
+                                @php
+                                    $userCreditsMobile = (float) ($user->credits ?? 0);
+                                @endphp
+                                <button type="button"
+                                    onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ $userCreditsMobile }})"
+                                    class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-bold transition-all cursor-pointer shadow-sm group
+                                        {{ $userCreditsMobile > 0 ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30' : 'bg-stone-100 dark:bg-stone-800 text-stone-400 dark:text-stone-500 border border-stone-200 dark:border-stone-700' }}">
+                                    <i class="fa-solid fa-coins text-[9px] text-amber-500"></i>
+                                    <span id="user-credits-val-mobile-{{ $user->id }}"><strong>{{ number_format($userCreditsMobile, 1) }}</strong></span>
+                                    <span>Credits</span>
+                                    <i class="fa-solid fa-pen text-[8px] opacity-40 group-hover:opacity-100 transition-opacity ml-0.5"></i>
+                                </button>
+                            </div>
+
                             <div class="flex items-center justify-between">
                                 <span class="text-theme-muted flex items-center gap-1.5">
                                     <i class="fa-regular fa-clock text-[10px] text-cyan-600 dark:text-cyan-400"></i> Held Timeslots
@@ -580,24 +646,31 @@
                             @endif
                         </div>
 
-                        <!-- Actions Buttons (50/50 Grid for Easy Tapping) -->
+                        <!-- Actions Buttons (3-column Grid for Easy Tapping) -->
                         @if($canEdit)
-                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                            <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                                <button type="button"
+                                    onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ (float) ($user->credits ?? 0) }})"
+                                    class="w-full py-2 px-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/20 text-stone-700 dark:text-stone-300 hover:text-cyan-600 font-bold text-[11px] border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                                    title="Manage Wallet Credits">
+                                    <i class="fa-solid fa-coins text-amber-500 text-[10px]"></i> Credits
+                                </button>
+
                                 <form method="POST" action="{{ route('owner.users.reset_password', $user->id) }}"
                                     id="reset-password-form-mobile-{{ $user->id }}" class="w-full">
                                     @csrf
                                     <button type="button"
                                         onclick="confirmResetPassword({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}')"
-                                        class="w-full py-2.5 px-3 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/20 text-stone-700 dark:text-stone-300 hover:text-amber-500 font-bold text-xs border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                                        class="w-full py-2 px-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-amber-500/20 text-stone-700 dark:text-stone-300 hover:text-amber-500 font-bold text-[11px] border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
                                         title="Reset Password to PaddleField2026!">
-                                        <i class="fa-solid fa-key text-[10px]"></i> Reset Key
+                                        <i class="fa-solid fa-key text-[10px]"></i> Key
                                     </button>
                                 </form>
 
                                 <button type="button"
                                     onclick='openEditUserModal(@json($user), @json($perms))'
-                                    class="w-full py-2.5 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-xs shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1.5 transition-all cursor-pointer">
-                                    <i class="fa-solid fa-pen-to-square"></i> Edit User
+                                    class="w-full py-2 px-1.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-extrabold text-[11px] shadow-md shadow-cyan-500/20 flex items-center justify-center gap-1 transition-all cursor-pointer">
+                                    <i class="fa-solid fa-pen-to-square text-[10px]"></i> Edit
                                 </button>
                             </div>
                         @endif
@@ -1119,6 +1192,185 @@
         </form>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- CREDIT ADJUSTMENT & LEDGER MODAL           -->
+<!-- ========================================== -->
+<div id="creditAdjustmentModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
+    <div class="w-full max-w-xl max-h-[92vh] flex flex-col rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 shadow-2xl overflow-hidden relative">
+        <!-- Modal Header -->
+        <div class="p-5 md:p-6 pb-4 border-b border-stone-200 dark:border-stone-800 flex items-center justify-between shrink-0 bg-stone-50 dark:bg-stone-900/40">
+            <div class="flex items-center gap-3">
+                <div class="w-11 h-11 rounded-2xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-xl shrink-0">
+                    <i class="fa-solid fa-coins text-amber-500"></i>
+                </div>
+                <div>
+                    <h3 class="text-base md:text-lg font-bold text-theme-heading flex items-center gap-2">
+                        <span>Manage Wallet Credits</span>
+                    </h3>
+                    <p class="text-xs text-theme-muted" id="credit_modal_user_subtitle">Add or deduct player court credits</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeCreditAdjustmentModal()" class="w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Content -->
+        <div class="p-5 md:p-6 overflow-y-auto space-y-4 flex-1">
+            <!-- Target User & Balance Info Card -->
+            <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 font-bold flex items-center justify-center text-sm shrink-0 uppercase" id="credit_modal_avatar">
+                        U
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-bold text-theme-heading truncate" id="credit_modal_user_name">User Name</div>
+                        <div class="text-[11px] text-theme-muted truncate font-mono" id="credit_modal_user_email">user@email.com</div>
+                    </div>
+                </div>
+                <!-- Current Balance Display -->
+                <div class="text-right shrink-0">
+                    <span class="text-[10px] uppercase font-bold text-theme-muted block">Current Balance</span>
+                    <div class="text-base font-extrabold text-cyan-600 dark:text-cyan-400 flex items-center justify-end gap-1">
+                        <i class="fa-solid fa-wallet text-[11px] text-amber-500"></i>
+                        <span id="credit_modal_current_balance_display">0.0</span>
+                        <span class="text-xs font-semibold">Credits</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Switcher (Adjust Balance vs Transaction Ledger) -->
+            <div class="flex items-center gap-2 border-b border-stone-200 dark:border-stone-800 pb-2">
+                <button type="button" onclick="switchCreditModalTab('adjust')" id="tab_btn_credit_adjust"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20">
+                    <i class="fa-solid fa-sliders"></i>
+                    <span>Adjust Balance</span>
+                </button>
+                <button type="button" onclick="switchCreditModalTab('ledger')" id="tab_btn_credit_ledger"
+                    class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-stone-200 dark:bg-stone-800 text-theme-muted hover:text-theme-heading">
+                    <i class="fa-solid fa-clock-rotate-left"></i>
+                    <span>Transaction Ledger</span>
+                    <span id="credit_modal_ledger_count" class="px-1.5 py-0.2 rounded-full text-[9px] bg-stone-300 dark:bg-stone-700 text-theme-muted">...</span>
+                </button>
+            </div>
+
+            <!-- Tab Pane 1: Adjust Form -->
+            <div id="pane_credit_adjust" class="space-y-4">
+                <form id="creditAdjustmentForm" onsubmit="submitCreditAdjustment(event)" class="space-y-4">
+                    <input type="hidden" id="credit_modal_user_id" value="">
+                    <input type="hidden" id="credit_modal_action" value="add">
+
+                    <!-- Action Selector (Add vs Deduct) -->
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Action Type</label>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button type="button" onclick="setCreditAction('add')" id="action_btn_add"
+                                class="py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 shadow-sm">
+                                <i class="fa-solid fa-circle-plus text-emerald-500"></i>
+                                <span>Add Credits (+)</span>
+                            </button>
+                            <button type="button" onclick="setCreditAction('deduct')" id="action_btn_deduct"
+                                class="py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-theme-muted hover:bg-stone-200 dark:hover:bg-stone-800">
+                                <i class="fa-solid fa-circle-minus text-rose-500"></i>
+                                <span>Deduct Credits (-)</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Amount Input & Quick Chips -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="credit_modal_amount" class="block text-xs font-bold text-theme-heading">
+                                Amount of Credits <span class="text-cyan-500">*</span>
+                            </label>
+                            <span class="text-[10px] text-theme-muted">1 credit = 1 court hr</span>
+                        </div>
+
+                        <!-- Quick Chips -->
+                        <div class="mb-2 flex flex-wrap gap-1.5" id="credit_amount_chips">
+                            <!-- Populated dynamically based on add vs deduct -->
+                        </div>
+
+                        <div class="relative">
+                            <input type="number" id="credit_modal_amount" step="0.5" min="0.1" max="50000" required
+                                placeholder="e.g. 5.0" oninput="recalcCreditBalance()"
+                                class="w-full pl-3.5 pr-20 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-sm font-bold text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-theme-muted pointer-events-none">Credits</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Balance Calculation Preview Card -->
+                    <div id="credit_calc_preview_card" class="p-3.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-xs transition-all">
+                        <div class="flex items-center justify-between font-mono text-[11px] text-theme-muted mb-1">
+                            <span>Calculation Preview:</span>
+                            <span id="calc_formula_text">0.0 + 0.0</span>
+                        </div>
+                        <div class="flex items-center justify-between pt-1 border-t border-cyan-500/20">
+                            <span class="font-bold text-theme-heading text-xs">Resulting Wallet Balance:</span>
+                            <span id="calc_new_balance_display" class="font-extrabold text-sm text-cyan-600 dark:text-cyan-400">0.0 Credits</span>
+                        </div>
+                        <p id="calc_warning_text" class="hidden text-[11px] text-rose-500 font-bold mt-1.5 flex items-center gap-1">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <span id="calc_warning_msg">Cannot deduct more credits than current balance!</span>
+                        </p>
+                    </div>
+
+                    <!-- Reason Input & Preset Chips -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label for="credit_modal_reason" class="block text-xs font-bold text-theme-heading">
+                                Reason / Reference Note <span class="text-rose-500">*</span>
+                            </label>
+                            <span class="text-[10px] text-theme-muted">Recorded in transaction audit ledger</span>
+                        </div>
+
+                        <!-- Reason Preset Chips -->
+                        <div class="mb-2 flex flex-wrap gap-1.5" id="credit_reason_chips">
+                            <!-- Populated dynamically -->
+                        </div>
+
+                        <textarea id="credit_modal_reason" rows="2" required
+                            placeholder="Provide reason for this manual adjustment..."
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-cyan-500 focus:outline-none transition-all resize-none"></textarea>
+                    </div>
+
+                    <!-- Modal Actions -->
+                    <div class="flex items-center justify-end gap-3 pt-3 border-t border-stone-200 dark:border-stone-800">
+                        <button type="button" onclick="closeCreditAdjustmentModal()"
+                            class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer transition-colors">
+                            Cancel
+                        </button>
+                        <button type="submit" id="credit_submit_btn"
+                            class="px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center gap-2">
+                            <span id="credit_submit_spinner" class="hidden"><i class="fa-solid fa-circle-notch fa-spin"></i></span>
+                            <span id="credit_submit_icon"><i class="fa-solid fa-circle-plus"></i></span>
+                            <span id="credit_submit_btn_text">Confirm Add Credits</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tab Pane 2: Ledger History -->
+            <div id="pane_credit_ledger" class="space-y-3 hidden">
+                <div id="credit_ledger_loading" class="py-10 text-center text-theme-muted space-y-2">
+                    <i class="fa-solid fa-circle-notch fa-spin text-xl text-cyan-500"></i>
+                    <p class="text-xs">Fetching credit transaction ledger...</p>
+                </div>
+                <div id="credit_ledger_empty" class="py-10 text-center text-theme-muted space-y-2 hidden">
+                    <div class="w-12 h-12 rounded-xl bg-stone-200 dark:bg-stone-800 flex items-center justify-center mx-auto text-xl">
+                        <i class="fa-solid fa-receipt text-stone-400"></i>
+                    </div>
+                    <h4 class="text-xs font-bold text-theme-heading">No Transactions Yet</h4>
+                    <p class="text-[11px] max-w-xs mx-auto">This player has no recorded credit top-ups, booking deductions, or adjustments.</p>
+                </div>
+                <div id="credit_ledger_list" class="space-y-2 hidden max-h-80 overflow-y-auto pr-1">
+                    <!-- Populated dynamically via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 @push('scripts')
@@ -1582,6 +1834,342 @@
         });
     }
 
+    // ==========================================
+    // CREDIT ADJUSTMENT MODAL LOGIC
+    // ==========================================
+    let currentCreditUserId = null;
+    let currentCreditUserBalance = 0;
+    let currentCreditAction = 'add';
+
+    function openCreditAdjustmentModal(userId, name, email, credits) {
+        currentCreditUserId = userId;
+        currentCreditUserBalance = parseFloat(credits) || 0;
+        currentCreditAction = 'add';
+
+        document.getElementById('credit_modal_user_id').value = userId;
+        document.getElementById('credit_modal_user_name').textContent = name;
+        document.getElementById('credit_modal_user_email').textContent = email;
+        document.getElementById('credit_modal_avatar').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('credit_modal_current_balance_display').textContent = currentCreditUserBalance.toFixed(1);
+        document.getElementById('credit_modal_user_subtitle').textContent = `Manage wallet credits for ${name}`;
+
+        // Reset inputs
+        document.getElementById('credit_modal_amount').value = '';
+        document.getElementById('credit_modal_reason').value = '';
+
+        setCreditAction('add');
+        switchCreditModalTab('adjust');
+
+        // Fetch transaction ledger in background
+        loadUserCreditHistory(userId);
+
+        const modal = document.getElementById('creditAdjustmentModal');
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCreditAdjustmentModal() {
+        const modal = document.getElementById('creditAdjustmentModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }
+    }
+
+    function switchCreditModalTab(tab) {
+        const paneAdjust = document.getElementById('pane_credit_adjust');
+        const paneLedger = document.getElementById('pane_credit_ledger');
+        const btnAdjust = document.getElementById('tab_btn_credit_adjust');
+        const btnLedger = document.getElementById('tab_btn_credit_ledger');
+
+        if (tab === 'adjust') {
+            paneAdjust.classList.remove('hidden');
+            paneLedger.classList.add('hidden');
+            btnAdjust.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20';
+            btnLedger.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-stone-200 dark:bg-stone-800 text-theme-muted hover:text-theme-heading';
+        } else {
+            paneAdjust.classList.add('hidden');
+            paneLedger.classList.remove('hidden');
+            btnLedger.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/20';
+            btnAdjust.className = 'px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer bg-stone-200 dark:bg-stone-800 text-theme-muted hover:text-theme-heading';
+        }
+    }
+
+    function setCreditAction(action) {
+        currentCreditAction = action;
+        document.getElementById('credit_modal_action').value = action;
+
+        const btnAdd = document.getElementById('action_btn_add');
+        const btnDeduct = document.getElementById('action_btn_deduct');
+        const submitBtn = document.getElementById('credit_submit_btn');
+        const submitText = document.getElementById('credit_submit_btn_text');
+        const submitIcon = document.getElementById('credit_submit_icon');
+        const chipsContainer = document.getElementById('credit_amount_chips');
+        const reasonChipsContainer = document.getElementById('credit_reason_chips');
+
+        if (action === 'add') {
+            btnAdd.className = 'py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-emerald-500/50 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 shadow-sm';
+            btnDeduct.className = 'py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-theme-muted hover:bg-stone-200 dark:hover:bg-stone-800';
+
+            submitBtn.className = 'px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 cursor-pointer transition-all flex items-center gap-2';
+            submitText.textContent = 'Confirm Add Credits';
+            submitIcon.innerHTML = '<i class="fa-solid fa-circle-plus"></i>';
+
+            chipsContainer.innerHTML = `
+                <button type="button" onclick="applyQuickCredit(1)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-emerald-500/15 hover:text-emerald-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">+1 Credit</button>
+                <button type="button" onclick="applyQuickCredit(2)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-emerald-500/15 hover:text-emerald-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">+2 Credits</button>
+                <button type="button" onclick="applyQuickCredit(5)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-emerald-500/15 hover:text-emerald-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">+5 Credits</button>
+                <button type="button" onclick="applyQuickCredit(10)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-emerald-500/15 hover:text-emerald-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">+10 Credits</button>
+                <button type="button" onclick="applyQuickCredit(20)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-emerald-500/15 hover:text-emerald-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">+20 Credits</button>
+            `;
+
+            reasonChipsContainer.innerHTML = `
+                <button type="button" onclick="setCreditReason('In-person cash payment at front desk')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-cyan-500/15 hover:text-cyan-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">💵 Cash at Front Desk</button>
+                <button type="button" onclick="setCreditReason('Complimentary tournament / promo bonus')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-cyan-500/15 hover:text-cyan-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">🎁 Promo / Bonus</button>
+                <button type="button" onclick="setCreditReason('Refund for cancelled court reservation')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-cyan-500/15 hover:text-cyan-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">🔄 Booking Refund</button>
+            `;
+        } else {
+            btnDeduct.className = 'py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-rose-500/50 bg-rose-500/15 text-rose-700 dark:text-rose-300 shadow-sm';
+            btnAdd.className = 'py-2.5 px-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer border border-stone-300 dark:border-stone-700 bg-stone-200/60 dark:bg-stone-800/60 text-theme-muted hover:bg-stone-200 dark:hover:bg-stone-800';
+
+            submitBtn.className = 'px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold shadow-md shadow-rose-600/20 cursor-pointer transition-all flex items-center gap-2';
+            submitText.textContent = 'Confirm Deduct Credits';
+            submitIcon.innerHTML = '<i class="fa-solid fa-circle-minus"></i>';
+
+            chipsContainer.innerHTML = `
+                <button type="button" onclick="applyQuickCredit(1)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">-1 Credit</button>
+                <button type="button" onclick="applyQuickCredit(2)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">-2 Credits</button>
+                <button type="button" onclick="applyQuickCredit(5)" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">-5 Credits</button>
+                <button type="button" onclick="applyQuickCredit(${currentCreditUserBalance})" class="px-2.5 py-1 rounded-lg text-[10px] font-bold bg-rose-500/15 text-rose-700 dark:text-rose-300 hover:bg-rose-500/25 border border-rose-500/30 transition-colors cursor-pointer">Clear All (${currentCreditUserBalance.toFixed(1)})</button>
+            `;
+
+            reasonChipsContainer.innerHTML = `
+                <button type="button" onclick="setCreditReason('Administrative balance correction')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">⚖️ Balance Correction</button>
+                <button type="button" onclick="setCreditReason('In-person court reservation charge')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">🎾 In-person Court Fee</button>
+                <button type="button" onclick="setCreditReason('Expired / voided promotional credits')" class="px-2.5 py-1 rounded-lg text-[10px] font-semibold bg-stone-200/80 dark:bg-stone-800 text-theme-body hover:bg-rose-500/15 hover:text-rose-600 border border-stone-300/60 dark:border-stone-700 transition-colors cursor-pointer">⌛ Expired Promo</button>
+            `;
+        }
+
+        recalcCreditBalance();
+    }
+
+    function applyQuickCredit(amount) {
+        document.getElementById('credit_modal_amount').value = amount;
+        recalcCreditBalance();
+    }
+
+    function setCreditReason(text) {
+        document.getElementById('credit_modal_reason').value = text;
+    }
+
+    function recalcCreditBalance() {
+        const amountInput = document.getElementById('credit_modal_amount');
+        const amount = parseFloat(amountInput.value) || 0;
+        const formulaEl = document.getElementById('calc_formula_text');
+        const newBalanceEl = document.getElementById('calc_new_balance_display');
+        const warningEl = document.getElementById('calc_warning_text');
+        const warningMsg = document.getElementById('calc_warning_msg');
+        const submitBtn = document.getElementById('credit_submit_btn');
+
+        let newBalance = currentCreditUserBalance;
+
+        if (currentCreditAction === 'add') {
+            newBalance = currentCreditUserBalance + amount;
+            formulaEl.textContent = `${currentCreditUserBalance.toFixed(1)} + ${amount.toFixed(1)}`;
+            newBalanceEl.textContent = `${newBalance.toFixed(1)} Credits`;
+            newBalanceEl.className = 'font-extrabold text-sm text-emerald-600 dark:text-emerald-400';
+            warningEl.classList.add('hidden');
+            submitBtn.disabled = false;
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            newBalance = currentCreditUserBalance - amount;
+            formulaEl.textContent = `${currentCreditUserBalance.toFixed(1)} - ${amount.toFixed(1)}`;
+            newBalanceEl.textContent = `${newBalance.toFixed(1)} Credits`;
+
+            if (newBalance < 0) {
+                newBalanceEl.className = 'font-extrabold text-sm text-rose-600 dark:text-rose-400';
+                warningMsg.textContent = `Deduction exceeds user balance by ${Math.abs(newBalance).toFixed(1)} credits!`;
+                warningEl.classList.remove('hidden');
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                newBalanceEl.className = 'font-extrabold text-sm text-cyan-600 dark:text-cyan-400';
+                warningEl.classList.add('hidden');
+                submitBtn.disabled = false;
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    }
+
+    async function loadUserCreditHistory(userId) {
+        const loadingEl = document.getElementById('credit_ledger_loading');
+        const emptyEl = document.getElementById('credit_ledger_empty');
+        const listEl = document.getElementById('credit_ledger_list');
+        const countBadge = document.getElementById('credit_modal_ledger_count');
+
+        loadingEl.classList.remove('hidden');
+        emptyEl.classList.add('hidden');
+        listEl.classList.add('hidden');
+        listEl.innerHTML = '';
+
+        try {
+            const res = await fetch(`/owner/users/${userId}/credits`, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await res.json();
+
+            loadingEl.classList.add('hidden');
+
+            if (data.success && data.transactions && data.transactions.length > 0) {
+                countBadge.textContent = data.transactions.length;
+                renderCreditLedger(data.transactions);
+                listEl.classList.remove('hidden');
+            } else {
+                countBadge.textContent = '0';
+                emptyEl.classList.remove('hidden');
+            }
+        } catch (err) {
+            loadingEl.classList.add('hidden');
+            emptyEl.classList.remove('hidden');
+            countBadge.textContent = '0';
+        }
+    }
+
+    function renderCreditLedger(transactions) {
+        const listEl = document.getElementById('credit_ledger_list');
+        listEl.innerHTML = '';
+
+        transactions.forEach(tx => {
+            const isPositive = parseFloat(tx.amount_credits) > 0;
+            const badgeBg = isPositive ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30' : 'bg-rose-500/15 text-rose-700 dark:text-rose-400 border-rose-500/30';
+            const icon = isPositive ? 'fa-plus' : 'fa-minus';
+
+            const card = document.createElement('div');
+            card.className = 'p-3 rounded-2xl bg-stone-100 dark:bg-stone-900/60 border border-stone-200 dark:border-stone-800 text-xs flex items-center justify-between gap-3';
+            card.innerHTML = `
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2 mb-0.5">
+                        <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeBg}">
+                            <i class="fa-solid ${icon} text-[8px]"></i>
+                            <span>${escapeHtml(tx.type.replace('_', ' ').toUpperCase())}</span>
+                        </span>
+                        <span class="text-[10px] text-theme-muted">${escapeHtml(tx.created_at)}</span>
+                    </div>
+                    <p class="text-[11px] text-theme-heading font-medium truncate" title="${escapeHtml(tx.description)}">
+                        ${escapeHtml(tx.description)}
+                    </p>
+                </div>
+                <div class="text-right shrink-0">
+                    <span class="font-extrabold text-xs ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">
+                        ${tx.formatted_credits}
+                    </span>
+                    <span class="text-[10px] text-theme-muted block font-mono">Bal: ${parseFloat(tx.balance_after).toFixed(1)}</span>
+                </div>
+            `;
+            listEl.appendChild(card);
+        });
+    }
+
+    async function submitCreditAdjustment(event) {
+        event.preventDefault();
+
+        const userId = currentCreditUserId;
+        const action = document.getElementById('credit_modal_action').value;
+        const amount = parseFloat(document.getElementById('credit_modal_amount').value);
+        const reason = document.getElementById('credit_modal_reason').value.trim();
+
+        if (!amount || amount <= 0) {
+            Swal.fire({ icon: 'warning', title: 'Invalid Amount', text: 'Please enter a valid credit amount greater than 0.' });
+            return;
+        }
+
+        if (!reason) {
+            Swal.fire({ icon: 'warning', title: 'Reason Required', text: 'Please provide a reference note or reason for this credit adjustment.' });
+            return;
+        }
+
+        const submitBtn = document.getElementById('credit_submit_btn');
+        const spinner = document.getElementById('credit_submit_spinner');
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+
+        try {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+            const response = await fetch(`/owner/users/${userId}/credits`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    action: action,
+                    amount: amount,
+                    reason: reason
+                })
+            });
+
+            const data = await response.json();
+
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+
+            if (data.success) {
+                // Update local tracking
+                currentCreditUserBalance = parseFloat(data.credits);
+                document.getElementById('credit_modal_current_balance_display').textContent = currentCreditUserBalance.toFixed(1);
+
+                // Update desktop table value
+                const desktopVal = document.getElementById(`user-credits-val-${userId}`);
+                if (desktopVal) {
+                    desktopVal.innerHTML = `<strong>${currentCreditUserBalance.toFixed(1)}</strong>`;
+                }
+
+                // Update mobile view value
+                const mobileVal = document.getElementById(`user-credits-val-mobile-${userId}`);
+                if (mobileVal) {
+                    mobileVal.innerHTML = `<strong>${currentCreditUserBalance.toFixed(1)}</strong>`;
+                }
+
+                // Show success toast
+                Swal.fire({
+                    icon: 'success',
+                    title: action === 'add' ? 'Credits Added' : 'Credits Deducted',
+                    text: data.message,
+                    timer: 3500,
+                    showConfirmButton: false,
+                    toast: true,
+                    position: 'top-end'
+                });
+
+                // Reset form inputs & reload history
+                document.getElementById('credit_modal_amount').value = '';
+                document.getElementById('credit_modal_reason').value = '';
+                recalcCreditBalance();
+                loadUserCreditHistory(userId);
+                switchCreditModalTab('ledger');
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Adjustment Failed',
+                    text: data.message || 'Unable to complete credit adjustment.'
+                });
+            }
+        } catch (err) {
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            Swal.fire({
+                icon: 'error',
+                title: 'Network Error',
+                text: 'An error occurred while communicating with the server. Please check your connection and try again.'
+            });
+        }
+    }
+
     // Close modals on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -1589,6 +2177,7 @@
             closeEditUserModal();
             closeHeldSlotsModal();
             closeDeactivateModal();
+            closeCreditAdjustmentModal();
         }
     });
 </script>
