@@ -180,7 +180,7 @@ class BookingService
                         'is_past' => $isPast,
                         'remaining_seconds' => $remainingSeconds,
                         'held_until' => $slot->held_until ? $slot->held_until->toISOString() : null,
-                        'booking_reference' => $slot->booking ? $slot->booking->booking_reference : null,
+                        'booking_reference' => null, // RA 10173: Do not leak booking reference codes in public timetable
                     ];
                 } else {
                     $hours[$timeKey] = [

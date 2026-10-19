@@ -741,6 +741,17 @@
                                             </div>
                                         </div>
 
+                                        <!-- RA 10173 Affirmative Consent Checkbox -->
+                                        <div class="pt-1 pb-1">
+                                            <label class="flex items-start gap-2 text-[11px] text-theme-muted cursor-pointer select-none">
+                                                <input type="checkbox" name="privacy_consent" id="mrPrivacyConsent" value="1" required
+                                                    class="mt-0.5 w-3.5 h-3.5 rounded text-cyan-600 border-stone-300 dark:border-stone-700 focus:ring-cyan-500 shrink-0">
+                                                <span>
+                                                    I agree to the <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Privacy Policy</a> & <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Terms</a> under <strong>Republic Act No. 10173 (Data Privacy Act of 2012)</strong>. <span class="text-rose-500">*</span>
+                                                </span>
+                                            </label>
+                                        </div>
+
                                         <button type="submit" id="submitManualBookingBtn"
                                             class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-600 to-cyan-500 hover:from-amber-500 hover:to-cyan-400 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] cursor-pointer">
                                             <i class="fa-solid fa-paper-plane"></i>

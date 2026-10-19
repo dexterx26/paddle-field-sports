@@ -48,6 +48,72 @@ class VenueSetting extends Model
         ]);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | RA 10173 Section 20(c): Encryption of API Credentials & Secrets at Rest
+    |--------------------------------------------------------------------------
+    */
+
+    public function getPaymongoSecretKeyAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return $value;
+        }
+    }
+
+    public function setPaymongoSecretKeyAttribute($value)
+    {
+        $this->attributes['paymongo_secret_key'] = !empty($value) ? \Illuminate\Support\Facades\Crypt::encryptString($value) : null;
+    }
+
+    public function getXenditSecretKeyAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return $value;
+        }
+    }
+
+    public function setXenditSecretKeyAttribute($value)
+    {
+        $this->attributes['xendit_secret_key'] = !empty($value) ? \Illuminate\Support\Facades\Crypt::encryptString($value) : null;
+    }
+
+    public function getPaymongoWebhookTokenAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return $value;
+        }
+    }
+
+    public function setPaymongoWebhookTokenAttribute($value)
+    {
+        $this->attributes['paymongo_webhook_token'] = !empty($value) ? \Illuminate\Support\Facades\Crypt::encryptString($value) : null;
+    }
+
+    public function getXenditWebhookTokenAttribute($value)
+    {
+        if (empty($value)) return $value;
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($value);
+        } catch (\Throwable $e) {
+            return $value;
+        }
+    }
+
+    public function setXenditWebhookTokenAttribute($value)
+    {
+        $this->attributes['xendit_webhook_token'] = !empty($value) ? \Illuminate\Support\Facades\Crypt::encryptString($value) : null;
+    }
+
     /**
      * Get the public URL for the uploaded venue logo, if set.
      */

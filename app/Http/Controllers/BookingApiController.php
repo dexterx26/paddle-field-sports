@@ -142,6 +142,9 @@ class BookingApiController extends Controller
             'players_count' => 'nullable|integer|min:1|max:20',
             'notes' => 'nullable|string|max:500',
             'receipt' => 'required|image|mimes:jpeg,png,jpg,webp|max:5120', // Max 5MB
+            'privacy_consent' => 'accepted',
+        ], [
+            'privacy_consent.accepted' => 'You must agree to the Privacy Policy and Terms of Service under Republic Act No. 10173 to complete your booking.',
         ]);
 
         $slotsRaw = $request->input('slots');
@@ -154,15 +157,8 @@ class BookingApiController extends Controller
         $courtId = (int) $request->input('court_id');
         $date = $request->input('date');
 
-        $receiptPath = $request->file('receipt')->store('receipts', 'public');
-
-        try {
-            $publicTargetDir = public_path('storage/receipts');
-            if (!file_exists($publicTargetDir)) {
-                @mkdir($publicTargetDir, 0755, true);
-            }
-            @copy(storage_path('app/public/' . $receiptPath), public_path('storage/' . $receiptPath));
-        } catch (\Throwable $e) {}
+        // Store securely on private disk (not accessible via public HTTP URL)
+        $receiptPath = $request->file('receipt')->store('receipts');
 
         $customerData = [
             'name' => trim($request->input('customer_name')),
@@ -183,6 +179,12 @@ class BookingApiController extends Controller
                 $receiptPath,
                 $userId
             );
+
+            // Retain session verification so the booker can access their own booking details and receipt proof
+            session([
+                'last_booked_ref' => $booking->booking_reference,
+                'last_booked_id' => $booking->id,
+            ]);
 
             return redirect()->route('booking.track', ['reference' => $booking->booking_reference])
                 ->with('success', 'Your reservation request and payment receipt have been submitted! The court owner will verify your receipt shortly.');

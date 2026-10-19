@@ -659,6 +659,13 @@ class OwnerController extends Controller
             : false;
         $data['credit_conversion_rate'] = $request->filled('credit_conversion_rate') ? (float) $request->input('credit_conversion_rate') : 150.00;
 
+        // Preserve existing encrypted secret keys if field was left blank
+        foreach (['xendit_secret_key', 'paymongo_secret_key', 'xendit_webhook_token', 'paymongo_webhook_token'] as $secField) {
+            if (!$request->filled($secField) && !empty($settings->$secField)) {
+                unset($data[$secField]);
+            }
+        }
+
         // Handle venue logo removal
         if ($request->boolean('remove_logo')) {
             if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {

@@ -7,6 +7,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OwnerController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SocialAuthController;
+use App\Http\Controllers\ReceiptController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -15,19 +16,23 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('/track/{reference}', [HomeController::class, 'trackBooking'])->name('booking.track');
-Route::get('/lookup', [HomeController::class, 'lookup'])->name('booking.lookup');
+Route::get('/track/{reference}', [HomeController::class, 'trackBooking'])->name('booking.track')->middleware('throttle:30,1');
+Route::get('/lookup', [HomeController::class, 'lookup'])->name('booking.lookup')->middleware('throttle:15,1');
 Route::get('/privacy', [HomeController::class, 'privacy'])->name('privacy');
 Route::get('/privacy-policy', [HomeController::class, 'privacy']);
 Route::get('/terms', [HomeController::class, 'terms'])->name('terms');
 Route::get('/terms-of-service', [HomeController::class, 'terms']);
-Route::post('/booking/manual-receipt', [BookingApiController::class, 'submitManualReceipt'])->name('booking.manual_receipt');
+Route::post('/booking/manual-receipt', [BookingApiController::class, 'submitManualReceipt'])->name('booking.manual_receipt')->middleware('throttle:10,1');
 Route::post('/booking/credits', [BookingApiController::class, 'submitCreditsBooking'])->name('booking.credits');
 Route::post('/credits/topup', [CreditController::class, 'submitTopup'])->name('credits.topup')->middleware('auth');
 Route::delete('/credits/topup/{id}', [CreditController::class, 'cancelTopup'])->name('credits.topup.cancel')->middleware('auth');
 Route::get('/xendit-checkout/{reference}', [BookingApiController::class, 'simulatedCheckout'])->name('xendit.simulated.checkout');
 Route::get('/paymongo-checkout/{reference}', [BookingApiController::class, 'paymongoCheckout'])->name('paymongo.simulated.checkout');
 Route::post('/simulate-payment/{reference}', [BookingApiController::class, 'simulatePayment'])->name('booking.simulate_payment');
+
+// RA 10173 Secure Receipt Streaming (Strict Authorization)
+Route::get('/secure-receipt/booking/{id}', [ReceiptController::class, 'showBookingReceipt'])->name('receipt.booking');
+Route::get('/secure-receipt/credit/{id}', [ReceiptController::class, 'showCreditReceipt'])->name('receipt.credit');
 
 /*
 |--------------------------------------------------------------------------
@@ -51,17 +56,17 @@ Route::prefix('api')->group(function () {
 |--------------------------------------------------------------------------
 */
 Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
+Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::get('/quick-login/{role}', [AuthController::class, 'quickLogin'])->name('quick.login');
 Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 // Password Reset Routes
 Route::get('/forgot-password', [AuthController::class, 'showForgotPassword'])->name('password.request');
-Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email')->middleware('throttle:5,1');
 Route::get('/reset-password/{token}', [AuthController::class, 'showResetPassword'])->name('password.reset');
-Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update')->middleware('throttle:5,1');
 
 // Email Confirmation & Verification Routes
 Route::get('/email/verify/{id}/{hash}', [AuthController::class, 'verifyEmail'])->name('verification.verify');
@@ -82,6 +87,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
+    // RA 10173 Data Subject Rights: Portability & Erasure
+    Route::get('/profile/export-data', [ProfileController::class, 'exportData'])->name('profile.export_data');
+    Route::delete('/profile/account', [ProfileController::class, 'destroyAccount'])->name('profile.destroy');
 });
 
 /*

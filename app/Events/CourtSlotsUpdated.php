@@ -74,7 +74,7 @@ class CourtSlotsUpdated implements ShouldBroadcastNow
             'held_until_timestamp' => $this->heldUntilTimestamp,
             'remaining_seconds' => $remaining,
             'message' => $this->message,
-            'booking_reference' => $this->bookingReference,
+            'booking_reference' => null, // RA 10173: Do not broadcast booking reference codes on public channel
             'timestamp' => now()->timestamp,
         ];
     }

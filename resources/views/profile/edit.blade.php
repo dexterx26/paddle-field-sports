@@ -504,6 +504,128 @@
                 </form>
             </div>
 
+            <!-- RA 10173 DATA PRIVACY & DATA SUBJECT RIGHTS CARD -->
+            <div class="glass-panel rounded-3xl p-6 sm:p-8 shadow-xl border border-cyan-500/30">
+                <div class="flex items-center gap-3 pb-5 mb-6 border-b border-stone-200 dark:border-stone-800">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-base font-extrabold text-theme-heading">Data Privacy & Your Rights</h3>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border border-cyan-500/30">
+                                RA 10173
+                            </span>
+                        </div>
+                        <p class="text-xs text-theme-muted">Manage your personal data under the Data Privacy Act of 2012.</p>
+                    </div>
+                </div>
+
+                <div class="space-y-5 text-xs">
+                    <!-- Right to Portability (Sec. 18) -->
+                    <div class="p-4 rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="space-y-0.5">
+                            <div class="font-bold text-theme-heading flex items-center gap-1.5">
+                                <i class="fa-solid fa-file-arrow-down text-cyan-500"></i>
+                                <span>Right to Data Portability (Sec. 18)</span>
+                            </div>
+                            <p class="text-[11px] text-theme-muted leading-relaxed">
+                                Obtain a structured machine-readable JSON copy of your profile, court reservations, wallet balance, and top-up transactions.
+                            </p>
+                        </div>
+                        <a href="{{ route('profile.export_data') }}"
+                            class="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shrink-0 flex items-center justify-center gap-1.5 transition-transform hover:scale-105 cursor-pointer shadow-md shadow-cyan-500/20">
+                            <i class="fa-solid fa-download"></i>
+                            <span>Download My Data</span>
+                        </a>
+                    </div>
+
+                    <!-- Right to Erasure / Account Deletion (Sec. 16(e)) -->
+                    <div class="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 space-y-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="space-y-0.5">
+                                <div class="font-bold text-rose-800 dark:text-rose-300 flex items-center gap-1.5">
+                                    <i class="fa-solid fa-user-xmark text-rose-500"></i>
+                                    <span>Right to Erasure or Blocking (Sec. 16(e))</span>
+                                </div>
+                                <p class="text-[11px] text-theme-muted leading-relaxed">
+                                    Permanently delete your account and anonymize your personal identifiers. Historical reservation ledger records will be preserved in de-identified form for accounting audit compliance.
+                                </p>
+                            </div>
+                        </div>
+
+                        @if($user->isOwner() || $user->isAdmin())
+                            <div class="p-2.5 rounded-xl bg-stone-200/50 dark:bg-stone-800/50 text-[11px] text-theme-muted italic">
+                                <i class="fa-solid fa-circle-exclamation text-amber-500 mr-1"></i>
+                                Court Owners and System Administrators cannot self-delete. Please transfer administrative role or contact organization management.
+                            </div>
+                        @else
+                            <button type="button" onclick="document.getElementById('deleteAccountModal').classList.remove('hidden')"
+                                class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i>
+                                <span>Request Account Erasure & Deletion</span>
+                            </button>
+                        @endif
+                    </div>
+
+                    <!-- Transparency & Policy Link -->
+                    <div class="pt-2 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between text-[11px] text-theme-muted">
+                        <span>Have questions about your data privacy?</span>
+                        <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 font-bold hover:underline flex items-center gap-1">
+                            <span>Read Full Privacy Policy</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Delete Account Confirmation Modal -->
+            @if(!$user->isOwner() && !$user->isAdmin())
+                <div id="deleteAccountModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+                    <div class="glass-panel max-w-md w-full rounded-3xl p-6 sm:p-8 space-y-5 border border-rose-500/30 shadow-2xl">
+                        <div class="flex items-center gap-3 text-rose-500">
+                            <div class="w-12 h-12 rounded-2xl bg-rose-500/15 flex items-center justify-center text-xl shrink-0">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-base font-black text-theme-heading">Confirm Account Erasure</h3>
+                                <p class="text-xs text-theme-muted">This action is irreversible under RA 10173.</p>
+                            </div>
+                        </div>
+
+                        <p class="text-xs text-theme-body leading-relaxed">
+                            Your account will be immediately deactivated and your name, email, phone number, and avatar will be permanently anonymized. You will not be able to recover this account.
+                        </p>
+
+                        <form action="{{ route('profile.destroy') }}" method="POST" class="space-y-4">
+                            @csrf
+                            @method('DELETE')
+
+                            @if($user->hasPassword())
+                                <div>
+                                    <label class="block text-xs font-bold text-theme-heading mb-1">
+                                        Enter Your Password to Confirm <span class="text-rose-500">*</span>
+                                    </label>
+                                    <input type="password" name="delete_confirmation_password" required placeholder="Your account password"
+                                        class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading text-xs focus:outline-none focus:border-rose-500">
+                                </div>
+                            @endif
+
+                            <div class="flex items-center justify-end gap-3 pt-2">
+                                <button type="button" onclick="document.getElementById('deleteAccountModal').classList.add('hidden')"
+                                    class="px-4 py-2.5 rounded-xl bg-stone-200 dark:bg-stone-800 text-theme-heading font-bold text-xs hover:bg-stone-300 dark:hover:bg-stone-700 transition-colors cursor-pointer">
+                                    Cancel
+                                </button>
+                                <button type="submit"
+                                    class="px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-black text-xs shadow-lg shadow-rose-600/30 transition-all cursor-pointer">
+                                    Permanently Delete & Anonymize
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            @endif
+
         </div>
 
         <!-- Right 5 Columns: Connected Accounts, Recent Bookings & Venue Info -->

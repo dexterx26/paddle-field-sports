@@ -93,12 +93,22 @@
                     class="w-full px-3.5 py-2.5 rounded-xl bg-white border border-stone-300 text-theme-heading placeholder-stone-400 focus:outline-none focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20 shadow-sm">
             </div>
 
-            <p class="text-[11px] text-theme-muted text-center pt-1">
-                By clicking Complete Registration, you agree to our 
-                <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 hover:underline font-semibold">Terms of Service</a> 
-                and 
-                <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 hover:underline font-semibold">Privacy Policy</a>.
-            </p>
+            <div class="pt-1">
+                <label class="flex items-start gap-2.5 text-xs text-theme-body cursor-pointer select-none">
+                    <input type="checkbox" name="privacy_consent" value="1" required {{ old('privacy_consent') ? 'checked' : '' }}
+                        class="mt-0.5 w-4 h-4 rounded text-cyan-600 border-stone-300 focus:ring-cyan-500 shrink-0">
+                    <span class="text-[11px] leading-relaxed text-theme-muted">
+                        I have read, understood, and voluntarily agree to the 
+                        <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 hover:underline font-bold">Privacy Policy</a> 
+                        and 
+                        <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 hover:underline font-bold">Terms of Service</a>, 
+                        consenting to the processing of my personal information pursuant to <strong>Republic Act No. 10173 (Data Privacy Act of 2012)</strong>. <span class="text-rose-500">*</span>
+                    </span>
+                </label>
+                @error('privacy_consent')
+                    <span class="text-[11px] text-rose-500 mt-1 block">{{ $message }}</span>
+                @enderror
+            </div>
 
             <button type="submit"
                 class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 transition-transform hover:scale-[1.02] cursor-pointer">

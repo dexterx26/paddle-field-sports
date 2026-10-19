@@ -135,6 +135,9 @@ class AuthController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'phone' => 'required|string|max:25',
             'password' => 'required|string|min:8|confirmed',
+            'privacy_consent' => 'accepted',
+        ], [
+            'privacy_consent.accepted' => 'You must agree to the Privacy Policy and Terms of Service under Republic Act No. 10173 to create an account.',
         ]);
 
         $user = User::create([

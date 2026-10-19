@@ -220,14 +220,47 @@
                 <h4 class="font-bold uppercase tracking-wider text-[11px] text-amber-700 dark:text-amber-400 print:text-slate-900 flex items-center gap-2 pb-2 border-b border-stone-200 dark:border-stone-800 print:border-stone-300">
                     <i class="fa-solid fa-user-check text-amber-600 dark:text-amber-400 print:text-slate-800"></i> Player & Payment
                 </h4>
+                @php
+                    $isAuthorizedViewer = (Auth::check() && (Auth::id() === $booking->user_id || Auth::user()->isOwner() || Auth::user()->isAdminAssistant() || Auth::user()->isAdmin()))
+                        || session('last_booked_ref') === $booking->booking_reference
+                        || session('verified_ref_' . $booking->booking_reference);
+
+                    $displayName = $isAuthorizedViewer
+                        ? $booking->customer_name
+                        : (function($name) {
+                            $words = explode(' ', trim($name));
+                            return implode(' ', array_map(function($w) {
+                                $len = mb_strlen($w);
+                                if ($len <= 2) return $w;
+                                return mb_substr($w, 0, 1) . str_repeat('*', max(1, $len - 2)) . mb_substr($w, -1, 1);
+                            }, $words));
+                        })($booking->customer_name);
+
+                    $displayPhone = $isAuthorizedViewer
+                        ? $booking->customer_phone
+                        : (function($phone) {
+                            $cleaned = preg_replace('/[^\d+]/', '', $phone);
+                            if (strlen($cleaned) >= 7) {
+                                return substr($cleaned, 0, 4) . ' ••• ' . substr($cleaned, -3);
+                            }
+                            return '••••••••••';
+                        })($booking->customer_phone);
+                @endphp
                 <div class="space-y-2 text-theme-body print:text-slate-800">
-                    <div class="flex justify-between">
+                    <div class="flex justify-between items-center">
                         <span class="text-theme-muted print:text-slate-500">Guest / Player:</span>
-                        <span class="font-bold text-theme-heading print:text-slate-900">{{ $booking->customer_name }}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-theme-heading print:text-slate-900">{{ $displayName }}</span>
+                            @if(!$isAuthorizedViewer)
+                                <span title="Personal details masked under Republic Act No. 10173" class="text-[9px] font-bold text-cyan-800 dark:text-cyan-300 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">
+                                    <i class="fa-solid fa-shield-halved text-[8px]"></i> Protected
+                                </span>
+                            @endif
+                        </div>
                     </div>
-                    <div class="flex justify-between">
+                    <div class="flex justify-between items-center">
                         <span class="text-theme-muted print:text-slate-500">Mobile Phone:</span>
-                        <span class="font-mono font-medium text-theme-heading print:text-slate-900">{{ $booking->customer_phone }}</span>
+                        <span class="font-mono font-medium text-theme-heading print:text-slate-900">{{ $displayPhone }}</span>
                     </div>
                     <div class="flex justify-between">
                         <span class="text-theme-muted print:text-slate-500">Hourly Rate:</span>

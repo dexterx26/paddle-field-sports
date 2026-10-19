@@ -45,7 +45,7 @@ class CreditTopup extends Model
         if (str_starts_with($this->receipt_image_path, 'http')) {
             return $this->receipt_image_path;
         }
-        return asset('storage/' . ltrim($this->receipt_image_path, '/'));
+        return route('receipt.credit', $this->id);
     }
 
     public function getFormattedAmountPhpAttribute(): string

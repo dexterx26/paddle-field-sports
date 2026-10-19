@@ -33,15 +33,8 @@ class CreditController extends Controller
         $credits = (float) $request->input('credits');
         $amountPhp = round($credits * $conversionRate, 2);
 
-        $receiptPath = $request->file('receipt')->store('credit_receipts', 'public');
-
-        try {
-            $publicTargetDir = public_path('storage/credit_receipts');
-            if (!file_exists($publicTargetDir)) {
-                @mkdir($publicTargetDir, 0755, true);
-            }
-            @copy(storage_path('app/public/' . $receiptPath), public_path('storage/' . $receiptPath));
-        } catch (\Throwable $e) {}
+        // Store securely on private disk (not accessible via public HTTP URL)
+        $receiptPath = $request->file('receipt')->store('credit_receipts');
 
         $reference = 'CR-' . date('Ymd') . '-' . strtoupper(Str::random(5));
 
