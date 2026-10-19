@@ -21,9 +21,21 @@
                                 <tr>
                                     <td align="center">
                                         <!-- Brand Badge -->
-                                        @if(!empty($settings->logo_path))
-                                            <div style="display: inline-block; width: 64px; height: 64px; border-radius: 16px; background-color: #ffffff; padding: 6px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35); box-sizing: border-box;">
-                                                <img src="{{ $settings->logo_url }}" alt="{{ $settings->venue_name ?? 'Paddle Field' }}" width="52" height="52" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 10px;">
+                                        @php
+                                            $logoPath = $settings->getEmailLogoPath();
+                                            $logoSrc = null;
+                                            if ($logoPath && isset($message)) {
+                                                $logoSrc = $message->embed($logoPath);
+                                            } elseif (!empty($settings->logo_url) && !str_contains($settings->logo_url, 'localhost') && !str_contains($settings->logo_url, '127.0.0.1')) {
+                                                $logoSrc = $settings->logo_url;
+                                            } elseif (file_exists(public_path('images/default-logo.png'))) {
+                                                $logoSrc = asset('images/default-logo.png');
+                                            }
+                                        @endphp
+
+                                        @if($logoSrc)
+                                            <div style="display: inline-block; width: 68px; height: 68px; border-radius: 18px; background-color: #ffffff; padding: 6px; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(8, 145, 178, 0.4); box-sizing: border-box;">
+                                                <img src="{{ $logoSrc }}" alt="{{ $settings->venue_name ?? 'Paddle Field Sports Center' }}" width="56" height="56" style="display: block; width: 100%; height: 100%; object-fit: contain; border-radius: 12px;">
                                             </div>
                                         @else
                                             <div style="display: inline-block; width: 56px; height: 56px; line-height: 56px; border-radius: 16px; background: linear-gradient(135deg, #b88250 0%, #0891b2 100%); color: #ffffff; font-size: 26px; font-weight: bold; text-align: center; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(8, 145, 178, 0.35);">

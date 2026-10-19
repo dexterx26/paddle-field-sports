@@ -79,4 +79,25 @@ class VenueSetting extends Model
     {
         return $this->logo_url ?: asset('images/default-logo.svg');
     }
+
+    /**
+     * Get the absolute local file path for embedding the logo in emails via CID attachment.
+     * Prioritizes custom uploaded logo (if non-SVG image), falling back to default branded PNG.
+     */
+    public function getEmailLogoPath(): ?string
+    {
+        if (!empty($this->logo_path)) {
+            $diskPath = storage_path('app/public/' . ltrim($this->logo_path, '/'));
+            if (file_exists($diskPath) && !str_ends_with(strtolower($diskPath), '.svg')) {
+                return $diskPath;
+            }
+        }
+
+        $defaultPng = public_path('images/default-logo.png');
+        if (file_exists($defaultPng)) {
+            return $defaultPng;
+        }
+
+        return null;
+    }
 }
