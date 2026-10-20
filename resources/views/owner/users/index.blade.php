@@ -448,7 +448,14 @@
                                                 @if($user->role === 'client')
                                                     <!-- Tag as Admin Assistant Button -->
                                                     <button type="button"
-                                                        onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', [], false, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                        data-id="{{ $user->id }}"
+                                                        data-name="{{ $user->name }}"
+                                                        data-email="{{ $user->email }}"
+                                                        data-phone="{{ $user->phone ?? '' }}"
+                                                        data-is-assistant="0"
+                                                        data-owner-id="{{ $user->court_owner_id ?? '' }}"
+                                                        data-perms="[]"
+                                                        onclick="handleTagAssistantClick(this)"
                                                         class="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer shadow-sm group"
                                                         title="Tag as Admin Assistant">
                                                         <i class="fa-solid fa-user-tie group-hover:scale-110 transition-transform"></i>
@@ -456,14 +463,23 @@
                                                 @elseif($user->role === 'admin_assistant')
                                                     <!-- Manage Assistant Access Button -->
                                                     <button type="button"
-                                                        onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                        data-id="{{ $user->id }}"
+                                                        data-name="{{ $user->name }}"
+                                                        data-email="{{ $user->email }}"
+                                                        data-phone="{{ $user->phone ?? '' }}"
+                                                        data-is-assistant="1"
+                                                        data-owner-id="{{ $user->court_owner_id ?? '' }}"
+                                                        data-perms="{{ json_encode($perms) }}"
+                                                        onclick="handleTagAssistantClick(this)"
                                                         class="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer shadow-sm group"
                                                         title="Manage Assistant Modules & Access">
                                                         <i class="fa-solid fa-user-shield group-hover:scale-110 transition-transform"></i>
                                                     </button>
                                                     <!-- Remove Admin Assistant Access Button -->
                                                     <button type="button"
-                                                        onclick="confirmRemoveAssistantAccess({{ $user->id }}, '{{ addslashes($user->name) }}')"
+                                                        data-id="{{ $user->id }}"
+                                                        data-name="{{ $user->name }}"
+                                                        onclick="handleRemoveAssistantClick(this)"
                                                         class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-500/30 transition-all cursor-pointer shadow-sm group"
                                                         title="Remove Admin Assistant Access">
                                                         <i class="fa-solid fa-user-xmark group-hover:scale-110 transition-transform"></i>
@@ -685,19 +701,35 @@
                                 <div class="pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
                                     @if($user->role === 'client')
                                         <button type="button"
-                                            onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', [], false, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                            data-id="{{ $user->id }}"
+                                            data-name="{{ $user->name }}"
+                                            data-email="{{ $user->email }}"
+                                            data-phone="{{ $user->phone ?? '' }}"
+                                            data-is-assistant="0"
+                                            data-owner-id="{{ $user->court_owner_id ?? '' }}"
+                                            data-perms="[]"
+                                            onclick="handleTagAssistantClick(this)"
                                             class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
                                             <i class="fa-solid fa-user-tie text-[11px]"></i> Tag as Admin Assistant
                                         </button>
                                     @elseif($user->role === 'admin_assistant')
                                         <div class="grid grid-cols-2 gap-1.5">
                                             <button type="button"
-                                                onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                data-id="{{ $user->id }}"
+                                                data-name="{{ $user->name }}"
+                                                data-email="{{ $user->email }}"
+                                                data-phone="{{ $user->phone ?? '' }}"
+                                                data-is-assistant="1"
+                                                data-owner-id="{{ $user->court_owner_id ?? '' }}"
+                                                data-perms="{{ json_encode($perms) }}"
+                                                onclick="handleTagAssistantClick(this)"
                                                 class="w-full py-2 px-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm truncate">
                                                 <i class="fa-solid fa-user-shield text-[10px]"></i> Staff Modules
                                             </button>
                                             <button type="button"
-                                                onclick="confirmRemoveAssistantAccess({{ $user->id }}, '{{ addslashes($user->name) }}')"
+                                                data-id="{{ $user->id }}"
+                                                data-name="{{ $user->name }}"
+                                                onclick="handleRemoveAssistantClick(this)"
                                                 class="w-full py-2 px-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm truncate">
                                                 <i class="fa-solid fa-user-xmark text-[10px]"></i> Remove Access
                                             </button>
@@ -2616,7 +2648,36 @@
     let currentTagUserId = null;
     let currentTagUserName = '';
 
+    function handleTagAssistantClick(button) {
+        if (!button) return;
+        const userId = parseInt(button.dataset.id, 10);
+        const name = button.dataset.name || '';
+        const email = button.dataset.email || '';
+        const phone = button.dataset.phone || '';
+        const isAssistant = button.dataset.isAssistant === '1';
+        const courtOwnerId = button.dataset.ownerId ? parseInt(button.dataset.ownerId, 10) : null;
+        let permissions = [];
+        try {
+            permissions = JSON.parse(button.dataset.perms || '[]');
+        } catch (e) {
+            permissions = [];
+        }
+        openTagAssistantModal(userId, name, email, phone, permissions, isAssistant, courtOwnerId);
+    }
+
+    function handleRemoveAssistantClick(button) {
+        if (!button) return;
+        confirmRemoveAssistantAccess(button.dataset.id, button.dataset.name || 'this user');
+    }
+
     function openTagAssistantModal(userId, name, email, phone, permissions = [], isAlreadyAssistant = false, courtOwnerId = null) {
+        if (typeof permissions === 'string') {
+            try {
+                permissions = JSON.parse(permissions);
+            } catch (e) {
+                permissions = [];
+            }
+        }
         currentTagUserId = userId;
         currentTagUserName = name;
 
