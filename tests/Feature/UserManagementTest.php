@@ -387,6 +387,8 @@ class UserManagementTest extends TestCase
         $response->assertSee('Tag as Admin Assistant');
         $response->assertSee('Tag Registered User');
         $response->assertSee('openTagAssistantModal');
+        $response->assertSee('Remove Admin Assistant Access');
+        $response->assertSee('confirmRemoveAssistantAccess');
     }
 }
 

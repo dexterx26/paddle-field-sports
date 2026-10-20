@@ -461,6 +461,13 @@
                                                         title="Manage Assistant Modules & Access">
                                                         <i class="fa-solid fa-user-shield group-hover:scale-110 transition-transform"></i>
                                                     </button>
+                                                    <!-- Remove Admin Assistant Access Button -->
+                                                    <button type="button"
+                                                        onclick="confirmRemoveAssistantAccess({{ $user->id }}, '{{ addslashes($user->name) }}')"
+                                                        class="p-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-500/30 transition-all cursor-pointer shadow-sm group"
+                                                        title="Remove Admin Assistant Access">
+                                                        <i class="fa-solid fa-user-xmark group-hover:scale-110 transition-transform"></i>
+                                                    </button>
                                                 @endif
                                             @endif
 
@@ -683,11 +690,18 @@
                                             <i class="fa-solid fa-user-tie text-[11px]"></i> Tag as Admin Assistant
                                         </button>
                                     @elseif($user->role === 'admin_assistant')
-                                        <button type="button"
-                                            onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
-                                            class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
-                                            <i class="fa-solid fa-user-shield text-[11px]"></i> Manage Assistant Modules
-                                        </button>
+                                        <div class="grid grid-cols-2 gap-1.5">
+                                            <button type="button"
+                                                onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                class="w-full py-2 px-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm truncate">
+                                                <i class="fa-solid fa-user-shield text-[10px]"></i> Staff Modules
+                                            </button>
+                                            <button type="button"
+                                                onclick="confirmRemoveAssistantAccess({{ $user->id }}, '{{ addslashes($user->name) }}')"
+                                                class="w-full py-2 px-2 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 text-rose-700 dark:text-rose-400 border border-rose-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1 cursor-pointer shadow-sm truncate">
+                                                <i class="fa-solid fa-user-xmark text-[10px]"></i> Remove Access
+                                            </button>
+                                        </div>
                                     @endif
                                 </div>
                             @endif
@@ -1153,7 +1167,7 @@
                 <div id="tag_modal_untag_wrapper" class="hidden w-full sm:w-auto">
                     <button type="button" onclick="executeUntagAssistant()"
                         class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5">
-                        <i class="fa-solid fa-user-xmark"></i> Revert to Player
+                        <i class="fa-solid fa-user-xmark"></i> Remove Admin Assistant Access
                     </button>
                 </div>
 
@@ -2663,22 +2677,21 @@
         document.getElementById('tagAssistantModal').classList.add('hidden');
     }
 
-    function executeUntagAssistant() {
-        if (!currentTagUserId) return;
+    function confirmRemoveAssistantAccess(userId, name) {
         Swal.fire({
-            title: 'Revert to Player?',
-            html: `Are you sure you want to remove <strong>${currentTagUserName}</strong> from Admin Assistants?<br><span class="text-xs text-stone-500">This will revoke their staff access and revert their account to a regular player.</span>`,
+            title: 'Remove Admin Assistant Access?',
+            html: `Are you sure you want to remove admin assistant privileges for <strong>${name}</strong>?<br><span class="text-xs text-stone-500">This will revoke their staff access and revert their account back to a regular Player/Client.</span>`,
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#e11d48',
             cancelButtonColor: '#78716c',
-            confirmButtonText: 'Yes, Revert to Player',
+            confirmButtonText: 'Yes, Remove Access',
             cancelButtonText: 'Cancel'
         }).then((result) => {
             if (result.isConfirmed) {
                 const untagForm = document.createElement('form');
                 untagForm.method = 'POST';
-                untagForm.action = "{{ url('owner/users') }}/" + currentTagUserId + "/untag-assistant";
+                untagForm.action = "{{ url('owner/users') }}/" + userId + "/untag-assistant";
 
                 const csrf = document.createElement('input');
                 csrf.type = 'hidden';
@@ -2690,6 +2703,11 @@
                 untagForm.submit();
             }
         });
+    }
+
+    function executeUntagAssistant() {
+        if (!currentTagUserId) return;
+        confirmRemoveAssistantAccess(currentTagUserId, currentTagUserName);
     }
 
     function openAddAssistantModal() {
