@@ -13,7 +13,13 @@
             </div>
             <p class="text-xs text-theme-muted mt-1">Manage court owners, staff assistants, and registered player accounts.</p>
         </div>
-        <div class="flex items-center gap-3 w-full sm:w-auto">
+        <div class="flex flex-col sm:flex-row items-center gap-2.5 w-full sm:w-auto">
+            @if(Auth::user()->canManageStaff())
+                <button type="button" onclick="openAddAssistantModal()"
+                    class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
+                    <i class="fa-solid fa-user-tie"></i> Add Admin Assistant
+                </button>
+            @endif
             <button type="button" onclick="openAddUserModal()"
                 class="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer">
                 <i class="fa-solid fa-user-plus"></i> Add New User
@@ -438,6 +444,26 @@
                                         @endphp
 
                                         @if($canEdit)
+                                            @if(Auth::user()->canManageStaff())
+                                                @if($user->role === 'client')
+                                                    <!-- Tag as Admin Assistant Button -->
+                                                    <button type="button"
+                                                        onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', [], false, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                        class="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer shadow-sm group"
+                                                        title="Tag as Admin Assistant">
+                                                        <i class="fa-solid fa-user-tie group-hover:scale-110 transition-transform"></i>
+                                                    </button>
+                                                @elseif($user->role === 'admin_assistant')
+                                                    <!-- Manage Assistant Access Button -->
+                                                    <button type="button"
+                                                        onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                                        class="p-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer shadow-sm group"
+                                                        title="Manage Assistant Modules & Access">
+                                                        <i class="fa-solid fa-user-shield group-hover:scale-110 transition-transform"></i>
+                                                    </button>
+                                                @endif
+                                            @endif
+
                                             <!-- Manage Credits Button -->
                                             <button type="button"
                                                 onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ (float) ($user->credits ?? 0) }})"
@@ -646,9 +672,26 @@
                             @endif
                         </div>
 
-                        <!-- Actions Buttons (3-column Grid for Easy Tapping) -->
+                        <!-- Actions Buttons -->
                         @if($canEdit)
-                            <div class="grid grid-cols-3 gap-1.5 pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                            @if(Auth::user()->canManageStaff())
+                                <div class="pt-2 border-t border-stone-200/60 dark:border-stone-800/60">
+                                    @if($user->role === 'client')
+                                        <button type="button"
+                                            onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', [], false, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                            class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                                            <i class="fa-solid fa-user-tie text-[11px]"></i> Tag as Admin Assistant
+                                        </button>
+                                    @elseif($user->role === 'admin_assistant')
+                                        <button type="button"
+                                            onclick="openTagAssistantModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', '{{ addslashes($user->phone ?? '') }}', @json($perms), true, {{ $user->court_owner_id ? $user->court_owner_id : 'null' }})"
+                                            class="w-full py-2 px-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 font-bold text-[11px] transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                                            <i class="fa-solid fa-user-shield text-[11px]"></i> Manage Assistant Modules
+                                        </button>
+                                    @endif
+                                </div>
+                            @endif
+                            <div class="grid grid-cols-3 gap-1.5 pt-2 {{ Auth::user()->canManageStaff() ? '' : 'border-t border-stone-200/60 dark:border-stone-800/60' }}">
                                 <button type="button"
                                     onclick="openCreditAdjustmentModal({{ $user->id }}, '{{ addslashes($user->name) }}', '{{ addslashes($user->email) }}', {{ (float) ($user->credits ?? 0) }})"
                                     class="w-full py-2 px-1.5 rounded-xl bg-stone-200 dark:bg-stone-800 hover:bg-cyan-500/20 text-stone-700 dark:text-stone-300 hover:text-cyan-600 font-bold text-[11px] border border-stone-300 dark:border-stone-700 transition-colors flex items-center justify-center gap-1 cursor-pointer"
@@ -1006,6 +1049,380 @@
         </form>
     </div>
 </div>
+
+<!-- ========================================== -->
+<!-- TAG AS ADMIN ASSISTANT MODAL               -->
+<!-- ========================================== -->
+<div id="tagAssistantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
+    <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative bg-white/95 dark:bg-stone-900/95">
+        <button type="button" onclick="closeTagAssistantModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="flex items-center gap-3.5 mb-5">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-user-tie"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-theme-heading" id="tag_modal_title">Tag User as Admin Assistant</h3>
+                <p class="text-xs text-theme-muted" id="tag_modal_subtitle">Authorize this registered user with admin assistant staff privileges and module permissions.</p>
+            </div>
+        </div>
+
+        <!-- Target User Preview Summary Card -->
+        <div class="p-4 rounded-2xl bg-stone-100 dark:bg-stone-800/60 border border-stone-200 dark:border-stone-700/60 flex items-center justify-between gap-3 mb-5">
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold flex items-center justify-center text-base shrink-0 uppercase" id="tag_modal_avatar">
+                    U
+                </div>
+                <div class="min-w-0">
+                    <div class="text-sm font-bold text-theme-heading truncate" id="tag_modal_name">User Name</div>
+                    <div class="text-xs text-theme-muted truncate font-mono" id="tag_modal_email">user@email.com</div>
+                    <div class="text-[11px] text-theme-muted font-mono mt-0.5" id="tag_modal_phone">+63 900 000 0000</div>
+                </div>
+            </div>
+            <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold shrink-0 uppercase tracking-wider" id="tag_modal_badge">
+                Client
+            </span>
+        </div>
+
+        <form id="tagAssistantForm" method="POST" class="space-y-4">
+            @csrf
+
+            <!-- Supervisor Selector (For Admins or to reassign owner) -->
+            @if(Auth::user()->isAdmin())
+                <div>
+                    <label class="block text-xs font-bold text-theme-heading mb-1.5">Supervisor (Court Owner)</label>
+                    <select name="court_owner_id" id="tag_modal_supervisor"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="">-- No Direct Supervisor --</option>
+                        @foreach($courtOwners as $owner)
+                            <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->email }})</option>
+                        @endforeach
+                    </select>
+                </div>
+            @endif
+
+            <!-- Module Permissions Section -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-xs font-extrabold text-theme-heading uppercase tracking-wider">Module Permissions</h4>
+                    <span class="text-[11px] text-theme-muted">Schedule & Approvals are default</span>
+                </div>
+                <p class="text-[11px] text-theme-muted mb-2">Check the operations this assistant is permitted to access and manage.</p>
+
+                <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    @foreach($availableModules as $key => $mod)
+                        <label class="module-permission-card flex items-start gap-3 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/60 dark:bg-stone-900/40 hover:border-emerald-500/50 cursor-pointer select-none transition-all duration-200">
+                            <input type="checkbox" name="modules[]" value="{{ $key }}" id="tag_modal_module_{{ $key }}"
+                                {{ $mod['default'] ? 'checked' : '' }}
+                                onchange="syncParentModuleCard(this)"
+                                class="sr-only module-checkbox">
+                            <div class="module-icon-box w-8 h-8 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-500 flex items-center justify-center shrink-0 transition-all duration-200">
+                                <i class="fa-solid {{ $mod['icon'] }} text-xs"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center justify-between gap-2">
+                                    <div class="flex items-center gap-1.5 truncate">
+                                        <span class="text-xs font-black text-theme-heading module-title">{{ $mod['name'] }}</span>
+                                        @if($mod['default'])
+                                            <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 uppercase">Default</span>
+                                        @endif
+                                    </div>
+                                    <div class="shrink-0 flex items-center gap-1.5">
+                                        <span class="module-badge-granted hidden items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30">
+                                            <i class="fa-solid fa-check text-[9px]"></i> Active
+                                        </span>
+                                        <span class="module-badge-disabled inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+                                            <i class="fa-solid fa-xmark text-[9px]"></i> Off
+                                        </span>
+                                        <div class="module-indicator-check w-4 h-4 rounded-lg border flex items-center justify-center transition-all duration-200">
+                                            <i class="fa-solid fa-check text-[9px]"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-theme-muted mt-0.5 leading-tight">{{ $mod['description'] }}</p>
+                            </div>
+                        </label>
+                    @endforeach
+                </div>
+            </div>
+
+            <!-- Footer Buttons -->
+            <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+                <div id="tag_modal_untag_wrapper" class="hidden w-full sm:w-auto">
+                    <button type="button" onclick="executeUntagAssistant()"
+                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-rose-300 dark:border-rose-900/60 bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-400 text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-user-xmark"></i> Revert to Player
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 w-full sm:w-auto ml-auto">
+                    <button type="button" onclick="closeTagAssistantModal()"
+                        class="w-full sm:w-auto px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit" id="tag_modal_submit_btn"
+                        class="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20 cursor-pointer transition-all flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-check"></i> <span id="tag_modal_submit_text">Tag as Admin Assistant</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ========================================== -->
+<!-- ADD ADMIN ASSISTANT MODAL (TAG OR CREATE)  -->
+<!-- ========================================== -->
+<div id="addAssistantModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm hidden transition-all p-3 sm:p-4">
+    <div class="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl glass-dropdown border border-stone-200 dark:border-stone-800 p-6 md:p-8 shadow-2xl relative bg-white/95 dark:bg-stone-900/95">
+        <button type="button" onclick="closeAddAssistantModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-200 dark:bg-stone-800 flex items-center justify-center text-theme-muted hover:text-theme-heading cursor-pointer">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+
+        <div class="flex items-center gap-3.5 mb-5">
+            <div class="w-11 h-11 rounded-2xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 flex items-center justify-center text-xl shrink-0">
+                <i class="fa-solid fa-user-shield"></i>
+            </div>
+            <div>
+                <h3 class="text-lg font-bold text-theme-heading">Add Admin Assistant</h3>
+                <p class="text-xs text-theme-muted">Tag an existing registered user or register a new assistant account.</p>
+            </div>
+        </div>
+
+        <!-- Mode Toggle Tabs -->
+        <div class="flex items-center p-1 rounded-2xl bg-stone-100 dark:bg-stone-800/70 border border-stone-200 dark:border-stone-700/60 mb-5">
+            <button type="button" onclick="switchAddAssistantTab('tag')" id="btn_tab_assistant_tag"
+                class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20">
+                <i class="fa-solid fa-tag"></i> Tag Registered User
+            </button>
+            <button type="button" onclick="switchAddAssistantTab('new')" id="btn_tab_assistant_new"
+                class="flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-theme-muted hover:text-theme-heading">
+                <i class="fa-solid fa-user-plus"></i> Create New Account
+            </button>
+        </div>
+
+        <!-- TAB 1: TAG REGISTERED USER -->
+        <div id="pane_assistant_tag" class="space-y-4">
+            <form action="{{ route('owner.users.tag_assistant') }}" method="POST" class="space-y-4">
+                @csrf
+
+                <!-- User Selection Dropdown -->
+                <div>
+                    <label class="block text-xs font-bold text-theme-heading mb-1.5">Select Registered Player / Client *</label>
+                    <select name="user_id" id="add_assistant_client_select" onchange="updateTagUserSelection(this)" required
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                        <option value="" disabled selected>-- Choose a registered player to tag --</option>
+                        @foreach($registeredClients as $rc)
+                            <option value="{{ $rc->id }}"
+                                data-name="{{ $rc->name }}"
+                                data-email="{{ $rc->email }}"
+                                data-phone="{{ $rc->phone ?? '—' }}">
+                                {{ $rc->name }} ({{ $rc->email }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Selected User Preview Box -->
+                <div id="tag_user_preview_box" class="p-3.5 rounded-2xl bg-stone-100/70 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-700/60 hidden items-center justify-between gap-3">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold flex items-center justify-center text-sm shrink-0 uppercase" id="tag_user_preview_avatar">
+                            U
+                        </div>
+                        <div class="min-w-0">
+                            <div class="text-xs font-bold text-theme-heading truncate" id="tag_user_preview_name">Name</div>
+                            <div class="text-[11px] text-theme-muted truncate font-mono" id="tag_user_preview_email">Email</div>
+                            <div class="text-[10px] text-theme-muted font-mono" id="tag_user_preview_phone">Phone</div>
+                        </div>
+                    </div>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-body border border-stone-300 dark:border-stone-700">
+                        Player Account
+                    </span>
+                </div>
+
+                @if(Auth::user()->isAdmin())
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Supervisor (Court Owner)</label>
+                        <select name="court_owner_id"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="">-- No Direct Supervisor --</option>
+                            @foreach($courtOwners as $owner)
+                                <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->email }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                <!-- Module Permissions Section -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-extrabold text-theme-heading uppercase tracking-wider">Module Permissions</h4>
+                        <span class="text-[11px] text-theme-muted">Schedule & Approvals are default</span>
+                    </div>
+                    <p class="text-[11px] text-theme-muted mb-2">Configure operational module access granted to this assistant.</p>
+
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        @foreach($availableModules as $key => $mod)
+                            <label class="module-permission-card flex items-start gap-3 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/60 dark:bg-stone-900/40 hover:border-emerald-500/50 cursor-pointer select-none transition-all duration-200">
+                                <input type="checkbox" name="modules[]" value="{{ $key }}"
+                                    {{ $mod['default'] ? 'checked' : '' }}
+                                    onchange="syncParentModuleCard(this)"
+                                    class="sr-only module-checkbox">
+                                <div class="module-icon-box w-8 h-8 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-500 flex items-center justify-center shrink-0 transition-all duration-200">
+                                    <i class="fa-solid {{ $mod['icon'] }} text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <span class="text-xs font-black text-theme-heading module-title">{{ $mod['name'] }}</span>
+                                            @if($mod['default'])
+                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 uppercase">Default</span>
+                                            @endif
+                                        </div>
+                                        <div class="shrink-0 flex items-center gap-1.5">
+                                            <span class="module-badge-granted hidden items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30">
+                                                <i class="fa-solid fa-check text-[9px]"></i> Active
+                                            </span>
+                                            <span class="module-badge-disabled inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+                                                <i class="fa-solid fa-xmark text-[9px]"></i> Off
+                                            </span>
+                                            <div class="module-indicator-check w-4 h-4 rounded-lg border flex items-center justify-center transition-all duration-200">
+                                                <i class="fa-solid fa-check text-[9px]"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-theme-muted mt-0.5 leading-tight">{{ $mod['description'] }}</p>
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+                    <button type="button" onclick="closeAddAssistantModal()"
+                        class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20 cursor-pointer transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-user-check"></i> Tag as Admin Assistant
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- TAB 2: CREATE NEW ASSISTANT ACCOUNT -->
+        <div id="pane_assistant_new" class="space-y-4 hidden">
+            <form action="{{ route('owner.users.store') }}" method="POST" class="space-y-4">
+                @csrf
+                <input type="hidden" name="role" value="admin_assistant">
+
+                <div>
+                    <label class="block text-xs font-bold text-theme-heading mb-1.5">Full Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Maria Santos"
+                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Email Address *</label>
+                        <input type="email" name="email" required placeholder="assistant@paddlefield.com"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Phone Number</label>
+                        <input type="text" name="phone" placeholder="+63 918 000 0000"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                @if(Auth::user()->isAdmin())
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Supervisor (Court Owner)</label>
+                        <select name="court_owner_id"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                            <option value="">-- No Direct Supervisor --</option>
+                            @foreach($courtOwners as $owner)
+                                <option value="{{ $owner->id }}">{{ $owner->name }} ({{ $owner->email }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Password *</label>
+                        <input type="password" name="password" required minlength="6" placeholder="••••••••"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-theme-heading mb-1.5">Confirm Password *</label>
+                        <input type="password" name="password_confirmation" required minlength="6" placeholder="••••••••"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- Module Permissions Section -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <h4 class="text-xs font-extrabold text-theme-heading uppercase tracking-wider">Module Permissions</h4>
+                        <span class="text-[11px] text-theme-muted">Schedule & Approvals are default</span>
+                    </div>
+
+                    <div class="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        @foreach($availableModules as $key => $mod)
+                            <label class="module-permission-card flex items-start gap-3 p-3 rounded-2xl border border-stone-200 dark:border-stone-800 bg-stone-100/60 dark:bg-stone-900/40 hover:border-emerald-500/50 cursor-pointer select-none transition-all duration-200">
+                                <input type="checkbox" name="modules[]" value="{{ $key }}"
+                                    {{ $mod['default'] ? 'checked' : '' }}
+                                    onchange="syncParentModuleCard(this)"
+                                    class="sr-only module-checkbox">
+                                <div class="module-icon-box w-8 h-8 rounded-xl bg-stone-200 dark:bg-stone-800 text-stone-500 flex items-center justify-center shrink-0 transition-all duration-200">
+                                    <i class="fa-solid {{ $mod['icon'] }} text-xs"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <div class="flex items-center gap-1.5 truncate">
+                                            <span class="text-xs font-black text-theme-heading module-title">{{ $mod['name'] }}</span>
+                                            @if($mod['default'])
+                                                <span class="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-amber-500/15 text-amber-700 dark:text-amber-300 border border-amber-500/30 uppercase">Default</span>
+                                            @endif
+                                        </div>
+                                        <div class="shrink-0 flex items-center gap-1.5">
+                                            <span class="module-badge-granted hidden items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-black bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/30">
+                                                <i class="fa-solid fa-check text-[9px]"></i> Active
+                                            </span>
+                                            <span class="module-badge-disabled inline-flex items-center gap-1 px-2 py-0.2 rounded-full text-[9px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-muted">
+                                                <i class="fa-solid fa-xmark text-[9px]"></i> Off
+                                            </span>
+                                            <div class="module-indicator-check w-4 h-4 rounded-lg border flex items-center justify-center transition-all duration-200">
+                                                <i class="fa-solid fa-check text-[9px]"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <p class="text-[10px] text-theme-muted mt-0.5 leading-tight">{{ $mod['description'] }}</p>
+                                </div>
+                            </label>
+                        @endforeach
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-3 pt-4 border-t border-stone-200 dark:border-stone-800">
+                    <button type="button" onclick="closeAddAssistantModal()"
+                        class="px-4 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 text-xs font-semibold text-theme-muted hover:text-theme-heading cursor-pointer">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                        class="px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-extrabold shadow-lg shadow-emerald-500/20 cursor-pointer transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-user-plus"></i> Create Admin Assistant
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- ========================================== -->
 <!-- HELD TIMESLOTS DETAILS MODAL               -->
 <!-- ========================================== -->
@@ -1481,6 +1898,15 @@
         const section = document.getElementById('edit_assistant_section');
         if (role === 'admin_assistant') {
             section.classList.remove('hidden');
+            const checkedBoxes = section.querySelectorAll('input[name="modules[]"]:checked');
+            if (checkedBoxes.length === 0) {
+                const defaultMods = ['schedule', 'approvals'];
+                defaultMods.forEach(mod => {
+                    const cb = document.getElementById(`edit_user_module_${mod}`);
+                    if (cb) cb.checked = true;
+                });
+                syncAllModuleCards('edit_assistant_section');
+            }
         } else {
             section.classList.add('hidden');
         }
@@ -2170,6 +2596,154 @@
         }
     }
 
+    // ==========================================
+    // TAG AS ADMIN ASSISTANT & ADD ASSISTANT
+    // ==========================================
+    let currentTagUserId = null;
+    let currentTagUserName = '';
+
+    function openTagAssistantModal(userId, name, email, phone, permissions = [], isAlreadyAssistant = false, courtOwnerId = null) {
+        currentTagUserId = userId;
+        currentTagUserName = name;
+
+        const form = document.getElementById('tagAssistantForm');
+        form.action = "{{ url('owner/users') }}/" + userId + "/tag-assistant";
+
+        document.getElementById('tag_modal_name').textContent = name;
+        document.getElementById('tag_modal_email').textContent = email;
+        document.getElementById('tag_modal_phone').textContent = phone || 'No phone recorded';
+        document.getElementById('tag_modal_avatar').textContent = (name || 'U').charAt(0).toUpperCase();
+
+        const badge = document.getElementById('tag_modal_badge');
+        const title = document.getElementById('tag_modal_title');
+        const subtitle = document.getElementById('tag_modal_subtitle');
+        const submitText = document.getElementById('tag_modal_submit_text');
+        const untagWrapper = document.getElementById('tag_modal_untag_wrapper');
+
+        if (isAlreadyAssistant) {
+            badge.textContent = 'Admin Assistant';
+            badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-extrabold shrink-0 uppercase tracking-wider bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30';
+            title.textContent = 'Manage Admin Assistant Access';
+            subtitle.textContent = `Update assigned module permissions for staff assistant ${name}.`;
+            submitText.textContent = 'Update Permissions';
+            untagWrapper.classList.remove('hidden');
+        } else {
+            badge.textContent = 'Player / Client';
+            badge.className = 'px-2.5 py-1 rounded-full text-[10px] font-extrabold shrink-0 uppercase tracking-wider bg-stone-200 dark:bg-stone-800 text-theme-body border border-stone-300 dark:border-stone-700';
+            title.textContent = 'Tag User as Admin Assistant';
+            subtitle.textContent = `Promote registered user ${name} to an Admin Assistant staff member.`;
+            submitText.textContent = 'Tag as Admin Assistant';
+            untagWrapper.classList.add('hidden');
+        }
+
+        const supervisorSelect = document.getElementById('tag_modal_supervisor');
+        if (supervisorSelect && courtOwnerId) {
+            supervisorSelect.value = courtOwnerId;
+        }
+
+        // Set module checkboxes
+        const defaultMods = ['schedule', 'approvals'];
+        availableUserModules.forEach(mod => {
+            const cb = document.getElementById(`tag_modal_module_${mod}`);
+            if (cb) {
+                if (isAlreadyAssistant) {
+                    cb.checked = Array.isArray(permissions) && permissions.includes(mod);
+                } else {
+                    // Default permissions for new promotion
+                    cb.checked = defaultMods.includes(mod);
+                }
+            }
+        });
+        syncAllModuleCards('tagAssistantModal');
+
+        document.getElementById('tagAssistantModal').classList.remove('hidden');
+    }
+
+    function closeTagAssistantModal() {
+        document.getElementById('tagAssistantModal').classList.add('hidden');
+    }
+
+    function executeUntagAssistant() {
+        if (!currentTagUserId) return;
+        Swal.fire({
+            title: 'Revert to Player?',
+            html: `Are you sure you want to remove <strong>${currentTagUserName}</strong> from Admin Assistants?<br><span class="text-xs text-stone-500">This will revoke their staff access and revert their account to a regular player.</span>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#e11d48',
+            cancelButtonColor: '#78716c',
+            confirmButtonText: 'Yes, Revert to Player',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const untagForm = document.createElement('form');
+                untagForm.method = 'POST';
+                untagForm.action = "{{ url('owner/users') }}/" + currentTagUserId + "/untag-assistant";
+
+                const csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = '_token';
+                csrf.value = "{{ csrf_token() }}";
+                untagForm.appendChild(csrf);
+
+                document.body.appendChild(untagForm);
+                untagForm.submit();
+            }
+        });
+    }
+
+    function openAddAssistantModal() {
+        document.getElementById('addAssistantModal').classList.remove('hidden');
+        switchAddAssistantTab('tag');
+        syncAllModuleCards('addAssistantModal');
+    }
+
+    function closeAddAssistantModal() {
+        document.getElementById('addAssistantModal').classList.add('hidden');
+    }
+
+    function switchAddAssistantTab(tab) {
+        const paneTag = document.getElementById('pane_assistant_tag');
+        const paneNew = document.getElementById('pane_assistant_new');
+        const btnTag = document.getElementById('btn_tab_assistant_tag');
+        const btnNew = document.getElementById('btn_tab_assistant_new');
+
+        if (tab === 'tag') {
+            paneTag.classList.remove('hidden');
+            paneNew.classList.add('hidden');
+            btnTag.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20';
+            btnNew.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-theme-muted hover:text-theme-heading';
+        } else {
+            paneTag.classList.add('hidden');
+            paneNew.classList.remove('hidden');
+            btnNew.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 bg-emerald-500 text-slate-950 shadow-sm shadow-emerald-500/20';
+            btnTag.className = 'flex-1 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center justify-center gap-1.5 text-theme-muted hover:text-theme-heading';
+        }
+        syncAllModuleCards('addAssistantModal');
+    }
+
+    function updateTagUserSelection(selectEl) {
+        const selected = selectEl.options[selectEl.selectedIndex];
+        const previewBox = document.getElementById('tag_user_preview_box');
+        if (!selected || !selected.value) {
+            previewBox.classList.add('hidden');
+            previewBox.classList.remove('flex');
+            return;
+        }
+
+        const name = selected.dataset.name || 'User';
+        const email = selected.dataset.email || '';
+        const phone = selected.dataset.phone || 'No phone recorded';
+
+        document.getElementById('tag_user_preview_name').textContent = name;
+        document.getElementById('tag_user_preview_email').textContent = email;
+        document.getElementById('tag_user_preview_phone').textContent = phone;
+        document.getElementById('tag_user_preview_avatar').textContent = name.charAt(0).toUpperCase();
+
+        previewBox.classList.remove('hidden');
+        previewBox.classList.add('flex');
+    }
+
     // Close modals on Escape key
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape') {
@@ -2178,6 +2752,8 @@
             closeHeldSlotsModal();
             closeDeactivateModal();
             closeCreditAdjustmentModal();
+            closeTagAssistantModal();
+            closeAddAssistantModal();
         }
     });
 </script>

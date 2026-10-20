@@ -151,6 +151,9 @@ Route::middleware(['auth', 'role:court_owner,admin,admin_assistant'])->prefix('o
         Route::get('/{id}/held-slots', [OwnerController::class, 'userHeldSlots'])->name('held_slots');
         Route::post('/{id}/credits', [OwnerController::class, 'adjustUserCredits'])->name('adjust_credits');
         Route::get('/{id}/credits', [OwnerController::class, 'userCreditHistory'])->name('credit_history');
+        Route::post('/tag-assistant', [OwnerController::class, 'tagAssistant'])->name('tag_assistant');
+        Route::post('/{id}/tag-assistant', [OwnerController::class, 'tagAssistant'])->name('tag_assistant_user');
+        Route::post('/{id}/untag-assistant', [OwnerController::class, 'untagAssistant'])->name('untag_assistant');
     });
 
     // Admin Assistants Management (Accessible only to Court Owners and System Administrators)

@@ -1079,6 +1079,9 @@ class OwnerController extends Controller
         $availableModules = User::availableModules();
         $defaultPermissions = User::defaultAssistantPermissions();
         $courtOwners = User::where('role', 'court_owner')->orderBy('name')->get();
+        $registeredClients = User::where('role', 'client')
+            ->orderBy('name')
+            ->get(['id', 'name', 'email', 'phone', 'is_active', 'created_at']);
 
         return view('owner.users.index', compact(
             'settings',
@@ -1090,7 +1093,8 @@ class OwnerController extends Controller
             'sort',
             'availableModules',
             'defaultPermissions',
-            'courtOwners'
+            'courtOwners',
+            'registeredClients'
         ));
     }
 
@@ -1233,7 +1237,11 @@ class OwnerController extends Controller
         }
 
         if ($newRole === 'admin_assistant') {
-            $updateData['permissions'] = array_values($request->input('modules', []));
+            $modules = $request->input('modules');
+            if (empty($modules)) {
+                $modules = User::defaultAssistantPermissions();
+            }
+            $updateData['permissions'] = array_values($modules);
             if ($request->filled('court_owner_id')) {
                 $updateData['court_owner_id'] = $request->input('court_owner_id');
             } elseif ($currentUser->isOwner() && !$targetUser->court_owner_id) {
@@ -1371,6 +1379,106 @@ class OwnerController extends Controller
         ]);
 
         return back()->with('success', "Password for user '{$targetUser->name}' has been reset to 'PaddleField2026!'.");
+    }
+
+    /**
+     * Tag an existing user as an Admin Assistant
+     */
+    public function tagAssistant(Request $request, ?int $id = null)
+    {
+        $currentUser = Auth::user();
+        if (!$currentUser->canManageStaff()) {
+            abort(403, 'Only court owners and system administrators can assign admin assistants.');
+        }
+
+        $userId = $id ?? $request->input('user_id');
+        if (!$userId) {
+            return back()->with('error', 'Please select a registered user to tag as Admin Assistant.');
+        }
+
+        $targetUser = User::findOrFail($userId);
+
+        if ($targetUser->isAdmin()) {
+            abort(403, 'System administrator accounts cannot be modified here.');
+        }
+
+        if ($targetUser->isOwner() && !$currentUser->isAdmin()) {
+            abort(403, 'Court owner accounts cannot be modified by another owner.');
+        }
+
+        $request->validate([
+            'modules' => 'nullable|array',
+            'modules.*' => 'string|in:schedule,approvals,courts,photos,settings,users',
+            'court_owner_id' => 'nullable|exists:users,id',
+        ]);
+
+        $modules = $request->input('modules');
+        if (empty($modules)) {
+            $modules = User::defaultAssistantPermissions();
+        }
+
+        $courtOwnerId = null;
+        if ($request->filled('court_owner_id')) {
+            $courtOwnerId = $request->input('court_owner_id');
+        } elseif ($currentUser->isOwner()) {
+            $courtOwnerId = $currentUser->id;
+        } elseif ($targetUser->court_owner_id) {
+            $courtOwnerId = $targetUser->court_owner_id;
+        }
+
+        $targetUser->update([
+            'role' => 'admin_assistant',
+            'permissions' => array_values($modules),
+            'court_owner_id' => $courtOwnerId,
+        ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "User '{$targetUser->name}' is now tagged as an Admin Assistant!",
+                'user' => $targetUser->fresh(),
+            ]);
+        }
+
+        return redirect()->route('owner.users.index')
+            ->with('success', "User '{$targetUser->name}' is now tagged as an Admin Assistant with assigned module permissions!");
+    }
+
+    /**
+     * Untag an Admin Assistant and revert to Player / Client
+     */
+    public function untagAssistant(Request $request, int $id)
+    {
+        $currentUser = Auth::user();
+        if (!$currentUser->canManageStaff()) {
+            abort(403, 'Only court owners and system administrators can manage staff roles.');
+        }
+
+        $targetUser = User::findOrFail($id);
+
+        if ($targetUser->id === $currentUser->id) {
+            return back()->with('error', 'You cannot change your own role.');
+        }
+
+        if ($targetUser->role !== 'admin_assistant') {
+            return back()->with('error', 'This user is not an Admin Assistant.');
+        }
+
+        $targetUser->update([
+            'role' => 'client',
+            'permissions' => null,
+            'court_owner_id' => null,
+        ]);
+
+        if ($request->expectsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Admin Assistant '{$targetUser->name}' reverted back to registered Player / Client.",
+            ]);
+        }
+
+        return redirect()->route('owner.users.index')
+            ->with('success', "Admin Assistant '{$targetUser->name}' reverted back to registered Player / Client.");
     }
 
     /**

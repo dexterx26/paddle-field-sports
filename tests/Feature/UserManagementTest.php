@@ -305,5 +305,88 @@ class UserManagementTest extends TestCase
         $adminResp->assertOk();
         $adminResp->assertDontSee($this->admin->email);
     }
+
+    public function test_court_owner_can_tag_registered_client_as_admin_assistant(): void
+    {
+        $this->assertEquals('client', $this->client->role);
+
+        $response = $this->actingAs($this->owner)->post(route('owner.users.tag_assistant'), [
+            'user_id' => $this->client->id,
+            'modules' => ['schedule', 'approvals', 'users'],
+        ]);
+
+        $response->assertRedirect(route('owner.users.index'));
+        $response->assertSessionHas('success');
+
+        $fresh = $this->client->fresh();
+        $this->assertEquals('admin_assistant', $fresh->role);
+        $this->assertEquals($this->owner->id, $fresh->court_owner_id);
+        $this->assertTrue($fresh->hasModuleAccess('schedule'));
+        $this->assertTrue($fresh->hasModuleAccess('approvals'));
+        $this->assertTrue($fresh->hasModuleAccess('users'));
+        $this->assertFalse($fresh->hasModuleAccess('courts'));
+    }
+
+    public function test_court_owner_can_tag_assistant_via_id_route_with_default_permissions(): void
+    {
+        $this->assertEquals('client', $this->client->role);
+
+        $response = $this->actingAs($this->owner)->post(route('owner.users.tag_assistant_user', $this->client->id), [
+            // No modules supplied -> defaults to schedule & approvals
+        ]);
+
+        $response->assertRedirect(route('owner.users.index'));
+        $response->assertSessionHas('success');
+
+        $fresh = $this->client->fresh();
+        $this->assertEquals('admin_assistant', $fresh->role);
+        $this->assertEquals($this->owner->id, $fresh->court_owner_id);
+        $this->assertTrue($fresh->hasModuleAccess('schedule'));
+        $this->assertTrue($fresh->hasModuleAccess('approvals'));
+        $this->assertFalse($fresh->hasModuleAccess('users'));
+    }
+
+    public function test_court_owner_can_untag_assistant_back_to_client(): void
+    {
+        $this->assertEquals('admin_assistant', $this->assistant->role);
+
+        $response = $this->actingAs($this->owner)->post(route('owner.users.untag_assistant', $this->assistant->id));
+
+        $response->assertRedirect(route('owner.users.index'));
+        $response->assertSessionHas('success');
+
+        $fresh = $this->assistant->fresh();
+        $this->assertEquals('client', $fresh->role);
+        $this->assertNull($fresh->permissions);
+        $this->assertNull($fresh->court_owner_id);
+        $this->assertFalse($fresh->hasModuleAccess('schedule'));
+    }
+
+    public function test_admin_assistant_cannot_tag_users_as_assistant(): void
+    {
+        // Even if assistant has 'users' module access, staff management is restricted to owners and admins
+        $this->assistant->update(['permissions' => ['users']]);
+
+        $response = $this->actingAs($this->assistant)->post(route('owner.users.tag_assistant'), [
+            'user_id' => $this->client->id,
+            'modules' => ['schedule', 'approvals'],
+        ]);
+
+        $response->assertForbidden();
+        $this->assertEquals('client', $this->client->fresh()->role);
+    }
+
+    public function test_user_management_view_has_add_admin_assistant_button_and_modals(): void
+    {
+        $response = $this->actingAs($this->owner)->get(route('owner.users.index'));
+
+        $response->assertOk();
+        $response->assertSee('Add Admin Assistant');
+        $response->assertSee('tagAssistantModal');
+        $response->assertSee('addAssistantModal');
+        $response->assertSee('Tag as Admin Assistant');
+        $response->assertSee('Tag Registered User');
+        $response->assertSee('openTagAssistantModal');
+    }
 }
 
