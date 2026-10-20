@@ -1251,28 +1251,102 @@
 
         <!-- TAB 1: TAG REGISTERED USER -->
         <div id="pane_assistant_tag" class="space-y-4">
-            <form action="{{ route('owner.users.tag_assistant') }}" method="POST" class="space-y-4">
+            <form action="{{ route('owner.users.tag_assistant') }}" method="POST" id="form_tag_assistant" onsubmit="return validateTagAssistantForm(event)" class="space-y-4">
                 @csrf
 
-                <!-- User Selection Dropdown -->
+                <!-- User Selection Dropdown (Searchable Combobox) -->
                 <div>
-                    <label class="block text-xs font-bold text-theme-heading mb-1.5">Select Registered Player / Client *</label>
-                    <select name="user_id" id="add_assistant_client_select" onchange="updateTagUserSelection(this)" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none">
-                        <option value="" disabled selected>-- Choose a registered player to tag --</option>
-                        @foreach($registeredClients as $rc)
-                            <option value="{{ $rc->id }}"
-                                data-name="{{ $rc->name }}"
-                                data-email="{{ $rc->email }}"
-                                data-phone="{{ $rc->phone ?? '—' }}">
-                                {{ $rc->name }} ({{ $rc->email }})
-                            </option>
-                        @endforeach
-                    </select>
+                    <label class="block text-xs font-bold text-theme-heading mb-1.5 flex items-center justify-between">
+                        <span>Select Registered Player / Client <span class="text-rose-500">*</span></span>
+                        <span class="text-[10px] font-normal text-theme-muted" id="assistant_search_count">
+                            {{ count($registeredClients) }} {{ count($registeredClients) === 1 ? 'player' : 'players' }}
+                        </span>
+                    </label>
+
+                    <div class="relative" id="assistant_search_combobox">
+                        <div class="relative flex items-center">
+                            <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-stone-400 dark:text-stone-500">
+                                <i class="fa-solid fa-magnifying-glass text-xs"></i>
+                            </div>
+                            <input type="text"
+                                id="assistant_client_search_input"
+                                autocomplete="off"
+                                placeholder="Type player name, email, or phone to search..."
+                                class="w-full pl-9 pr-16 py-2.5 rounded-xl border border-stone-300 dark:border-stone-700 bg-stone-100 dark:bg-stone-900 text-xs text-theme-heading placeholder:text-stone-400 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all"
+                                onfocus="openAssistantClientDropdown()"
+                                oninput="filterAssistantClients(this.value)"
+                                onkeydown="handleAssistantSearchKeydown(event)">
+                            
+                            <div class="absolute inset-y-0 right-0 pr-2.5 flex items-center gap-1.5">
+                                <button type="button"
+                                    id="assistant_client_clear_btn"
+                                    onclick="clearAssistantClientSelection(true)"
+                                    class="w-6 h-6 rounded-lg text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 flex items-center justify-center cursor-pointer hidden transition-colors"
+                                    title="Clear selection">
+                                    <i class="fa-solid fa-xmark text-xs"></i>
+                                </button>
+                                <button type="button"
+                                    onclick="toggleAssistantClientDropdown()"
+                                    class="w-6 h-6 rounded-lg text-stone-400 hover:text-stone-600 dark:hover:text-stone-200 flex items-center justify-center cursor-pointer transition-colors"
+                                    tabindex="-1">
+                                    <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200" id="assistant_client_dropdown_arrow"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Hidden input for form submission -->
+                        <input type="hidden" name="user_id" id="add_assistant_client_id" value="">
+
+                        <!-- Validation error message -->
+                        <p id="assistant_client_error_msg" class="text-[11px] text-rose-500 font-medium mt-1.5 hidden flex items-center gap-1">
+                            <i class="fa-solid fa-circle-exclamation text-[10px]"></i> Please select a registered player from the search list.
+                        </p>
+
+                        <!-- Searchable Options Dropdown List -->
+                        <div id="assistant_client_dropdown"
+                            class="absolute left-0 right-0 top-full mt-1.5 max-h-60 overflow-y-auto rounded-2xl bg-white dark:bg-stone-900 border border-stone-200 dark:border-stone-700 shadow-2xl z-50 hidden">
+                            <div class="p-1.5 space-y-0.5" id="assistant_client_options_list">
+                                @forelse($registeredClients as $rc)
+                                    <button type="button"
+                                        class="assistant-client-option w-full text-left px-3 py-2 rounded-xl hover:bg-emerald-500/10 dark:hover:bg-emerald-500/15 transition-colors cursor-pointer flex items-center justify-between gap-3 group"
+                                        data-id="{{ $rc->id }}"
+                                        data-name="{{ $rc->name }}"
+                                        data-email="{{ $rc->email }}"
+                                        data-phone="{{ $rc->phone ?? '' }}"
+                                        onclick="selectAssistantClient(this)">
+                                        <div class="flex items-center gap-2.5 min-w-0">
+                                            <div class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 font-bold flex items-center justify-center text-xs shrink-0 uppercase group-hover:bg-emerald-500 group-hover:text-slate-950 transition-colors">
+                                                {{ strtoupper(mb_substr($rc->name, 0, 1)) }}
+                                            </div>
+                                            <div class="min-w-0">
+                                                <div class="text-xs font-bold text-theme-heading truncate option-name">{{ $rc->name }}</div>
+                                                <div class="text-[11px] text-theme-muted truncate font-mono option-email">{{ $rc->email }}</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right shrink-0">
+                                            @if(!empty($rc->phone))
+                                                <span class="text-[10px] text-theme-muted font-mono block option-phone">{{ $rc->phone }}</span>
+                                            @endif
+                                            <span class="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity">Select &rarr;</span>
+                                        </div>
+                                    </button>
+                                @empty
+                                    <div class="p-4 text-center text-xs text-theme-muted">
+                                        No registered players available to tag.
+                                    </div>
+                                @endforelse
+                            </div>
+                            <!-- No Results State -->
+                            <div id="assistant_client_no_results" class="p-4 text-center text-xs text-theme-muted hidden">
+                                <i class="fa-solid fa-user-slash text-base mb-1 block text-stone-400"></i>
+                                No players found matching "<span id="assistant_client_search_term" class="font-bold text-theme-heading"></span>"
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Selected User Preview Box -->
-                <div id="tag_user_preview_box" class="p-3.5 rounded-2xl bg-stone-100/70 dark:bg-stone-800/40 border border-stone-200 dark:border-stone-700/60 hidden items-center justify-between gap-3">
+                <div id="tag_user_preview_box" class="p-3.5 rounded-2xl bg-stone-100/70 dark:bg-stone-800/40 border border-emerald-500/30 hidden items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
                         <div class="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30 font-bold flex items-center justify-center text-sm shrink-0 uppercase" id="tag_user_preview_avatar">
                             U
@@ -1283,9 +1357,14 @@
                             <div class="text-[10px] text-theme-muted font-mono" id="tag_user_preview_phone">Phone</div>
                         </div>
                     </div>
-                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-stone-200 dark:bg-stone-800 text-theme-body border border-stone-300 dark:border-stone-700">
-                        Player Account
-                    </span>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30">
+                            Selected Player
+                        </span>
+                        <button type="button" onclick="clearAssistantClientSelection(true)" class="w-7 h-7 rounded-lg bg-stone-200 dark:bg-stone-700 hover:bg-rose-500 hover:text-white text-theme-muted flex items-center justify-center text-xs transition-colors cursor-pointer" title="Deselect Player">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
                 </div>
 
                 @if(Auth::user()->isAdmin())
@@ -2771,14 +2850,277 @@
         confirmRemoveAssistantAccess(currentTagUserId, currentTagUserName);
     }
 
+    let assistantHighlightedIndex = -1;
+
+    function openAssistantClientDropdown() {
+        const dropdown = document.getElementById('assistant_client_dropdown');
+        const arrow = document.getElementById('assistant_client_dropdown_arrow');
+        if (dropdown) dropdown.classList.remove('hidden');
+        if (arrow) arrow.classList.add('rotate-180');
+    }
+
+    function closeAssistantClientDropdown() {
+        const dropdown = document.getElementById('assistant_client_dropdown');
+        const arrow = document.getElementById('assistant_client_dropdown_arrow');
+        if (dropdown) dropdown.classList.add('hidden');
+        if (arrow) arrow.classList.remove('rotate-180');
+        assistantHighlightedIndex = -1;
+        updateAssistantHighlight();
+    }
+
+    function toggleAssistantClientDropdown() {
+        const dropdown = document.getElementById('assistant_client_dropdown');
+        if (dropdown && dropdown.classList.contains('hidden')) {
+            openAssistantClientDropdown();
+            document.getElementById('assistant_client_search_input')?.focus();
+        } else {
+            closeAssistantClientDropdown();
+        }
+    }
+
+    function selectAssistantClient(optionEl) {
+        if (!optionEl) return;
+        const id = optionEl.dataset.id;
+        const name = optionEl.dataset.name || 'User';
+        const email = optionEl.dataset.email || '';
+        const phone = optionEl.dataset.phone || 'No phone recorded';
+
+        const idInput = document.getElementById('add_assistant_client_id');
+        const searchInput = document.getElementById('assistant_client_search_input');
+        const clearBtn = document.getElementById('assistant_client_clear_btn');
+        const errorMsg = document.getElementById('assistant_client_error_msg');
+        const previewBox = document.getElementById('tag_user_preview_box');
+
+        if (idInput) idInput.value = id;
+        if (searchInput) {
+            searchInput.value = name;
+            searchInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+        }
+        if (clearBtn) clearBtn.classList.remove('hidden');
+        if (errorMsg) errorMsg.classList.add('hidden');
+
+        const previewName = document.getElementById('tag_user_preview_name');
+        const previewEmail = document.getElementById('tag_user_preview_email');
+        const previewPhone = document.getElementById('tag_user_preview_phone');
+        const previewAvatar = document.getElementById('tag_user_preview_avatar');
+
+        if (previewName) previewName.textContent = name;
+        if (previewEmail) previewEmail.textContent = email;
+        if (previewPhone) previewPhone.textContent = phone;
+        if (previewAvatar) previewAvatar.textContent = name.charAt(0).toUpperCase();
+
+        if (previewBox) {
+            previewBox.classList.remove('hidden');
+            previewBox.classList.add('flex');
+        }
+
+        document.querySelectorAll('.assistant-client-option').forEach(opt => {
+            if (opt.dataset.id === id) {
+                opt.classList.add('bg-emerald-500/15', 'font-bold');
+            } else {
+                opt.classList.remove('bg-emerald-500/15', 'font-bold');
+            }
+        });
+
+        closeAssistantClientDropdown();
+    }
+
+    function clearAssistantClientSelection(shouldFocus = false) {
+        const idInput = document.getElementById('add_assistant_client_id');
+        const searchInput = document.getElementById('assistant_client_search_input');
+        const clearBtn = document.getElementById('assistant_client_clear_btn');
+        const previewBox = document.getElementById('tag_user_preview_box');
+
+        if (idInput) idInput.value = '';
+        if (searchInput) searchInput.value = '';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        if (previewBox) {
+            previewBox.classList.add('hidden');
+            previewBox.classList.remove('flex');
+        }
+
+        document.querySelectorAll('.assistant-client-option').forEach(opt => {
+            opt.classList.remove('hidden', 'bg-emerald-500/15', 'font-bold', 'bg-stone-100', 'dark:bg-stone-800');
+        });
+
+        const noResults = document.getElementById('assistant_client_no_results');
+        if (noResults) noResults.classList.add('hidden');
+
+        const totalClients = {{ count($registeredClients) }};
+        const countBadge = document.getElementById('assistant_search_count');
+        if (countBadge) countBadge.textContent = `${totalClients} ${totalClients === 1 ? 'player' : 'players'}`;
+
+        if (shouldFocus && searchInput) {
+            searchInput.focus();
+            openAssistantClientDropdown();
+        }
+    }
+
+    function filterAssistantClients(query) {
+        const q = (query || '').toLowerCase().trim();
+        const idInput = document.getElementById('add_assistant_client_id');
+        const clearBtn = document.getElementById('assistant_client_clear_btn');
+        const errorMsg = document.getElementById('assistant_client_error_msg');
+        const searchInput = document.getElementById('assistant_client_search_input');
+
+        if (searchInput) {
+            searchInput.classList.remove('border-rose-500', 'ring-2', 'ring-rose-500/20');
+        }
+        if (errorMsg) errorMsg.classList.add('hidden');
+
+        if (clearBtn) {
+            if (q.length > 0 || (idInput && idInput.value)) {
+                clearBtn.classList.remove('hidden');
+            } else {
+                clearBtn.classList.add('hidden');
+            }
+        }
+
+        if (idInput && idInput.value) {
+            const previewBox = document.getElementById('tag_user_preview_box');
+            const previewName = document.getElementById('tag_user_preview_name')?.textContent || '';
+            if (q !== previewName.toLowerCase().trim()) {
+                idInput.value = '';
+                if (previewBox) {
+                    previewBox.classList.add('hidden');
+                    previewBox.classList.remove('flex');
+                }
+            }
+        }
+
+        const options = document.querySelectorAll('.assistant-client-option');
+        let matchCount = 0;
+
+        options.forEach(opt => {
+            const name = (opt.dataset.name || '').toLowerCase();
+            const email = (opt.dataset.email || '').toLowerCase();
+            const phone = (opt.dataset.phone || '').toLowerCase();
+
+            if (!q || name.includes(q) || email.includes(q) || phone.includes(q)) {
+                opt.classList.remove('hidden');
+                matchCount++;
+            } else {
+                opt.classList.add('hidden');
+            }
+        });
+
+        const noResults = document.getElementById('assistant_client_no_results');
+        const searchTerm = document.getElementById('assistant_client_search_term');
+        const countBadge = document.getElementById('assistant_search_count');
+
+        if (matchCount === 0 && q.length > 0) {
+            if (noResults) noResults.classList.remove('hidden');
+            if (searchTerm) searchTerm.textContent = query;
+            if (countBadge) countBadge.textContent = '0 matches';
+        } else {
+            if (noResults) noResults.classList.add('hidden');
+            if (countBadge) {
+                if (!q) {
+                    const total = {{ count($registeredClients) }};
+                    countBadge.textContent = `${total} ${total === 1 ? 'player' : 'players'}`;
+                } else {
+                    countBadge.textContent = `${matchCount} ${matchCount === 1 ? 'match' : 'matches'}`;
+                }
+            }
+        }
+
+        assistantHighlightedIndex = -1;
+        updateAssistantHighlight();
+        openAssistantClientDropdown();
+    }
+
+    function handleAssistantSearchKeydown(e) {
+        const visibleOptions = Array.from(document.querySelectorAll('.assistant-client-option:not(.hidden)'));
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            openAssistantClientDropdown();
+            if (visibleOptions.length > 0) {
+                assistantHighlightedIndex = (assistantHighlightedIndex + 1) % visibleOptions.length;
+                updateAssistantHighlight(visibleOptions);
+            }
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            openAssistantClientDropdown();
+            if (visibleOptions.length > 0) {
+                assistantHighlightedIndex = (assistantHighlightedIndex - 1 + visibleOptions.length) % visibleOptions.length;
+                updateAssistantHighlight(visibleOptions);
+            }
+        } else if (e.key === 'Enter') {
+            const dropdown = document.getElementById('assistant_client_dropdown');
+            if (dropdown && !dropdown.classList.contains('hidden')) {
+                if (assistantHighlightedIndex >= 0 && assistantHighlightedIndex < visibleOptions.length) {
+                    e.preventDefault();
+                    selectAssistantClient(visibleOptions[assistantHighlightedIndex]);
+                } else if (visibleOptions.length === 1) {
+                    e.preventDefault();
+                    selectAssistantClient(visibleOptions[0]);
+                }
+            }
+        } else if (e.key === 'Escape') {
+            closeAssistantClientDropdown();
+        }
+    }
+
+    function updateAssistantHighlight(visibleOptions) {
+        const options = visibleOptions || Array.from(document.querySelectorAll('.assistant-client-option:not(.hidden)'));
+        options.forEach((opt, idx) => {
+            if (idx === assistantHighlightedIndex) {
+                opt.classList.add('bg-stone-100', 'dark:bg-stone-800');
+                opt.scrollIntoView({ block: 'nearest' });
+            } else {
+                opt.classList.remove('bg-stone-100', 'dark:bg-stone-800');
+            }
+        });
+    }
+
+    function validateTagAssistantForm(e) {
+        const idInput = document.getElementById('add_assistant_client_id');
+        const searchInput = document.getElementById('assistant_client_search_input');
+        const errorMsg = document.getElementById('assistant_client_error_msg');
+
+        if (!idInput || !idInput.value) {
+            e.preventDefault();
+            if (errorMsg) errorMsg.classList.remove('hidden');
+            if (searchInput) {
+                searchInput.classList.add('border-rose-500', 'ring-2', 'ring-rose-500/20');
+                searchInput.focus();
+                openAssistantClientDropdown();
+            }
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Player Selection Required',
+                    text: 'Please search and select a registered player or client to tag as Admin Assistant.',
+                    confirmButtonColor: '#10b981',
+                    customClass: {
+                        popup: 'rounded-2xl'
+                    }
+                });
+            }
+            return false;
+        }
+        return true;
+    }
+
+    // Close combobox when clicking outside
+    document.addEventListener('click', (e) => {
+        const combobox = document.getElementById('assistant_search_combobox');
+        if (combobox && !combobox.contains(e.target)) {
+            closeAssistantClientDropdown();
+        }
+    });
+
     function openAddAssistantModal() {
         document.getElementById('addAssistantModal').classList.remove('hidden');
         switchAddAssistantTab('tag');
+        clearAssistantClientSelection(false);
+        closeAssistantClientDropdown();
         syncAllModuleCards('addAssistantModal');
     }
 
     function closeAddAssistantModal() {
         document.getElementById('addAssistantModal').classList.add('hidden');
+        closeAssistantClientDropdown();
     }
 
     function switchAddAssistantTab(tab) {
@@ -2802,25 +3144,10 @@
     }
 
     function updateTagUserSelection(selectEl) {
-        const selected = selectEl.options[selectEl.selectedIndex];
-        const previewBox = document.getElementById('tag_user_preview_box');
-        if (!selected || !selected.value) {
-            previewBox.classList.add('hidden');
-            previewBox.classList.remove('flex');
-            return;
-        }
-
-        const name = selected.dataset.name || 'User';
-        const email = selected.dataset.email || '';
-        const phone = selected.dataset.phone || 'No phone recorded';
-
-        document.getElementById('tag_user_preview_name').textContent = name;
-        document.getElementById('tag_user_preview_email').textContent = email;
-        document.getElementById('tag_user_preview_phone').textContent = phone;
-        document.getElementById('tag_user_preview_avatar').textContent = name.charAt(0).toUpperCase();
-
-        previewBox.classList.remove('hidden');
-        previewBox.classList.add('flex');
+        // Retained for backward compatibility
+        if (!selectEl) return;
+        const selected = selectEl.options ? selectEl.options[selectEl.selectedIndex] : null;
+        if (selected) selectAssistantClient(selected);
     }
 
     // Close modals on Escape key
