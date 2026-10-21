@@ -742,14 +742,18 @@
                                         </div>
 
                                         <!-- RA 10173 Affirmative Consent Checkbox -->
-                                        <div class="pt-1 pb-1">
-                                            <label class="flex items-start gap-2 text-[11px] text-theme-muted cursor-pointer select-none">
-                                                <input type="checkbox" name="privacy_consent" id="mrPrivacyConsent" value="1" required
-                                                    class="mt-0.5 w-3.5 h-3.5 rounded text-cyan-600 border-stone-300 dark:border-stone-700 focus:ring-cyan-500 shrink-0">
-                                                <span>
-                                                    I agree to the <a href="{{ route('privacy') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Privacy Policy</a> & <a href="{{ route('terms') }}" target="_blank" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Terms</a> under <strong>Republic Act No. 10173 (Data Privacy Act of 2012)</strong>. <span class="text-rose-500">*</span>
+                                        <div class="pt-1.5 pb-1">
+                                            <label for="mrPrivacyConsent" class="flex items-start gap-2.5 text-[11px] text-theme-muted cursor-pointer select-none">
+                                                <input type="checkbox" name="privacy_consent" id="mrPrivacyConsent" value="1" required {{ old('privacy_consent') ? 'checked' : '' }}
+                                                    class="mt-0.5 w-4 h-4 rounded text-cyan-600 dark:text-cyan-400 border border-stone-300 dark:border-stone-700 focus:ring-cyan-500 shrink-0 cursor-pointer accent-cyan-600"
+                                                    style="appearance: auto; -webkit-appearance: auto; accent-color: #0891b2;">
+                                                <span class="leading-relaxed">
+                                                    I agree to the <a href="{{ route('privacy') }}" target="_blank" onclick="event.stopPropagation()" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Privacy Policy</a> & <a href="{{ route('terms') }}" target="_blank" onclick="event.stopPropagation()" class="text-cyan-600 dark:text-cyan-400 hover:underline font-bold">Terms</a> under <strong>Republic Act No. 10173 (Data Privacy Act of 2012)</strong>. <span class="text-rose-500">*</span>
                                                 </span>
                                             </label>
+                                            @error('privacy_consent')
+                                                <span class="text-[11px] text-rose-500 font-semibold block mt-1">{{ $message }}</span>
+                                            @enderror
                                         </div>
 
                                         <button type="submit" id="submitManualBookingBtn"
@@ -2735,6 +2739,19 @@
                         text: 'Please upload a screenshot or photo of your payment receipt before submitting.',
                         confirmButtonColor: '#0891b2'
                     });
+                    return false;
+                }
+
+                const privacyConsent = document.getElementById('mrPrivacyConsent');
+                if (!privacyConsent || !privacyConsent.checked) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Data Privacy Consent Required',
+                        text: 'Please check the box to agree to the Privacy Policy & Terms under Republic Act No. 10173 (Data Privacy Act of 2012) before submitting.',
+                        confirmButtonColor: '#0891b2'
+                    });
+                    privacyConsent?.focus();
                     return false;
                 }
 

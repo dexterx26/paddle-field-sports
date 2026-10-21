@@ -240,10 +240,17 @@ body {
 }
 
 /* Form input styling (Ensures iOS Safari & WebKit always render crisp light backgrounds) */
-input, select, textarea {
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea {
     color: var(--text-heading) !important;
     background-color: #ffffff;
     -webkit-appearance: none;
+}
+
+input[type="checkbox"], input[type="radio"] {
+    -webkit-appearance: auto !important;
+    appearance: auto !important;
+    accent-color: #0891b2 !important;
+    cursor: pointer !important;
 }
 
 input::placeholder,
