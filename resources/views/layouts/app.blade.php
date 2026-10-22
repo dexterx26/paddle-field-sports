@@ -93,11 +93,11 @@
                 <!-- Actions: Theme Toggle, Sync Badge, Role Switcher, Auth -->
                 <div class="flex items-center gap-3">
                     <!-- Real-Time Sync Indicator -->
-                    <div class="reverb-status-indicator hidden sm:block">
+                    <!-- <div class="reverb-status-indicator hidden sm:block">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-cyan-500/10 text-cyan-700 border border-cyan-500/30">
                             <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Live Sync
                         </span>
-                    </div>
+                    </div> -->
 
                     <!-- Quick Switcher Demo Dropdown -->
                     @if(!app()->isProduction())
