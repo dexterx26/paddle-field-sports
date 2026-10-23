@@ -236,11 +236,11 @@
                 </div>
 
                 <!-- Reverb Status Indicator -->
-                <div class="reverb-status-indicator hidden sm:block">
+                <!-- <div class="reverb-status-indicator hidden sm:block">
                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-cyan-500/10 text-cyan-700 border border-cyan-500/30">
                         <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span> Reverb Live
                     </span>
-                </div>
+                </div> -->
 
                 <!-- Fast Demo Role Switcher -->
                 @if(!app()->isProduction())
