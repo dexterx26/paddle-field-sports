@@ -651,7 +651,8 @@ class OwnerController extends Controller
 
         $settings = VenueSetting::getSettings();
 
-        $data = $request->except(['_token', 'manual_payment_qr', 'logo', 'remove_logo']);
+        $data = $request->except(['_token', '_method', 'manual_payment_qr', 'logo', 'remove_logo']);
+        $data['tagline'] = $request->filled('tagline') ? trim((string) $request->input('tagline')) : null;
         $data['xendit_simulation_mode'] = $request->boolean('xendit_simulation_mode', false);
         $data['paymongo_simulation_mode'] = $request->boolean('paymongo_simulation_mode', false);
         $data['credits_enabled'] = $request->has('credits_enabled')
@@ -668,25 +669,63 @@ class OwnerController extends Controller
 
         // Handle venue logo removal
         if ($request->boolean('remove_logo')) {
-            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
-                Storage::disk('public')->delete($settings->logo_path);
+            if ($settings->logo_path) {
+                if (Storage::disk('public')->exists($settings->logo_path)) {
+                    Storage::disk('public')->delete($settings->logo_path);
+                }
+                if (file_exists(public_path('storage/' . $settings->logo_path))) {
+                    @unlink(public_path('storage/' . $settings->logo_path));
+                }
             }
             $data['logo_path'] = null;
         }
 
         // Handle venue logo upload
         if ($request->hasFile('logo')) {
-            if ($settings->logo_path && Storage::disk('public')->exists($settings->logo_path)) {
-                Storage::disk('public')->delete($settings->logo_path);
+            if ($settings->logo_path) {
+                if (Storage::disk('public')->exists($settings->logo_path)) {
+                    Storage::disk('public')->delete($settings->logo_path);
+                }
+                if (file_exists(public_path('storage/' . $settings->logo_path))) {
+                    @unlink(public_path('storage/' . $settings->logo_path));
+                }
             }
-            $data['logo_path'] = $request->file('logo')->store('logos', 'public');
+            $logoPath = $request->file('logo')->store('logos', 'public');
+            $data['logo_path'] = $logoPath;
+            if (file_exists(public_path('storage')) && !is_link(public_path('storage'))) {
+                @mkdir(public_path('storage/logos'), 0777, true);
+                @copy(storage_path('app/public/' . $logoPath), public_path('storage/' . $logoPath));
+            }
         }
 
+        // Handle manual payment QR upload
         if ($request->hasFile('manual_payment_qr')) {
-            $data['manual_payment_qr'] = $request->file('manual_payment_qr')->store('qr', 'public');
+            if ($settings->manual_payment_qr) {
+                if (Storage::disk('public')->exists($settings->manual_payment_qr)) {
+                    Storage::disk('public')->delete($settings->manual_payment_qr);
+                }
+                if (file_exists(public_path('storage/' . $settings->manual_payment_qr))) {
+                    @unlink(public_path('storage/' . $settings->manual_payment_qr));
+                }
+            }
+            $qrPath = $request->file('manual_payment_qr')->store('qr', 'public');
+            $data['manual_payment_qr'] = $qrPath;
+            if (file_exists(public_path('storage')) && !is_link(public_path('storage'))) {
+                @mkdir(public_path('storage/qr'), 0777, true);
+                @copy(storage_path('app/public/' . $qrPath), public_path('storage/' . $qrPath));
+            }
         }
 
-        $settings->update($data);
+        try {
+            $settings->update($data);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('Error saving venue settings: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Unable to save settings: ' . $e->getMessage());
+        }
 
         return redirect()->route('owner.settings')
             ->with('success', 'Settings updated successfully! Payment gateway: ' . strtoupper(str_replace('_', ' ', $settings->payment_mode)) . ' | Court Credits: ' . ($settings->credits_enabled ? 'ENABLED' : 'DISABLED'));
