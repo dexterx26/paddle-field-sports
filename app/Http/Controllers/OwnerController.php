@@ -753,9 +753,25 @@ class OwnerController extends Controller
             }
         } catch (\Throwable $e) {}
 
+        // Auto-heal MySQL column sizes for encrypted secrets if migration hasn't run yet
+        try {
+            if (\Illuminate\Support\Facades\DB::getDriverName() === 'mysql') {
+                \Illuminate\Support\Facades\DB::statement('ALTER TABLE venue_settings MODIFY paymongo_secret_key TEXT NULL, MODIFY paymongo_webhook_token TEXT NULL, MODIFY xendit_secret_key TEXT NULL, MODIFY xendit_webhook_token TEXT NULL');
+            }
+        } catch (\Throwable $e) {}
+
         try {
             $settings->update($data);
         } catch (\Throwable $e) {
+            // If MySQL threw truncation error (1406), attempt immediate column expansion and retry
+            if (str_contains($e->getMessage(), '1406') || str_contains($e->getMessage(), 'Data too long')) {
+                try {
+                    \Illuminate\Support\Facades\DB::statement('ALTER TABLE venue_settings MODIFY paymongo_secret_key TEXT NULL, MODIFY paymongo_webhook_token TEXT NULL, MODIFY xendit_secret_key TEXT NULL, MODIFY xendit_webhook_token TEXT NULL');
+                    $settings->update($data);
+                    goto settings_saved;
+                } catch (\Throwable $retryErr) {}
+            }
+
             \Illuminate\Support\Facades\Log::error('Error saving venue settings: ' . $e->getMessage(), [
                 'exception' => $e,
             ]);
@@ -772,6 +788,7 @@ class OwnerController extends Controller
                 ->with('error', 'Unable to save settings: ' . $e->getMessage());
         }
 
+        settings_saved:
         $settings->refresh();
 
         $successMsg = 'Settings updated successfully! Payment gateway: ' . strtoupper(str_replace('_', ' ', $settings->payment_mode)) . ' | Court Credits: ' . ($settings->credits_enabled ? 'ENABLED' : 'DISABLED');
