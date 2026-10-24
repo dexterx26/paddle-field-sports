@@ -11,6 +11,27 @@
         @csrf
         @method('PUT')
 
+        @if(isset($errors) && $errors->any())
+            <div class="p-5 rounded-2xl bg-rose-500/15 border-2 border-rose-500/30 text-rose-950 dark:text-rose-200 shadow-lg space-y-2">
+                <div class="flex items-center gap-2.5 font-black text-sm text-rose-800 dark:text-rose-300">
+                    <i class="fa-solid fa-triangle-exclamation text-base"></i>
+                    <span>Some settings could not be saved. Please correct the highlighted issues:</span>
+                </div>
+                <ul class="list-disc list-inside text-xs space-y-1 text-rose-800 dark:text-rose-300 pl-1 font-medium">
+                    @foreach($errors->all() as $err)
+                        <li>{{ $err }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @php
+            $currentPaymentMode = old('payment_mode', $settings->payment_mode);
+            $currentHoldingSeconds = (int) old('holding_duration_seconds', $settings->holding_duration_seconds ?: 120);
+            $currentHoldMins = max(1, (int) round($currentHoldingSeconds / 60));
+            $currentCreditsEnabled = old('credits_enabled', $settings->credits_enabled ? '1' : '0');
+        @endphp
+
         <!-- PAYMENT MODE TOGGLE (Req #3 & #5) -->
         <div class="rounded-3xl glass-panel border border-cyan-500/30 p-6 sm:p-8 shadow-xl space-y-6">
             <div>
@@ -26,7 +47,7 @@
             <!-- Radio Selection Cards -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <!-- Option 1: Manual Receipt Mode (Crunch Tan Tone) -->
-                <label id="paymentCard-manual_receipt" class="payment-mode-card payment-mode-amber p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'manual_receipt' ? 'is-active' : '' }}">
+                <label id="paymentCard-manual_receipt" class="payment-mode-card payment-mode-amber p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $currentPaymentMode === 'manual_receipt' ? 'is-active' : '' }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
                             <div class="mode-icon-box w-11 h-11 rounded-xl bg-amber-500/20 text-amber-700 dark:text-amber-400 flex items-center justify-center text-lg mb-2 transition-all">
@@ -41,7 +62,7 @@
                             <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
                             </div>
-                            <input type="radio" name="payment_mode" value="manual_receipt" {{ $settings->payment_mode === 'manual_receipt' ? 'checked' : '' }} onchange="selectPaymentMode('manual_receipt')" class="sr-only">
+                            <input type="radio" name="payment_mode" value="manual_receipt" {{ $currentPaymentMode === 'manual_receipt' ? 'checked' : '' }} onchange="selectPaymentMode('manual_receipt')" class="sr-only">
                         </div>
                     </div>
                     <div class="flex items-center justify-between pt-1">
@@ -58,10 +79,7 @@
                 </label>
 
                 <!-- Option 2: Xendit API Mode (Dreamland Cyan Tone) -->
-                @php
-                    $currentHoldMins = max(1, (int) round(($settings->holding_duration_seconds ?: 120) / 60));
-                @endphp
-                <label id="paymentCard-xendit" class="payment-mode-card payment-mode-cyan p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'xendit' ? 'is-active' : '' }}">
+                <label id="paymentCard-xendit" class="payment-mode-card payment-mode-cyan p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $currentPaymentMode === 'xendit' ? 'is-active' : '' }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
                             <div class="mode-icon-box w-11 h-11 rounded-xl bg-cyan-500/20 text-cyan-600 dark:text-cyan-400 flex items-center justify-center text-lg mb-2 transition-all">
@@ -76,7 +94,7 @@
                             <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
                             </div>
-                            <input type="radio" name="payment_mode" value="xendit" {{ $settings->payment_mode === 'xendit' ? 'checked' : '' }} onchange="selectPaymentMode('xendit')" class="sr-only">
+                            <input type="radio" name="payment_mode" value="xendit" {{ $currentPaymentMode === 'xendit' ? 'checked' : '' }} onchange="selectPaymentMode('xendit')" class="sr-only">
                         </div>
                     </div>
                     <div class="flex items-center justify-between pt-1">
@@ -93,7 +111,7 @@
                 </label>
 
                 <!-- Option 3: PayMongo API Mode (Teal / Emerald Tone) -->
-                <label id="paymentCard-paymongo" class="payment-mode-card payment-mode-emerald p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $settings->payment_mode === 'paymongo' ? 'is-active' : '' }}">
+                <label id="paymentCard-paymongo" class="payment-mode-card payment-mode-emerald p-5 rounded-2xl cursor-pointer flex flex-col justify-between space-y-4 {{ $currentPaymentMode === 'paymongo' ? 'is-active' : '' }}">
                     <div class="flex items-start justify-between gap-3">
                         <div class="space-y-1">
                             <div class="mode-icon-box w-11 h-11 rounded-xl bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-lg mb-2 transition-all">
@@ -108,7 +126,7 @@
                             <div class="mode-indicator w-6 h-6 rounded-full border-2 border-stone-300 dark:border-stone-600 flex items-center justify-center transition-all">
                                 <i class="fa-solid fa-check text-[10px] mode-check-icon"></i>
                             </div>
-                            <input type="radio" name="payment_mode" value="paymongo" {{ $settings->payment_mode === 'paymongo' ? 'checked' : '' }} onchange="selectPaymentMode('paymongo')" class="sr-only">
+                            <input type="radio" name="payment_mode" value="paymongo" {{ $currentPaymentMode === 'paymongo' ? 'checked' : '' }} onchange="selectPaymentMode('paymongo')" class="sr-only">
                         </div>
                     </div>
                     <div class="flex items-center justify-between pt-1">
@@ -124,6 +142,11 @@
                     </div>
                 </label>
             </div>
+            @error('payment_mode')
+                <p class="text-rose-600 dark:text-rose-400 text-xs font-semibold mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-circle-exclamation"></i> {{ $message }}
+                </p>
+            @enderror
 
             <!-- Holding Time Setting (Default 2 mins, fully editable by Court Owner) -->
             <div class="pt-4 border-t border-stone-200 dark:border-stone-800 space-y-3">
@@ -141,15 +164,20 @@
                     </div>
                     <div class="flex items-center gap-2.5">
                         <div class="relative">
-                            <input type="number" id="holdingDurationInput" name="holding_duration_seconds" value="{{ $settings->holding_duration_seconds ?: 120 }}" min="30" max="600" step="10" required
+                            <input type="number" id="holdingDurationInput" name="holding_duration_seconds" value="{{ $currentHoldingSeconds }}" min="30" max="600" step="10" required
                                 class="w-28 px-3 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono font-bold text-center focus:border-cyan-500 text-sm">
                         </div>
                         <span class="text-xs text-theme-body font-semibold">seconds</span>
                         <span id="holdingMinutesBadge" class="px-2.5 py-1 rounded-lg bg-stone-200 dark:bg-stone-800 text-xs font-mono font-bold text-cyan-700 dark:text-cyan-400 border border-stone-300 dark:border-stone-700">
-                            {{ round(($settings->holding_duration_seconds ?: 120) / 60, 1) }} mins
+                            {{ round($currentHoldingSeconds / 60, 1) }} mins
                         </span>
                     </div>
                 </div>
+                @error('holding_duration_seconds')
+                    <p class="text-rose-600 dark:text-rose-400 text-xs font-semibold mt-1">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}
+                    </p>
+                @enderror
 
                 <!-- Quick Presets for Owner Convenience -->
                 <div class="flex items-center gap-2 pt-1 flex-wrap">
@@ -178,8 +206,8 @@
                                 <i class="fa-solid fa-coins"></i>
                             </div>
                             <h4 class="font-extrabold text-theme-heading text-sm">Court Credits Booking Option</h4>
-                            <span id="creditsConfigBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
-                                {{ $settings->credits_enabled ? 'Active / Enabled' : 'Disabled (Gateway Only)' }}
+                            <span id="creditsConfigBadge" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $currentCreditsEnabled == '1' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                                {{ $currentCreditsEnabled == '1' ? 'Active / Enabled' : 'Disabled (Gateway Only)' }}
                             </span>
                         </div>
                         <p class="text-theme-muted text-[11px] leading-relaxed max-w-xl">
@@ -189,18 +217,23 @@
 
                     <!-- Explicit Segmented Switch for Credits Booking (Yes / No) -->
                     <div class="flex items-center gap-2 bg-white dark:bg-stone-900 p-1.5 rounded-2xl border border-stone-300 dark:border-stone-700 shadow-sm shrink-0">
-                        <label id="creditsBtnYes" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ $settings->credits_enabled ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-theme-muted hover:text-theme-heading' }}">
-                            <input type="radio" name="credits_enabled" value="1" {{ $settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(true)">
+                        <label id="creditsBtnYes" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ $currentCreditsEnabled == '1' ? 'bg-amber-500 text-slate-950 shadow-md' : 'text-theme-muted hover:text-theme-heading' }}">
+                            <input type="radio" name="credits_enabled" value="1" {{ $currentCreditsEnabled == '1' ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(true)">
                             <i class="fa-solid fa-check"></i>
                             <span>Allow Credits</span>
                         </label>
-                        <label id="creditsBtnNo" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ !$settings->credits_enabled ? 'bg-rose-500 text-white shadow-md' : 'text-theme-muted hover:text-theme-heading' }}" >
-                            <input type="radio" name="credits_enabled" value="0" {{ !$settings->credits_enabled ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(false)">
+                        <label id="creditsBtnNo" class="px-3.5 py-2 rounded-xl text-xs font-black cursor-pointer transition-all flex items-center gap-1.5 {{ $currentCreditsEnabled == '0' ? 'bg-rose-500 text-white shadow-md' : 'text-theme-muted hover:text-theme-heading' }}" >
+                            <input type="radio" name="credits_enabled" value="0" {{ $currentCreditsEnabled == '0' ? 'checked' : '' }} class="sr-only" onchange="updateCreditsToggle(false)">
                             <i class="fa-solid fa-ban"></i>
                             <span>Disallow Credits</span>
                         </label>
                     </div>
                 </div>
+                @error('credits_enabled')
+                    <p class="text-rose-600 dark:text-rose-400 text-xs font-semibold mt-1">
+                        <i class="fa-solid fa-circle-exclamation mr-1"></i> {{ $message }}
+                    </p>
+                @enderror
             </div>
         </div>
 
@@ -218,25 +251,37 @@
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Bank / E-Wallet Name</label>
-                    <input type="text" name="manual_bank_name" value="{{ $settings->manual_bank_name }}" placeholder="GCash / Maya / BDO"
+                    <input type="text" name="manual_bank_name" value="{{ old('manual_bank_name', $settings->manual_bank_name) }}" placeholder="GCash / Maya / BDO"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('manual_bank_name')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Account Holder Name</label>
-                    <input type="text" name="manual_account_name" value="{{ $settings->manual_account_name }}" placeholder="Paddle Field Sports Center"
+                    <input type="text" name="manual_account_name" value="{{ old('manual_account_name', $settings->manual_account_name) }}" placeholder="Paddle Field Sports Center"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('manual_account_name')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Account / Mobile Number</label>
-                    <input type="text" name="manual_account_number" value="{{ $settings->manual_account_number }}" placeholder="0917-555-7233"
+                    <input type="text" name="manual_account_number" value="{{ old('manual_account_number', $settings->manual_account_number) }}" placeholder="0917-555-7233"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-cyan-500">
+                    @error('manual_account_number')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Payment Instructions for Client</label>
                 <textarea name="manual_payment_instructions" rows="3"
-                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">{{ $settings->manual_payment_instructions }}</textarea>
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">{{ old('manual_payment_instructions', $settings->manual_payment_instructions) }}</textarea>
+                @error('manual_payment_instructions')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div>
@@ -248,6 +293,9 @@
                     <input type="file" name="manual_payment_qr" accept="image/*"
                         class="w-full text-xs text-theme-muted file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-cyan-500 file:text-slate-950 hover:file:bg-cyan-400 cursor-pointer">
                 </div>
+                @error('manual_payment_qr')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -265,29 +313,41 @@
             <div class="space-y-4">
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Xendit Secret API Key</label>
-                    <input type="password" name="xendit_secret_key" value="{{ $settings->xendit_secret_key }}" placeholder="xnd_development_... or xnd_production_..."
+                    <input type="password" name="xendit_secret_key" value="{{ old('xendit_secret_key', $settings->xendit_secret_key) }}" placeholder="xnd_development_... or xnd_production_..."
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-cyan-500">
+                    @error('xendit_secret_key')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-semibold text-theme-body mb-1">Xendit Public Key</label>
-                        <input type="text" name="xendit_public_key" value="{{ $settings->xendit_public_key }}" placeholder="xnd_public_..."
+                        <input type="text" name="xendit_public_key" value="{{ old('xendit_public_key', $settings->xendit_public_key) }}" placeholder="xnd_public_..."
                             class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-cyan-500">
+                        @error('xendit_public_key')
+                            <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block font-semibold text-theme-body mb-1">Webhook Verification Token</label>
-                        <input type="password" name="xendit_webhook_token" value="{{ $settings->xendit_webhook_token }}" placeholder="xendit_webhook_token"
+                        <input type="password" name="xendit_webhook_token" value="{{ old('xendit_webhook_token', $settings->xendit_webhook_token) }}" placeholder="xendit_webhook_token"
                             class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-cyan-500">
+                        @error('xendit_webhook_token')
+                            <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" name="xendit_simulation_mode" id="simMode" value="1" {{ $settings->xendit_simulation_mode ? 'checked' : '' }} class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
+                    <input type="checkbox" name="xendit_simulation_mode" id="simMode" value="1" {{ old('xendit_simulation_mode', $settings->xendit_simulation_mode) ? 'checked' : '' }} class="w-4 h-4 rounded text-cyan-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
                     <label for="simMode" class="text-xs text-theme-body font-medium">
                         Enable Interactive Test Simulation Mode (Allows instant checkout testing without live API keys)
                     </label>
                 </div>
+                @error('xendit_simulation_mode')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -305,29 +365,41 @@
             <div class="space-y-4">
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">PayMongo Secret Key</label>
-                    <input type="password" name="paymongo_secret_key" value="{{ $settings->paymongo_secret_key }}" placeholder="sk_test_... or sk_live_..."
+                    <input type="password" name="paymongo_secret_key" value="{{ old('paymongo_secret_key', $settings->paymongo_secret_key) }}" placeholder="sk_test_... or sk_live_..."
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-emerald-500">
+                    @error('paymongo_secret_key')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block font-semibold text-theme-body mb-1">PayMongo Public Key</label>
-                        <input type="text" name="paymongo_public_key" value="{{ $settings->paymongo_public_key }}" placeholder="pk_test_... or pk_live_..."
+                        <input type="text" name="paymongo_public_key" value="{{ old('paymongo_public_key', $settings->paymongo_public_key) }}" placeholder="pk_test_... or pk_live_..."
                             class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-emerald-500">
+                        @error('paymongo_public_key')
+                            <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="block font-semibold text-theme-body mb-1">Webhook Secret Key</label>
-                        <input type="password" name="paymongo_webhook_token" value="{{ $settings->paymongo_webhook_token }}" placeholder="whsk_..."
+                        <input type="password" name="paymongo_webhook_token" value="{{ old('paymongo_webhook_token', $settings->paymongo_webhook_token) }}" placeholder="whsk_..."
                             class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-mono focus:border-emerald-500">
+                        @error('paymongo_webhook_token')
+                            <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                 </div>
 
                 <div class="flex items-center gap-2 pt-1">
-                    <input type="checkbox" name="paymongo_simulation_mode" id="pmSimMode" value="1" {{ $settings->paymongo_simulation_mode ? 'checked' : '' }} class="w-4 h-4 rounded text-emerald-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
+                    <input type="checkbox" name="paymongo_simulation_mode" id="pmSimMode" value="1" {{ old('paymongo_simulation_mode', $settings->paymongo_simulation_mode) ? 'checked' : '' }} class="w-4 h-4 rounded text-emerald-500 bg-stone-100 dark:bg-stone-900 border-stone-300 dark:border-stone-700">
                     <label for="pmSimMode" class="text-xs text-theme-body font-medium">
                         Enable Interactive Test Simulation Mode (Allows instant PayMongo checkout testing without live API keys)
                     </label>
                 </div>
+                @error('paymongo_simulation_mode')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
         </div>
 
@@ -352,9 +424,12 @@
                     </label>
                     <div class="relative">
                         <span class="absolute left-3.5 top-2.5 font-bold text-theme-muted text-xs">₱</span>
-                        <input type="number" step="1" min="1" max="10000" name="credit_conversion_rate" required value="{{ $settings->credit_conversion_rate ?: 150 }}"
+                        <input type="number" step="any" min="1" max="10000" name="credit_conversion_rate" required value="{{ old('credit_conversion_rate', $settings->credit_conversion_rate ?: 150) }}"
                             class="w-full pl-8 pr-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading font-black text-sm focus:border-amber-500 focus:outline-none">
                     </div>
+                    @error('credit_conversion_rate')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                     <p class="text-[11px] text-theme-muted leading-relaxed">
                         Setting this to <strong>150</strong> means <strong>₱150.00 = 1 Court Credit</strong>. When a player purchases 2 credits, they will pay ₱300.00.
                     </p>
@@ -373,8 +448,8 @@
             <div class="pt-3 border-t border-stone-200 dark:border-stone-800 flex items-center justify-between">
                 <div class="flex items-center gap-2">
                     <span class="text-xs font-bold text-theme-heading">Checkout Booking Status:</span>
-                    <span id="creditsSystemPill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $settings->credits_enabled ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
-                        {{ $settings->credits_enabled ? 'Allowed for Court Booking' : 'Disallowed for Booking' }}
+                    <span id="creditsSystemPill" class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider {{ $currentCreditsEnabled == '1' ? 'bg-emerald-500/20 text-emerald-800 dark:text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-800 dark:text-rose-300 border border-rose-500/30' }}">
+                        {{ $currentCreditsEnabled == '1' ? 'Allowed for Court Booking' : 'Disallowed for Booking' }}
                     </span>
                 </div>
                 <span class="text-[11px] text-theme-muted">Configured in Payment Settings above</span>
@@ -526,58 +601,94 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Venue Name <span class="text-rose-500">*</span></label>
-                    <input type="text" name="venue_name" required value="{{ $settings->venue_name }}"
+                    <input type="text" name="venue_name" required value="{{ old('venue_name', $settings->venue_name) }}"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('venue_name')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Tagline</label>
-                    <input type="text" name="tagline" value="{{ $settings->tagline }}"
+                    <input type="text" name="tagline" value="{{ old('tagline', $settings->tagline) }}"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('tagline')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
+            </div>
+
+            <div>
+                <label class="block font-semibold text-theme-body mb-1">About / Facility Description</label>
+                <textarea name="description" rows="3" placeholder="Describe your facility amenities and pickleball courts..."
+                    class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">{{ old('description', $settings->description) }}</textarea>
+                @error('description')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block font-semibold text-theme-body mb-1">Opening Time</label>
-                    <input type="time" name="opening_time" value="{{ $settings->opening_time }}" required
+                    <label class="block font-semibold text-theme-body mb-1">Opening Time <span class="text-rose-500">*</span></label>
+                    <input type="time" name="opening_time" value="{{ old('opening_time', $settings->opening_time) }}" required
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('opening_time')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="block font-semibold text-theme-body mb-1">Closing Time</label>
-                    <input type="time" name="closing_time" value="{{ $settings->closing_time }}" required
+                    <label class="block font-semibold text-theme-body mb-1">Closing Time <span class="text-rose-500">*</span></label>
+                    <input type="time" name="closing_time" value="{{ old('closing_time', $settings->closing_time) }}" required
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('closing_time')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Phone Number</label>
-                    <input type="text" name="phone" value="{{ $settings->phone }}"
+                    <input type="text" name="phone" value="{{ old('phone', $settings->phone) }}"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('phone')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
                     <label class="block font-semibold text-theme-body mb-1">Email Address</label>
-                    <input type="email" name="email" value="{{ $settings->email }}"
+                    <input type="email" name="email" value="{{ old('email', $settings->email) }}"
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('email')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
             <div>
                 <label class="block font-semibold text-theme-body mb-1">Physical Address</label>
-                <input type="text" name="address" value="{{ $settings->address }}"
+                <input type="text" name="address" value="{{ old('address', $settings->address) }}"
                     class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                @error('address')
+                    <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                @enderror
             </div>
 
             <div class="grid grid-cols-2 gap-4">
                 <div>
-                    <label class="block font-semibold text-theme-body mb-1">Currency Code</label>
-                    <input type="text" name="currency" value="{{ $settings->currency }}" required
+                    <label class="block font-semibold text-theme-body mb-1">Currency Code <span class="text-rose-500">*</span></label>
+                    <input type="text" name="currency" value="{{ old('currency', $settings->currency) }}" required
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('currency')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
                 <div>
-                    <label class="block font-semibold text-theme-body mb-1">Currency Symbol</label>
-                    <input type="text" name="currency_symbol" value="{{ $settings->currency_symbol }}" required
+                    <label class="block font-semibold text-theme-body mb-1">Currency Symbol <span class="text-rose-500">*</span></label>
+                    <input type="text" name="currency_symbol" value="{{ old('currency_symbol', $settings->currency_symbol) }}" required
                         class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-900 border border-stone-300 dark:border-stone-700 text-theme-heading focus:border-cyan-500">
+                    @error('currency_symbol')
+                        <p class="text-rose-600 dark:text-rose-400 text-[11px] font-semibold mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
         </div>
@@ -703,4 +814,26 @@
         }
     }
 </script>
+
+@if(isset($errors) && $errors->any())
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Settings Not Saved',
+                html: '<div style="text-align: left; font-size: 13px; line-height: 1.6;">' +
+                      '<p style="margin-bottom: 8px; font-weight: 600;">Please fix the following validation issue(s):</p>' +
+                      '<ul style="padding-left: 20px; margin: 0;">' +
+                      @foreach($errors->all() as $error)
+                          '<li>{{ addslashes($error) }}</li>' +
+                      @endforeach
+                      '</ul></div>',
+                confirmButtonColor: '#06b6d4',
+                confirmButtonText: 'Review Form'
+            });
+        }
+    });
+</script>
+@endif
 @endpush

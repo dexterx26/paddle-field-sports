@@ -126,4 +126,97 @@ class OwnerVenueSettingsSaveTest extends TestCase
         $this->assertTrue($this->settings->credits_enabled);
         $this->assertEquals('GCash', $this->settings->manual_bank_name);
     }
+
+    public function test_validation_errors_preserve_user_inputs_via_old_helper_and_render_error_feedback(): void
+    {
+        // Attempt to submit with invalid email and invalid holding duration
+        $response = $this->actingAs($this->owner)
+            ->from(route('owner.settings'))
+            ->put(route('owner.settings.update'), [
+                'venue_name' => 'Attempted Venue Name Update',
+                'tagline' => 'My New Tagline',
+                'email' => 'invalid-not-an-email',
+                'holding_duration_seconds' => 10, // Invalid: min is 30
+                'opening_time' => '06:00',
+                'closing_time' => '00:00',
+                'currency' => 'PHP',
+                'currency_symbol' => '₱',
+                'payment_mode' => 'manual_receipt',
+            ]);
+
+        // Expect redirect back with validation errors and withInput
+        $response->assertRedirect(route('owner.settings'));
+        $response->assertSessionHasErrors(['email', 'holding_duration_seconds']);
+
+        // Now follow redirect to settings page and ensure old inputs are rendered instead of wiping back to DB
+        $pageResponse = $this->actingAs($this->owner)->get(route('owner.settings'));
+        $pageResponse->assertOk();
+        $pageResponse->assertSee('Attempted Venue Name Update');
+        $pageResponse->assertSee('My New Tagline');
+        $pageResponse->assertSee('Some settings could not be saved');
+        $pageResponse->assertSee('Settings Not Saved');
+    }
+
+    public function test_owner_can_update_description_and_decimal_credit_rate(): void
+    {
+        $response = $this->actingAs($this->owner)->put(route('owner.settings.update'), [
+            'venue_name' => 'Paddle Field Sports Center',
+            'tagline' => 'Premier Indoor Facility',
+            'description' => 'Newly upgraded state-of-the-art acrylic courts with player lounge.',
+            'opening_time' => '08:00',
+            'closing_time' => '22:00',
+            'phone' => '+63 917 888 9999',
+            'email' => 'contact@paddlefield.com',
+            'address' => 'Highway 1, Nueva Ecija',
+            'currency' => 'PHP',
+            'currency_symbol' => '₱',
+            'payment_mode' => 'manual_receipt',
+            'holding_duration_seconds' => 120,
+            'credit_conversion_rate' => 175.50,
+            'credits_enabled' => 1,
+        ]);
+
+        $response->assertRedirect(route('owner.settings'));
+        $response->assertSessionHas('success');
+
+        $this->settings->refresh();
+        $this->assertEquals('Newly upgraded state-of-the-art acrylic courts with player lounge.', $this->settings->description);
+        $this->assertEquals(175.50, (float) $this->settings->credit_conversion_rate);
+        $this->assertEquals('+63 917 888 9999', $this->settings->phone);
+    }
+
+    public function test_owner_can_clear_optional_fields(): void
+    {
+        $response = $this->actingAs($this->owner)->put(route('owner.settings.update'), [
+            'venue_name' => 'Paddle Field Sports Center',
+            'tagline' => '',
+            'description' => '',
+            'phone' => '',
+            'email' => '',
+            'address' => '',
+            'manual_bank_name' => '',
+            'manual_account_name' => '',
+            'manual_account_number' => '',
+            'manual_payment_instructions' => '',
+            'opening_time' => '06:00',
+            'closing_time' => '00:00',
+            'currency' => 'PHP',
+            'currency_symbol' => '₱',
+            'payment_mode' => 'manual_receipt',
+            'holding_duration_seconds' => 120,
+            'credit_conversion_rate' => 150,
+            'credits_enabled' => 0,
+        ]);
+
+        $response->assertRedirect(route('owner.settings'));
+        $response->assertSessionHas('success');
+
+        $this->settings->refresh();
+        $this->assertNull($this->settings->tagline);
+        $this->assertNull($this->settings->description);
+        $this->assertNull($this->settings->phone);
+        $this->assertNull($this->settings->email);
+        $this->assertNull($this->settings->address);
+        $this->assertNull($this->settings->manual_bank_name);
+    }
 }

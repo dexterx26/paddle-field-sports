@@ -278,42 +278,42 @@
         <!-- Flash messages -->
         <div class="px-3.5 sm:px-6 md:px-8 pt-4 sm:pt-6 min-w-0 w-full max-w-full">
             @if(session('success'))
-                <div class="p-4 mb-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-900 text-sm flex items-center justify-between">
+                <div class="p-4 mb-4 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-950 dark:text-cyan-200 text-sm flex items-center justify-between shadow-xs">
                     <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-circle-check text-cyan-600 text-lg"></i>
-                        <span>{{ session('success') }}</span>
+                        <i class="fa-solid fa-circle-check text-cyan-600 dark:text-cyan-400 text-lg"></i>
+                        <span class="font-semibold">{{ session('success') }}</span>
                     </div>
                     <button type="button" onclick="this.parentElement.remove()" class="text-theme-muted hover:text-theme-heading cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
 
             @if(session('error'))
-                <div class="p-4 mb-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-900 text-sm flex items-center justify-between">
+                <div class="p-4 mb-4 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-950 dark:text-rose-200 text-sm flex items-center justify-between shadow-xs">
                     <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-triangle-exclamation text-rose-600 text-lg"></i>
-                        <span>{{ session('error') }}</span>
+                        <i class="fa-solid fa-triangle-exclamation text-rose-600 dark:text-rose-400 text-lg"></i>
+                        <span class="font-semibold">{{ session('error') }}</span>
                     </div>
                     <button type="button" onclick="this.parentElement.remove()" class="text-theme-muted hover:text-theme-heading cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
 
             @if(session('info'))
-                <div class="p-4 mb-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-900 text-sm flex items-center justify-between">
+                <div class="p-4 mb-4 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-950 dark:text-amber-200 text-sm flex items-center justify-between shadow-xs">
                     <div class="flex items-center gap-3">
-                        <i class="fa-solid fa-circle-info text-amber-600 text-lg"></i>
-                        <span>{{ session('info') }}</span>
+                        <i class="fa-solid fa-circle-info text-amber-600 dark:text-amber-400 text-lg"></i>
+                        <span class="font-semibold">{{ session('info') }}</span>
                     </div>
                     <button type="button" onclick="this.parentElement.remove()" class="text-theme-muted hover:text-theme-heading cursor-pointer"><i class="fa-solid fa-xmark"></i></button>
                 </div>
             @endif
 
-            @if($errors->any())
-                <div class="p-4 mb-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-900 text-sm flex items-start justify-between">
+            @if(isset($errors) && $errors->any())
+                <div class="p-4 mb-4 rounded-2xl bg-rose-500/15 border-2 border-rose-500/30 text-rose-950 dark:text-rose-200 text-sm flex items-start justify-between shadow-md">
                     <div class="flex items-start gap-3">
-                        <i class="fa-solid fa-circle-exclamation text-rose-600 text-lg mt-0.5 shrink-0"></i>
+                        <i class="fa-solid fa-circle-exclamation text-rose-600 dark:text-rose-400 text-lg mt-0.5 shrink-0"></i>
                         <div>
                             <span class="font-bold">Please check the following error(s):</span>
-                            <ul class="list-disc list-inside text-xs mt-1 space-y-0.5">
+                            <ul class="list-disc list-inside text-xs mt-1.5 space-y-1 text-rose-800 dark:text-rose-300">
                                 @foreach($errors->all() as $error)
                                     <li>{{ $error }}</li>
                                 @endforeach

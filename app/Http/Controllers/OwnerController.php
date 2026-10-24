@@ -612,47 +612,65 @@ class OwnerController extends Controller
      */
     public function updateSettings(Request $request)
     {
-        $request->validate([
-            'venue_name' => 'required|string|max:150',
-            'tagline' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'phone' => 'nullable|string|max:50',
-            'email' => 'nullable|email|max:100',
-            'address' => 'nullable|string|max:255',
-            'opening_time' => 'required|string',
-            'closing_time' => 'required|string',
-            'currency' => 'required|string|max:10',
-            'currency_symbol' => 'required|string|max:5',
-            'payment_mode' => 'required|in:manual_receipt,xendit,paymongo',
-            'holding_duration_seconds' => 'required|integer|min:30|max:600',
-            // Credits settings
-            'credit_conversion_rate' => 'nullable|numeric|min:1|max:10000',
-            'credits_enabled' => 'nullable',
-            // Xendit credentials
-            'xendit_secret_key' => 'nullable|string',
-            'xendit_public_key' => 'nullable|string',
-            'xendit_webhook_token' => 'nullable|string',
-            'xendit_simulation_mode' => 'nullable|boolean',
-            // PayMongo credentials
-            'paymongo_secret_key' => 'nullable|string',
-            'paymongo_public_key' => 'nullable|string',
-            'paymongo_webhook_token' => 'nullable|string',
-            'paymongo_simulation_mode' => 'nullable|boolean',
-            // Manual receipt info
-            'manual_bank_name' => 'nullable|string|max:150',
-            'manual_account_name' => 'nullable|string|max:150',
-            'manual_account_number' => 'nullable|string|max:100',
-            'manual_payment_instructions' => 'nullable|string|max:2000',
-            'manual_payment_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
-            // Venue / Court Logo
-            'logo' => 'nullable|mimes:jpeg,png,jpg,webp,svg,ico|max:4096',
-            'remove_logo' => 'nullable|boolean',
-        ]);
+        try {
+            $request->validate([
+                'venue_name' => 'required|string|max:150',
+                'tagline' => 'nullable|string|max:255',
+                'description' => 'nullable|string|max:1000',
+                'phone' => 'nullable|string|max:50',
+                'email' => 'nullable|email|max:100',
+                'address' => 'nullable|string|max:255',
+                'opening_time' => 'required|string',
+                'closing_time' => 'required|string',
+                'currency' => 'required|string|max:10',
+                'currency_symbol' => 'required|string|max:5',
+                'payment_mode' => 'required|in:manual_receipt,xendit,paymongo',
+                'holding_duration_seconds' => 'required|integer|min:30|max:600',
+                // Credits settings
+                'credit_conversion_rate' => 'nullable|numeric|min:1|max:10000',
+                'credits_enabled' => 'nullable',
+                // Xendit credentials
+                'xendit_secret_key' => 'nullable|string',
+                'xendit_public_key' => 'nullable|string',
+                'xendit_webhook_token' => 'nullable|string',
+                'xendit_simulation_mode' => 'nullable|boolean',
+                // PayMongo credentials
+                'paymongo_secret_key' => 'nullable|string',
+                'paymongo_public_key' => 'nullable|string',
+                'paymongo_webhook_token' => 'nullable|string',
+                'paymongo_simulation_mode' => 'nullable|boolean',
+                // Manual receipt info
+                'manual_bank_name' => 'nullable|string|max:150',
+                'manual_account_name' => 'nullable|string|max:150',
+                'manual_account_number' => 'nullable|string|max:100',
+                'manual_payment_instructions' => 'nullable|string|max:2000',
+                'manual_payment_qr' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:4096',
+                // Venue / Court Logo
+                'logo' => 'nullable|mimes:jpeg,png,jpg,webp,svg,ico|max:4096',
+                'remove_logo' => 'nullable|boolean',
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $ve) {
+            \Illuminate\Support\Facades\Log::warning('Venue settings validation failed: ', [
+                'errors' => $ve->errors(),
+                'input' => $request->except(['_token', '_method', 'xendit_secret_key', 'paymongo_secret_key', 'xendit_webhook_token', 'paymongo_webhook_token']),
+            ]);
+            throw $ve;
+        }
 
         $settings = VenueSetting::getSettings();
 
         $data = $request->except(['_token', '_method', 'manual_payment_qr', 'logo', 'remove_logo']);
         $data['tagline'] = $request->filled('tagline') ? trim((string) $request->input('tagline')) : null;
+        $data['description'] = $request->filled('description') ? trim((string) $request->input('description')) : null;
+        $data['phone'] = $request->filled('phone') ? trim((string) $request->input('phone')) : null;
+        $data['email'] = $request->filled('email') ? trim((string) $request->input('email')) : null;
+        $data['address'] = $request->filled('address') ? trim((string) $request->input('address')) : null;
+        $data['manual_bank_name'] = $request->filled('manual_bank_name') ? trim((string) $request->input('manual_bank_name')) : null;
+        $data['manual_account_name'] = $request->filled('manual_account_name') ? trim((string) $request->input('manual_account_name')) : null;
+        $data['manual_account_number'] = $request->filled('manual_account_number') ? trim((string) $request->input('manual_account_number')) : null;
+        $data['manual_payment_instructions'] = $request->filled('manual_payment_instructions') ? trim((string) $request->input('manual_payment_instructions')) : null;
+        $data['xendit_public_key'] = $request->filled('xendit_public_key') ? trim((string) $request->input('xendit_public_key')) : null;
+        $data['paymongo_public_key'] = $request->filled('paymongo_public_key') ? trim((string) $request->input('paymongo_public_key')) : null;
         $data['xendit_simulation_mode'] = $request->boolean('xendit_simulation_mode', false);
         $data['paymongo_simulation_mode'] = $request->boolean('paymongo_simulation_mode', false);
         $data['credits_enabled'] = $request->has('credits_enabled')
@@ -726,6 +744,8 @@ class OwnerController extends Controller
                 ->withInput()
                 ->with('error', 'Unable to save settings: ' . $e->getMessage());
         }
+
+        $settings->refresh();
 
         return redirect()->route('owner.settings')
             ->with('success', 'Settings updated successfully! Payment gateway: ' . strtoupper(str_replace('_', ' ', $settings->payment_mode)) . ' | Court Credits: ' . ($settings->credits_enabled ? 'ENABLED' : 'DISABLED'));
