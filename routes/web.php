@@ -191,5 +191,8 @@ Route::get('/storage/{path}', function (string $path) {
     }
 
     abort(404);
-})->where('path', '.*')->name('storage.serve');
+})->where('path', '.*')->withoutMiddleware([
+    \Illuminate\Session\Middleware\StartSession::class,
+    \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+])->name('storage.serve');
 

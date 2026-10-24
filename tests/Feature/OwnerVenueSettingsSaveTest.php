@@ -76,7 +76,7 @@ class OwnerVenueSettingsSaveTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->settings->refresh();
-        $this->assertNull($this->settings->tagline);
+        $this->assertEmpty($this->settings->tagline);
         $this->assertFalse($this->settings->credits_enabled);
     }
 
@@ -212,11 +212,43 @@ class OwnerVenueSettingsSaveTest extends TestCase
         $response->assertSessionHas('success');
 
         $this->settings->refresh();
-        $this->assertNull($this->settings->tagline);
+        $this->assertEmpty($this->settings->tagline);
         $this->assertNull($this->settings->description);
         $this->assertNull($this->settings->phone);
         $this->assertNull($this->settings->email);
         $this->assertNull($this->settings->address);
         $this->assertNull($this->settings->manual_bank_name);
     }
+
+    public function test_owner_can_save_settings_via_ajax_request(): void
+    {
+        $response = $this->actingAs($this->owner)
+            ->withHeaders(['Accept' => 'application/json', 'X-Requested-With' => 'XMLHttpRequest'])
+            ->put(route('owner.settings.update'), [
+                'venue_name' => 'AJAX Saved Venue Name',
+                'tagline' => 'Updated via AJAX',
+                'opening_time' => '07:00',
+                'closing_time' => '23:00',
+                'currency' => 'PHP',
+                'currency_symbol' => '₱',
+                'payment_mode' => 'xendit',
+                'holding_duration_seconds' => 180,
+                'credits_enabled' => 1,
+                'credit_conversion_rate' => 250.50,
+            ]);
+
+        $response->assertOk();
+        $response->assertJson([
+            'success' => true,
+        ]);
+
+        $this->settings->refresh();
+        $this->assertEquals('AJAX Saved Venue Name', $this->settings->venue_name);
+        $this->assertEquals('Updated via AJAX', $this->settings->tagline);
+        $this->assertEquals('xendit', $this->settings->payment_mode);
+        $this->assertEquals(180, $this->settings->holding_duration_seconds);
+        $this->assertTrue($this->settings->credits_enabled);
+        $this->assertEquals(250.50, (float) $this->settings->credit_conversion_rate);
+    }
 }
+

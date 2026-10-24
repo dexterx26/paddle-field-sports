@@ -24,7 +24,12 @@ class VenueSetting extends Model
      */
     public static function getSettings(): self
     {
-        return static::firstOrCreate([], [
+        $settings = static::first();
+        if ($settings) {
+            return $settings;
+        }
+
+        $defaultData = [
             'venue_name' => 'Paddle Field Sports Center',
             'tagline' => 'Premier Indoor Pickleball Facility',
             'description' => 'Experience world-class pickleball action at Paddle Field Sports Center. Equipped with tournament-grade cushioned acrylic courts, high-powered LED lighting, and premium club amenities.',
@@ -45,7 +50,16 @@ class VenueSetting extends Model
             'manual_account_number' => '0917-555-7233',
             'manual_payment_instructions' => "1. Transfer the exact reservation amount via GCash, Maya, or BDO.\n2. Write your Booking Reference code in the transfer notes.\n3. Take a screenshot of the completed transaction receipt.\n4. Upload the screenshot below to secure your court reservation.",
             'holding_duration_seconds' => 120, // 2 minutes hold for Xendit / PayMongo checkout
-        ]);
+        ];
+
+        try {
+            $tableColumns = \Illuminate\Support\Facades\Schema::getColumnListing('venue_settings');
+            if (!empty($tableColumns)) {
+                $defaultData = array_intersect_key($defaultData, array_flip($tableColumns));
+            }
+        } catch (\Throwable $e) {}
+
+        return static::create($defaultData);
     }
 
     /*

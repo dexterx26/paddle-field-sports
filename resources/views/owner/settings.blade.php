@@ -7,7 +7,7 @@
         <p class="text-xs text-theme-muted">Configure your payment gateway (Xendit vs Manual Receipt) and center operating hours.</p>
     </div>
 
-    <form action="{{ route('owner.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8 text-xs">
+    <form id="venueSettingsForm" action="{{ route('owner.settings.update') }}" method="POST" enctype="multipart/form-data" class="space-y-8 text-xs">
         @csrf
         @method('PUT')
 
@@ -694,8 +694,9 @@
         </div>
 
         <div class="flex items-center justify-end gap-4 pt-4">
-            <button type="submit" class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 transition-transform hover:scale-105 cursor-pointer">
-                <i class="fa-solid fa-floppy-disk mr-1.5"></i> Save All Settings
+            <button type="submit" id="saveSettingsBtn" class="px-8 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-slate-950 font-black text-sm shadow-xl shadow-cyan-500/25 transition-transform hover:scale-105 cursor-pointer flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Save All Settings</span>
             </button>
         </div>
     </form>
@@ -813,6 +814,109 @@
             if (tabIcon) tabIcon.src = currentLogoUrl || defaultLogoUrl;
         }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('venueSettingsForm');
+        const submitBtn = document.getElementById('saveSettingsBtn');
+
+        if (form && submitBtn) {
+            form.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                // Native constraint check
+                if (!form.checkValidity()) {
+                    form.reportValidity();
+                    return;
+                }
+
+                const originalBtnHtml = submitBtn.innerHTML;
+                submitBtn.disabled = true;
+                submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+                submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Saving Settings...</span>';
+
+                try {
+                    const formData = new FormData(form);
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || form.querySelector('input[name="_token"]')?.value;
+
+                    const response = await fetch(form.action, {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: formData
+                    });
+
+                    const data = await response.json().catch(() => null);
+
+                    if (response.ok && data && data.success) {
+                        if (typeof Swal !== 'undefined') {
+                            await Swal.fire({
+                                icon: 'success',
+                                title: 'Settings Saved!',
+                                text: data.message || 'Settings updated successfully.',
+                                confirmButtonColor: '#06b6d4',
+                                confirmButtonText: 'Great'
+                            });
+                        }
+                        // Update live previews
+                        if (data.settings) {
+                            const tabIcon = document.getElementById('simulatedTabIcon');
+                            const logoPreview = document.getElementById('logoPreviewImg');
+                            if (tabIcon && data.settings.tab_icon_url) tabIcon.src = data.settings.tab_icon_url;
+                            if (logoPreview && data.settings.logo_url) logoPreview.src = data.settings.logo_url;
+                        }
+                        // Refresh to sync layout topbar & sidebar
+                        window.location.reload();
+                    } else if (response.status === 422 && data && data.errors) {
+                        const errorList = Object.values(data.errors).flat();
+                        let errorHtml = '<div style="text-align: left; font-size: 13px; line-height: 1.6;">' +
+                            '<p style="margin-bottom: 8px; font-weight: 600;">Please correct the highlighted issues:</p>' +
+                            '<ul style="padding-left: 20px; margin: 0;">';
+                        errorList.forEach(err => {
+                            errorHtml += `<li>${err}</li>`;
+                        });
+                        errorHtml += '</ul></div>';
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Settings Not Saved',
+                                html: errorHtml,
+                                confirmButtonColor: '#e11d48',
+                                confirmButtonText: 'Review Form'
+                            });
+                        } else {
+                            alert('Settings not saved:\n' + errorList.join('\n'));
+                        }
+                    } else {
+                        const errorMsg = (data && data.message) ? data.message : `Server responded with status ${response.status}`;
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error Saving Settings',
+                                text: errorMsg,
+                                confirmButtonColor: '#e11d48',
+                                confirmButtonText: 'OK'
+                            });
+                        } else {
+                            alert('Error: ' + errorMsg);
+                        }
+                    }
+                } catch (err) {
+                    console.error('Settings submit error:', err);
+                    // Fall back to native submission
+                    form.submit();
+                    return;
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                    submitBtn.innerHTML = originalBtnHtml;
+                }
+            });
+        }
+    });
 </script>
 
 @if(isset($errors) && $errors->any())
